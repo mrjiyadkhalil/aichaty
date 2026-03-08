@@ -58,7 +58,9 @@ export default function ChatWorkspace() {
   const [imageMimeType, setImageMimeType] = useState<string | null>(null);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
   const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
-
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState("");
+  const [upgradeRequiredPlan, setUpgradeRequiredPlan] = useState<"pro" | "enterprise">("pro");
   useEffect(() => { setLayout(defaultLayout); }, [defaultLayout]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
