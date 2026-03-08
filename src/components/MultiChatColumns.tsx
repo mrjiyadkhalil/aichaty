@@ -224,9 +224,6 @@ export function MultiChatColumns({
                       onCheckedChange={() => handleToggleProvider(provider)}
                       className="data-[state=checked]:bg-accent shrink-0 scale-75 transform"
                     />
-                  </div>
-                    />
-                  </div>
                 </div>
               </div>
             );
