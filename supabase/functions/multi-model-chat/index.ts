@@ -44,11 +44,95 @@ serve(async (req) => {
 
   try {
     const { prompt, model, projectId, chatId, messageId, max_tokens, request_type } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
     const sb = getServiceClient();
     const reqType = request_type || "model_compare";
+
+    // Check if user is banned/suspended
+    if (userId) {
+      const { data: profile } = await sb.from("profiles").select("status, suspended_until").eq("user_id", userId).single();
+      if (profile?.status === "banned") {
+        return new Response(JSON.stringify({ error: "Your account has been banned", code: "BANNED" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (profile?.status === "suspended") {
+        const until = profile.suspended_until ? new Date(profile.suspended_until) : null;
+        if (until && until > new Date()) {
+          return new Response(JSON.stringify({ error: "Your account is suspended", code: "SUSPENDED" }), {
+            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    }
+
+    // Check if model is custom and route accordingly
+    const modelId = model || "google/gemini-3-flash-preview";
+    const { data: modelConfig } = await sb.from("model_configs").select("*").eq("model_name", modelId).eq("enabled", true).maybeSingle();
+
+    if (modelConfig?.is_custom && modelConfig?.provider_url) {
+      // Route to custom endpoint
+      const apiKey = modelConfig.api_key_env ? Deno.env.get(modelConfig.api_key_env) : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+
+      let requestBody: string;
+      if (modelConfig.request_format) {
+        requestBody = JSON.stringify(modelConfig.request_format)
+          .replace(/\{\{model\}\}/g, modelId)
+          .replace(/\{\{prompt\}\}/g, prompt);
+      } else {
+        requestBody = JSON.stringify({
+          model: modelId,
+          messages: [
+            { role: "system", content: "You are a helpful AI assistant." },
+            { role: "user", content: prompt },
+          ],
+          stream: false,
+          ...(max_tokens ? { max_tokens } : {}),
+        });
+      }
+
+      const response = await fetch(modelConfig.provider_url, {
+        method: "POST", headers, body: requestBody,
+      });
+      const latency = Date.now() - start;
+
+      if (!response.ok) {
+        if (userId) {
+          await sb.from("usage_events").insert({
+            user_id: userId, project_id: projectId || null, chat_id: chatId || null,
+            message_id: messageId || null, provider: modelConfig.provider_name,
+            model: modelId, request_type: reqType, latency_ms: latency, status: "error",
+            error_code: String(response.status),
+          });
+        }
+        return new Response(JSON.stringify({ error: "Custom model error" }), {
+          status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || JSON.stringify(data);
+      const usage = data.usage || {};
+
+      if (userId) {
+        await sb.from("usage_events").insert({
+          user_id: userId, project_id: projectId || null, chat_id: chatId || null,
+          message_id: messageId || null, provider: modelConfig.provider_name,
+          model: modelId, request_type: reqType,
+          input_tokens: usage.prompt_tokens || 0, output_tokens: usage.completion_tokens || 0,
+          estimated_cost: 0, latency_ms: latency, status: "success",
+        });
+      }
+
+      return new Response(JSON.stringify({ content, usage: { input_tokens: usage.prompt_tokens || 0, output_tokens: usage.completion_tokens || 0, estimated_cost: 0 } }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Standard Lovable AI gateway flow
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     // Rate limit check
     if (userId) {
@@ -81,7 +165,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: model || "google/gemini-3-flash-preview",
+        model: modelId,
         messages: [
           { role: "system", content: "You are a helpful AI assistant. Provide clear, well-structured, and thorough answers." },
           { role: "user", content: prompt },
@@ -99,12 +183,11 @@ serve(async (req) => {
         : status === 402 ? "Usage limit reached. Please add credits."
         : "AI model error";
 
-      // Log failed usage
       if (userId) {
         await sb.from("usage_events").insert({
           user_id: userId, project_id: projectId || null, chat_id: chatId || null,
-          message_id: messageId || null, provider: (model || "google/gemini-3-flash-preview").split("/")[0],
-          model: model || "google/gemini-3-flash-preview", request_type: reqType,
+          message_id: messageId || null, provider: modelId.split("/")[0],
+          model: modelId, request_type: reqType,
           latency_ms: latency, status: "error", error_code: String(status),
         });
       }
@@ -119,11 +202,9 @@ serve(async (req) => {
     const usage = data.usage || {};
     const inputTokens = usage.prompt_tokens || 0;
     const outputTokens = usage.completion_tokens || 0;
-    const modelId = model || "google/gemini-3-flash-preview";
     const rates = COST_PER_1K[modelId] || { input: 0.001, output: 0.002 };
     const estCost = (inputTokens / 1000) * rates.input + (outputTokens / 1000) * rates.output;
 
-    // Log successful usage
     if (userId) {
       const monthlyCostNow = await getMonthlyCost(sb, userId);
       const warning = monthlyCostNow + estCost >= SOFT_CAP ? "Approaching usage limit" : undefined;

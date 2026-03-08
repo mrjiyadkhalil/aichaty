@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { label: "Users", path: "/admin/users", icon: Users },
   { label: "Usage & Cost", path: "/admin/usage", icon: BarChart3 },
   { label: "Models", path: "/admin/models", icon: Cpu },
+  { label: "Revenue", path: "/admin/revenue", icon: BarChart3 },
   { label: "Settings", path: "/admin/settings", icon: Settings2 },
   { label: "Feature Flags", path: "/admin/feature-flags", icon: Flag },
   { label: "Templates", path: "/admin/templates", icon: FileText },

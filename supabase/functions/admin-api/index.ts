@@ -45,6 +45,8 @@ Deno.serve(async (req) => {
       case "update_user_role": return await updateUserRole(sb, userId, body);
       case "suspend_user": return await suspendUser(sb, userId, body);
       case "reactivate_user": return await reactivateUser(sb, userId, body);
+      case "ban_user": return await banUser(sb, userId, body);
+      case "unban_user": return await unbanUser(sb, userId, body);
       case "disable_ai_access": return await disableAiAccess(sb, userId, body);
       case "enable_ai_access": return await enableAiAccess(sb, userId, body);
       case "list_usage": return await listUsage(sb, body);
@@ -54,10 +56,13 @@ Deno.serve(async (req) => {
       case "update_provider_config": return await updateProviderConfig(sb, userId, body);
       case "get_model_configs": return await getModelConfigs(sb);
       case "update_model_config": return await updateModelConfig(sb, userId, body);
+      case "create_model_config": return await createModelConfig(sb, userId, body);
+      case "get_model_performance": return await getModelPerformance(sb);
+      case "test_custom_model": return await testCustomModel(body);
+      case "get_revenue_data": return await getRevenueData(sb);
       case "get_system_config": return await getSystemConfig(sb);
       case "update_system_config": return await updateSystemConfig(sb, userId, body);
       case "list_audit_logs": return await listAuditLogs(sb, body);
-      // New actions
       case "list_feature_flags": return await listFeatureFlags(sb);
       case "update_feature_flag": return await updateFeatureFlag(sb, userId, body);
       case "list_announcements": return await listAnnouncements(sb);
@@ -110,17 +115,14 @@ async function getMetrics(sb: any, body: any) {
   const failedCount = usageData.filter((r: any) => r.status === "error").length;
   const successCount = usageData.length - failedCount;
 
-  // Top heavy users
   const userCostMap: Record<string, number> = {};
   usageData.forEach((u: any) => { userCostMap[u.user_id] = (userCostMap[u.user_id] || 0) + (Number(u.estimated_cost) || 0); });
   const topUsers = Object.entries(userCostMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([uid, cost]) => ({ user_id: uid, cost: Math.round(cost * 10000) / 10000 }));
 
-  // Top models
   const modelCountMap: Record<string, number> = {};
   usageData.forEach((u: any) => { modelCountMap[u.model] = (modelCountMap[u.model] || 0) + 1; });
   const topModels = Object.entries(modelCountMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([model, count]) => ({ model, count }));
 
-  // Provider breakdown
   const providerMap: Record<string, { count: number; cost: number }> = {};
   usageData.forEach((u: any) => {
     const p = u.provider || "unknown";
@@ -130,7 +132,6 @@ async function getMetrics(sb: any, body: any) {
   });
   const providerBreakdown = Object.entries(providerMap).map(([provider, d]) => ({ provider, ...d }));
 
-  // Cost trend (daily)
   const costTrend: Record<string, { date: string; cost: number; requests: number }> = {};
   usageData.forEach((u: any) => {
     const day = u.created_at?.slice(0, 10);
@@ -191,7 +192,6 @@ async function listUsers(sb: any, body: any) {
     };
   }));
 
-  // Filter by role client-side since it's a join
   let result = enriched;
   if (role) result = result.filter((u: any) => u.roles.includes(role));
 
@@ -242,11 +242,18 @@ async function updateUserRole(sb: any, adminId: string, body: any) {
 }
 
 async function suspendUser(sb: any, adminId: string, body: any) {
-  const { target_user_id } = body;
+  const { target_user_id, duration = "7d", reason = "" } = body;
   if (!target_user_id) throw new Error("target_user_id required");
-  await sb.from("profiles").update({ status: "suspended" }).eq("user_id", target_user_id);
+  const durationMs: Record<string, number> = { "1d": 86400000, "7d": 7 * 86400000, "30d": 30 * 86400000 };
+  const suspendedUntil = new Date(Date.now() + (durationMs[duration] || 7 * 86400000)).toISOString();
+  await sb.from("profiles").update({ 
+    status: "suspended", 
+    suspended_until: suspendedUntil,
+    ban_reason: reason || null,
+  }).eq("user_id", target_user_id);
   await sb.from("admin_audit_logs").insert({
     admin_user_id: adminId, action_type: "suspend_user", target_type: "user", target_id: target_user_id,
+    details_json: { duration, reason, suspended_until: suspendedUntil },
   });
   return json({ success: true });
 }
@@ -254,9 +261,47 @@ async function suspendUser(sb: any, adminId: string, body: any) {
 async function reactivateUser(sb: any, adminId: string, body: any) {
   const { target_user_id } = body;
   if (!target_user_id) throw new Error("target_user_id required");
-  await sb.from("profiles").update({ status: "active" }).eq("user_id", target_user_id);
+  await sb.from("profiles").update({ 
+    status: "active", 
+    ban_reason: null, 
+    banned_at: null, 
+    banned_by: null, 
+    suspended_until: null,
+  }).eq("user_id", target_user_id);
   await sb.from("admin_audit_logs").insert({
     admin_user_id: adminId, action_type: "reactivate_user", target_type: "user", target_id: target_user_id,
+  });
+  return json({ success: true });
+}
+
+async function banUser(sb: any, adminId: string, body: any) {
+  const { target_user_id, reason = "" } = body;
+  if (!target_user_id) throw new Error("target_user_id required");
+  await sb.from("profiles").update({ 
+    status: "banned",
+    ban_reason: reason || null,
+    banned_at: new Date().toISOString(),
+    banned_by: adminId,
+    suspended_until: null,
+  }).eq("user_id", target_user_id);
+  await sb.from("admin_audit_logs").insert({
+    admin_user_id: adminId, action_type: "ban_user", target_type: "user", target_id: target_user_id,
+    details_json: { reason },
+  });
+  return json({ success: true });
+}
+
+async function unbanUser(sb: any, adminId: string, body: any) {
+  const { target_user_id } = body;
+  if (!target_user_id) throw new Error("target_user_id required");
+  await sb.from("profiles").update({ 
+    status: "active",
+    ban_reason: null,
+    banned_at: null,
+    banned_by: null,
+  }).eq("user_id", target_user_id);
+  await sb.from("admin_audit_logs").insert({
+    admin_user_id: adminId, action_type: "unban_user", target_type: "user", target_id: target_user_id,
   });
   return json({ success: true });
 }
@@ -350,6 +395,154 @@ async function updateModelConfig(sb: any, adminId: string, body: any) {
     target_type: "model_config", target_id: id, details_json: updates,
   });
   return json({ success: true });
+}
+
+async function createModelConfig(sb: any, adminId: string, body: any) {
+  const { model_name, short_label, provider_name, provider_url, api_key_env, cost_tier, max_output_tokens, timeout_seconds, request_format, is_custom, premium_only, retry_enabled } = body;
+  if (!model_name || !provider_name) throw new Error("model_name and provider_name required");
+  const { data, error } = await sb.from("model_configs").insert({
+    model_name, short_label, provider_name, provider_url, api_key_env,
+    cost_tier: cost_tier || "standard",
+    max_output_tokens: max_output_tokens || 4096,
+    timeout_seconds: timeout_seconds || 60,
+    request_format: request_format || null,
+    is_custom: is_custom ?? false,
+    premium_only: premium_only ?? false,
+    retry_enabled: retry_enabled ?? true,
+    enabled: true,
+  }).select().single();
+  if (error) throw error;
+  await sb.from("admin_audit_logs").insert({
+    admin_user_id: adminId, action_type: "create_model_config",
+    target_type: "model_config", target_id: data.id, details_json: { model_name, provider_name, is_custom },
+  });
+  return json({ model: data });
+}
+
+// ==================== MODEL PERFORMANCE ====================
+
+async function getModelPerformance(sb: any) {
+  const { data, error } = await sb.from("model_performance").select("*");
+  if (error) throw error;
+  return json({ stats: data || [] });
+}
+
+// ==================== TEST CUSTOM MODEL ====================
+
+async function testCustomModel(body: any) {
+  const { provider_url, api_key_env, model_name, request_format } = body;
+  if (!provider_url) throw new Error("provider_url required");
+  
+  const apiKey = api_key_env ? Deno.env.get(api_key_env) : null;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+  
+  let requestBody: string;
+  if (request_format) {
+    try {
+      const parsed = typeof request_format === "string" ? JSON.parse(request_format) : request_format;
+      requestBody = JSON.stringify(parsed)
+        .replace(/\{\{model\}\}/g, model_name)
+        .replace(/\{\{prompt\}\}/g, "Hello, this is a test message. Reply with 'OK'.");
+    } catch {
+      requestBody = JSON.stringify({
+        model: model_name,
+        messages: [{ role: "user", content: "Hello, this is a test. Reply with 'OK'." }],
+        stream: false, max_tokens: 10,
+      });
+    }
+  } else {
+    requestBody = JSON.stringify({
+      model: model_name,
+      messages: [{ role: "user", content: "Hello, this is a test. Reply with 'OK'." }],
+      stream: false, max_tokens: 10,
+    });
+  }
+
+  const start = Date.now();
+  try {
+    const res = await fetch(provider_url, { method: "POST", headers, body: requestBody });
+    const latency = Date.now() - start;
+    if (!res.ok) {
+      const errText = await res.text();
+      return json({ success: false, error: `HTTP ${res.status}: ${errText.slice(0, 200)}`, latency_ms: latency });
+    }
+    return json({ success: true, latency_ms: latency });
+  } catch (e: any) {
+    return json({ success: false, error: e.message, latency_ms: Date.now() - start });
+  }
+}
+
+// ==================== REVENUE ====================
+
+async function getRevenueData(sb: any) {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const last30d = new Date(now.getTime() - 30 * 86400000).toISOString();
+
+  // All-time usage
+  const { data: allUsage } = await sb.from("usage_events").select("user_id, estimated_cost, model, provider, created_at, status").eq("status", "success");
+  const usage = allUsage || [];
+
+  const revenueAllTime = usage.reduce((s: number, r: any) => s + (Number(r.estimated_cost) || 0), 0);
+  const revenueThisMonth = usage.filter((r: any) => r.created_at >= startOfMonth).reduce((s: number, r: any) => s + (Number(r.estimated_cost) || 0), 0);
+
+  // Unique users
+  const uniqueUsers = new Set(usage.map((r: any) => r.user_id));
+  const avgRevenuePerUser = uniqueUsers.size > 0 ? revenueAllTime / uniqueUsers.size : 0;
+
+  // Users near cap ($5)
+  const userCosts: Record<string, number> = {};
+  usage.filter((r: any) => r.created_at >= startOfMonth).forEach((r: any) => {
+    userCosts[r.user_id] = (userCosts[r.user_id] || 0) + (Number(r.estimated_cost) || 0);
+  });
+  const usersNearCap = Object.values(userCosts).filter((c) => c >= 4).length;
+
+  // Daily revenue (last 30 days)
+  const dailyMap: Record<string, number> = {};
+  usage.filter((r: any) => r.created_at >= last30d).forEach((r: any) => {
+    const day = r.created_at?.slice(0, 10);
+    if (day) dailyMap[day] = (dailyMap[day] || 0) + (Number(r.estimated_cost) || 0);
+  });
+  const dailyRevenue = Object.entries(dailyMap).sort().map(([day, revenue]) => ({ day, revenue }));
+
+  // Revenue by model
+  const modelMap: Record<string, number> = {};
+  usage.forEach((r: any) => { modelMap[r.model] = (modelMap[r.model] || 0) + (Number(r.estimated_cost) || 0); });
+  const revenueByModel = Object.entries(modelMap).map(([model, revenue]) => ({ model, revenue })).sort((a, b) => b.revenue - a.revenue);
+
+  // Revenue by provider
+  const provMap: Record<string, number> = {};
+  usage.forEach((r: any) => { provMap[r.provider] = (provMap[r.provider] || 0) + (Number(r.estimated_cost) || 0); });
+  const revenueByProvider = Object.entries(provMap).map(([provider, revenue]) => ({ provider, revenue })).sort((a, b) => b.revenue - a.revenue);
+
+  // Top spending users
+  const userTotals: Record<string, { total_cost: number; request_count: number }> = {};
+  usage.forEach((r: any) => {
+    if (!userTotals[r.user_id]) userTotals[r.user_id] = { total_cost: 0, request_count: 0 };
+    userTotals[r.user_id].total_cost += Number(r.estimated_cost) || 0;
+    userTotals[r.user_id].request_count++;
+  });
+  const topUserIds = Object.entries(userTotals).sort((a, b) => b[1].total_cost - a[1].total_cost).slice(0, 20);
+  
+  // Get display names for top users
+  const topUserProfiles = await Promise.all(
+    topUserIds.map(async ([uid, data]) => {
+      const { data: profile } = await sb.from("profiles").select("display_name").eq("user_id", uid).maybeSingle();
+      return { user_id: uid, display_name: profile?.display_name || null, ...data };
+    })
+  );
+
+  return json({
+    revenueThisMonth: Math.round(revenueThisMonth * 10000) / 10000,
+    revenueAllTime: Math.round(revenueAllTime * 10000) / 10000,
+    avgRevenuePerUser: Math.round(avgRevenuePerUser * 10000) / 10000,
+    usersNearCap,
+    dailyRevenue,
+    revenueByModel,
+    revenueByProvider,
+    topUsers: topUserProfiles,
+  });
 }
 
 // ==================== SYSTEM CONFIG ====================
@@ -528,7 +721,6 @@ async function getSystemHealth(sb: any) {
   const success24h = data24h.filter((u: any) => u.status === "success").length;
   const avgLatency = total24h > 0 ? Math.round(data24h.reduce((s: number, u: any) => s + (u.latency_ms || 0), 0) / total24h) : 0;
 
-  // Provider health
   const providerHealth: Record<string, { total: number; success: number; totalLatency: number }> = {};
   data24h.forEach((u: any) => {
     const p = u.provider || "unknown";
@@ -544,7 +736,6 @@ async function getSystemHealth(sb: any) {
     avgLatency: d.total > 0 ? Math.round(d.totalLatency / d.total) : 0,
   }));
 
-  // Request type breakdown
   const typeHealth: Record<string, { total: number; success: number }> = {};
   data24h.forEach((u: any) => {
     const t = u.request_type || "unknown";

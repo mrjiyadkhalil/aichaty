@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdmin";
 import { AppLayout } from "@/components/AppLayout";
@@ -26,13 +27,30 @@ import AdminTemplates from "./pages/admin/AdminTemplates";
 import AdminShareLinks from "./pages/admin/AdminShareLinks";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import AdminSystemHealth from "./pages/admin/AdminSystemHealth";
+import AdminRevenue from "./pages/admin/AdminRevenue";
+import AdminModelAdd from "./pages/admin/AdminModelAdd";
 
 const queryClient = new QueryClient();
 
+function BannedScreen({ type }: { type: "banned" | "suspended" }) {
+  const { signOut } = useAuth();
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center space-y-4 max-w-md p-8">
+        <h1 className="text-2xl font-bold text-destructive">{type === "banned" ? "Account Banned" : "Account Suspended"}</h1>
+        <p className="text-muted-foreground">{type === "banned" ? "Your account has been permanently banned. Contact support if you believe this is an error." : "Your account is temporarily suspended. Please try again later."}</p>
+        <Button variant="outline" onClick={signOut}>Sign Out</Button>
+      </div>
+    </div>
+  );
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, banned, suspended } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
   if (!user) return <Navigate to="/auth" replace />;
+  if (banned) return <BannedScreen type="banned" />;
+  if (suspended) return <BannedScreen type="suspended" />;
   return <>{children}</>;
 }
 
@@ -79,6 +97,8 @@ const App = () => (
             <Route path="/admin/users/:id" element={<AdminRoute><AdminUserDetail /></AdminRoute>} />
             <Route path="/admin/usage" element={<AdminRoute><AdminUsage /></AdminRoute>} />
             <Route path="/admin/models" element={<AdminRoute><AdminModels /></AdminRoute>} />
+            <Route path="/admin/models/add" element={<AdminRoute><AdminModelAdd /></AdminRoute>} />
+            <Route path="/admin/revenue" element={<AdminRoute><AdminRevenue /></AdminRoute>} />
             <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
             <Route path="/admin/errors" element={<AdminRoute><AdminErrors /></AdminRoute>} />
             <Route path="/admin/audit" element={<AdminRoute><AdminAudit /></AdminRoute>} />
