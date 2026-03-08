@@ -23,6 +23,7 @@ interface AppSidebarProps {
   recentChats: Chat[];
   projectChats: Chat[];
   selectedProjectId: string | null;
+  onProjectsChanged?: () => void;
 }
 
 function groupChatsByDate(chats: Chat[]): { label: string; chats: Chat[] }[] {
