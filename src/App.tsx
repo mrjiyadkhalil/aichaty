@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdmin";
+import { ImpersonationProvider } from "@/hooks/useImpersonation";
+import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
+import { MaintenanceGate } from "@/components/MaintenanceGate";
 import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import Landing from "./pages/Landing";
@@ -29,6 +32,8 @@ import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import AdminSystemHealth from "./pages/admin/AdminSystemHealth";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminModelAdd from "./pages/admin/AdminModelAdd";
+import AdminBroadcast from "./pages/admin/AdminBroadcast";
+import AdminRoles from "./pages/admin/AdminRoles";
 
 const queryClient = new QueryClient();
 
@@ -80,37 +85,44 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingRoute />} />
-            <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
-            <Route path="/chat" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
-            <Route path="/chat/:id" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
-            <Route path="/project/:id" element={<ProtectedRoute><AppLayout><ProjectDetail /></AppLayout></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>} />
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-            <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-            <Route path="/admin/users/:id" element={<AdminRoute><AdminUserDetail /></AdminRoute>} />
-            <Route path="/admin/usage" element={<AdminRoute><AdminUsage /></AdminRoute>} />
-            <Route path="/admin/models" element={<AdminRoute><AdminModels /></AdminRoute>} />
-            <Route path="/admin/models/add" element={<AdminRoute><AdminModelAdd /></AdminRoute>} />
-            <Route path="/admin/revenue" element={<AdminRoute><AdminRevenue /></AdminRoute>} />
-            <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
-            <Route path="/admin/errors" element={<AdminRoute><AdminErrors /></AdminRoute>} />
-            <Route path="/admin/audit" element={<AdminRoute><AdminAudit /></AdminRoute>} />
-            <Route path="/admin/feature-flags" element={<AdminRoute><AdminFeatureFlags /></AdminRoute>} />
-            <Route path="/admin/templates" element={<AdminRoute><AdminTemplates /></AdminRoute>} />
-            <Route path="/admin/share-links" element={<AdminRoute><AdminShareLinks /></AdminRoute>} />
-            <Route path="/admin/announcements" element={<AdminRoute><AdminAnnouncements /></AdminRoute>} />
-            <Route path="/admin/health" element={<AdminRoute><AdminSystemHealth /></AdminRoute>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <ImpersonationProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <ImpersonationBanner />
+          <BrowserRouter>
+            <MaintenanceGate>
+              <Routes>
+                <Route path="/" element={<LandingRoute />} />
+                <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+                <Route path="/chat" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
+                <Route path="/chat/:id" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
+                <Route path="/project/:id" element={<ProtectedRoute><AppLayout><ProjectDetail /></AppLayout></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>} />
+                {/* Admin Routes */}
+                <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+                <Route path="/admin/users/:id" element={<AdminRoute><AdminUserDetail /></AdminRoute>} />
+                <Route path="/admin/roles" element={<AdminRoute><AdminRoles /></AdminRoute>} />
+                <Route path="/admin/usage" element={<AdminRoute><AdminUsage /></AdminRoute>} />
+                <Route path="/admin/models" element={<AdminRoute><AdminModels /></AdminRoute>} />
+                <Route path="/admin/models/add" element={<AdminRoute><AdminModelAdd /></AdminRoute>} />
+                <Route path="/admin/revenue" element={<AdminRoute><AdminRevenue /></AdminRoute>} />
+                <Route path="/admin/broadcast" element={<AdminRoute><AdminBroadcast /></AdminRoute>} />
+                <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+                <Route path="/admin/errors" element={<AdminRoute><AdminErrors /></AdminRoute>} />
+                <Route path="/admin/audit" element={<AdminRoute><AdminAudit /></AdminRoute>} />
+                <Route path="/admin/feature-flags" element={<AdminRoute><AdminFeatureFlags /></AdminRoute>} />
+                <Route path="/admin/templates" element={<AdminRoute><AdminTemplates /></AdminRoute>} />
+                <Route path="/admin/share-links" element={<AdminRoute><AdminShareLinks /></AdminRoute>} />
+                <Route path="/admin/announcements" element={<AdminRoute><AdminAnnouncements /></AdminRoute>} />
+                <Route path="/admin/health" element={<AdminRoute><AdminSystemHealth /></AdminRoute>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </MaintenanceGate>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ImpersonationProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
