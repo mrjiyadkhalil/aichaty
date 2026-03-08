@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { MetricCard } from "@/components/admin/MetricCard";
-import { ArrowLeft, Shield, ShieldOff, Ban, CheckCircle } from "lucide-react";
+import { ArrowLeft, Shield, ShieldOff, Ban, CheckCircle, Zap, ZapOff } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminUserDetail() {
@@ -43,6 +43,7 @@ export default function AdminUserDetail() {
 
   const isAdmin = detail.roles?.includes("admin");
   const isSuspended = detail.profile?.status === "suspended";
+  const aiEnabled = detail.profile?.ai_access_enabled !== false;
 
   return (
     <div className="p-6 space-y-6 max-w-3xl">
@@ -54,17 +55,22 @@ export default function AdminUserDetail() {
         <div>
           <h1 className="text-2xl font-bold font-['Space_Grotesk']">{detail.profile?.display_name || "User"}</h1>
           <p className="text-sm text-muted-foreground">{detail.profile?.user_id}</p>
+          {detail.profile?.last_active_at && (
+            <p className="text-xs text-muted-foreground">Last active: {new Date(detail.profile.last_active_at).toLocaleString()}</p>
+          )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {detail.roles?.map((r: string) => <StatusBadge key={r} status={r} />)}
           <StatusBadge status={detail.profile?.status || "active"} />
+          {!aiEnabled && <StatusBadge status="warning" />}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <MetricCard label="Projects" value={detail.project_count} />
         <MetricCard label="Chats" value={detail.chat_count} />
         <MetricCard label="Total Cost" value={`$${detail.total_cost}`} />
+        <MetricCard label="Errors" value={detail.error_count || 0} />
         <MetricCard label="Cost Mode" value={detail.preferences?.cost_mode || "balanced"} />
       </div>
 
@@ -87,6 +93,15 @@ export default function AdminUserDetail() {
           ) : (
             <Button variant="destructive" size="sm" disabled={acting} onClick={() => handleAction("suspend_user")} className="gap-1.5">
               <Ban className="h-4 w-4" /> Suspend
+            </Button>
+          )}
+          {aiEnabled ? (
+            <Button variant="outline" size="sm" disabled={acting} onClick={() => handleAction("disable_ai_access")} className="gap-1.5">
+              <ZapOff className="h-4 w-4" /> Disable AI
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" disabled={acting} onClick={() => handleAction("enable_ai_access")} className="gap-1.5">
+              <Zap className="h-4 w-4" /> Enable AI
             </Button>
           )}
         </CardContent>

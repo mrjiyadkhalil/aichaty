@@ -1,6 +1,9 @@
 import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, BarChart3, Cpu, Settings2, AlertTriangle, ClipboardList, ArrowLeft } from "lucide-react";
+import {
+  LayoutDashboard, Users, BarChart3, Cpu, Settings2, AlertTriangle,
+  ClipboardList, ArrowLeft, Flag, FileText, Link2, Megaphone, HeartPulse,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -10,8 +13,13 @@ const NAV_ITEMS = [
   { label: "Usage & Cost", path: "/admin/usage", icon: BarChart3 },
   { label: "Models", path: "/admin/models", icon: Cpu },
   { label: "Settings", path: "/admin/settings", icon: Settings2 },
+  { label: "Feature Flags", path: "/admin/feature-flags", icon: Flag },
+  { label: "Templates", path: "/admin/templates", icon: FileText },
+  { label: "Share Links", path: "/admin/share-links", icon: Link2 },
+  { label: "Announcements", path: "/admin/announcements", icon: Megaphone },
   { label: "Errors", path: "/admin/errors", icon: AlertTriangle },
   { label: "Audit Log", path: "/admin/audit", icon: ClipboardList },
+  { label: "System Health", path: "/admin/health", icon: HeartPulse },
 ];
 
 export function AdminLayout({ children }: { children: ReactNode }) {
@@ -24,7 +32,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
         <div className="p-4 border-b border-border/30">
           <h2 className="font-bold text-sm font-['Space_Grotesk'] text-foreground">Admin Panel</h2>
         </div>
-        <nav className="flex-1 p-2 space-y-0.5">
+        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
           {NAV_ITEMS.map((item) => {
             const active = location.pathname === item.path || (item.path !== "/admin" && location.pathname.startsWith(item.path));
             return (

@@ -22,6 +22,11 @@ import AdminModels from "./pages/admin/AdminModels";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminErrors from "./pages/admin/AdminErrors";
 import AdminAudit from "./pages/admin/AdminAudit";
+import AdminFeatureFlags from "./pages/admin/AdminFeatureFlags";
+import AdminTemplates from "./pages/admin/AdminTemplates";
+import AdminShareLinks from "./pages/admin/AdminShareLinks";
+import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
+import AdminSystemHealth from "./pages/admin/AdminSystemHealth";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +83,11 @@ const App = () => (
             <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
             <Route path="/admin/errors" element={<AdminRoute><AdminErrors /></AdminRoute>} />
             <Route path="/admin/audit" element={<AdminRoute><AdminAudit /></AdminRoute>} />
+            <Route path="/admin/feature-flags" element={<AdminRoute><AdminFeatureFlags /></AdminRoute>} />
+            <Route path="/admin/templates" element={<AdminRoute><AdminTemplates /></AdminRoute>} />
+            <Route path="/admin/share-links" element={<AdminRoute><AdminShareLinks /></AdminRoute>} />
+            <Route path="/admin/announcements" element={<AdminRoute><AdminAnnouncements /></AdminRoute>} />
+            <Route path="/admin/health" element={<AdminRoute><AdminSystemHealth /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
