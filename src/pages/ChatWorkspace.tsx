@@ -243,7 +243,7 @@ export default function ChatWorkspace() {
           <div className="flex flex-col items-center justify-center min-h-full px-4 py-8">
             <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
             <motion.div key="empty-prompt" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="w-full max-w-3xl mt-8">
-              <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} />
+              <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} showGreeting={isSuperFiesta} />
             </motion.div>
             <div className="w-full max-w-4xl mt-12">
               <ExploreSection />

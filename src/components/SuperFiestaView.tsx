@@ -34,14 +34,16 @@ export function SuperFiestaView({
   return (
     <div className="flex flex-col items-center gap-6">
       {/* Greeting */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold font-['Space_Grotesk'] tracking-tight">
-          What can I help you with?
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          Ask anything — the best model is chosen automatically
-        </p>
-      </div>
+      {showGreeting && (
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold font-['Space_Grotesk'] tracking-tight">
+            What can I help you with?
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Ask anything — the best model is chosen automatically
+          </p>
+        </div>
+      )}
 
       {/* Large centered input */}
       <div className="w-full relative group">
