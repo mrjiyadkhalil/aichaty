@@ -11,7 +11,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface Project { id: string; name: string; }
 interface Chat { id: string; title: string | null; project_id: string | null; updated_at?: string; }
 
-export function AppLayout({ children }: { children: ReactNode }) {
+export function AppLayout({ children, layout, onToggleLayout }: { 
+  children: ReactNode;
+  layout?: "grid" | "stacked";
+  onToggleLayout?: () => void;
+}) {
   const { user } = useAuth();
   const location = useLocation();
   const isMobile = useIsMobile();
