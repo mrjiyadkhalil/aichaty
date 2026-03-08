@@ -264,7 +264,7 @@ export default function ChatWorkspace() {
   const isSuperFiesta = chatMode === "superfiesta";
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Multi-chat model bar */}
       {!isSuperFiesta && hasMessages && (
         <div className="relative z-20 shrink-0">
@@ -274,7 +274,7 @@ export default function ChatWorkspace() {
 
       <div className="flex-1 overflow-y-auto">
         {!hasMessages ? (
-          <div className="flex flex-col items-center justify-center min-h-full px-4 py-16">
+          <div className="flex flex-col items-center justify-center min-h-full px-3 sm:px-4 py-8 sm:py-16">
             <ChatModeSwitcher mode={chatMode} onModeChange={(mode) => {
               if (mode === "multichat" && !canAccess("multi_chat")) {
                 setUpgradeFeature("Multi-Chat Mode");
@@ -292,7 +292,7 @@ export default function ChatWorkspace() {
             </div>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+          <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
             <div className="flex justify-center mb-2">
               <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
             </div>
@@ -300,7 +300,7 @@ export default function ChatWorkspace() {
               <div key={msg.id} className="space-y-4 animate-fade-in">
                 {/* User message — right aligned, dark bubble */}
                 <div className="flex justify-end" onMouseEnter={() => setHoveredMsg(msg.id)} onMouseLeave={() => setHoveredMsg(null)}>
-                  <div className="relative max-w-[85%]">
+                  <div className="relative max-w-[85%] sm:max-w-[70%]">
                     <div className="bg-card border border-border rounded-2xl rounded-br-md px-4 py-3">
                       <p className="text-sm leading-relaxed">{msg.content}</p>
                     </div>

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Save, Trash2, MessageSquare, Plus, FolderOpen, Upload, File, X } from "lucide-react";
 import { FileContextModal } from "@/components/FileContextModal";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const AVAILABLE_MODELS = [
   { id: "google/gemini-3-flash-preview", label: "Gemini 3 Flash", short: "G3F" },
@@ -26,6 +27,7 @@ export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [customInstruction, setCustomInstruction] = useState("");
@@ -86,9 +88,111 @@ export default function ProjectDetail() {
     setPreferredModels((prev) => prev.includes(modelId) ? prev.filter((m) => m !== modelId) : [...prev, modelId]);
   };
 
+  // Mobile: stacked layout
+  if (isMobile) {
+    return (
+      <div className="h-full overflow-y-auto animate-fade-in">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 sticky top-0 bg-background z-10">
+          <h1 className="text-base font-semibold font-['Space_Grotesk'] flex items-center gap-2">
+            <FolderOpen className="h-4 w-4 text-primary" /> Project
+          </h1>
+          <div className="flex items-center gap-1">
+            <Button size="sm" className="gap-1 h-8 text-xs shadow-glow-sm" onClick={handleNewChat}>
+              <Plus className="h-3 w-3" /> Chat
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={handleDelete}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {/* Settings */}
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Project Name</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-background/50 border-border/30 focus:border-primary/50" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Description</Label>
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's this project about?" rows={2} className="bg-background/50 border-border/30 focus:border-primary/50 resize-none" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Custom Instruction</Label>
+              <Textarea value={customInstruction} onChange={(e) => setCustomInstruction(e.target.value)} placeholder="Special instructions..." rows={3} className="bg-background/50 border-border/30 focus:border-primary/50 resize-none" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Preferred Models</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {AVAILABLE_MODELS.map((m) => (
+                  <Badge key={m.id} variant={preferredModels.includes(m.id) ? "default" : "outline"} className={`cursor-pointer select-none text-[11px] ${preferredModels.includes(m.id) ? "bg-primary text-primary-foreground shadow-glow-sm" : "border-border/50 text-muted-foreground hover:border-primary/50"}`} onClick={() => toggleModel(m.id)}>
+                    {m.short}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <Button onClick={handleSave} disabled={saving} size="sm" className="w-full gap-1.5 shadow-glow-sm">
+              <Save className="h-3.5 w-3.5" /> Save
+            </Button>
+          </div>
+
+          {/* Files */}
+          <div className="glass-card overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+              <h2 className="text-sm font-semibold">Files</h2>
+              <Button variant="outline" size="sm" className="gap-1 h-7 text-xs" onClick={() => setShowFileModal(true)}>
+                <Upload className="h-3 w-3" /> Upload
+              </Button>
+            </div>
+            <div className="p-3">
+              {files.length > 0 ? files.map((f) => (
+                <div key={f.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/50">
+                  <File className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <p className="text-xs truncate flex-1">{f.file_name}</p>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteFile(f.id, f.file_path)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )) : <p className="text-xs text-muted-foreground text-center py-4">No files</p>}
+            </div>
+          </div>
+
+          {/* Chats */}
+          <div className="glass-card overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+              <h2 className="text-sm font-semibold">Chats</h2>
+            </div>
+            <div className="p-3">
+              {chats.length > 0 ? chats.map((c) => (
+                <button key={c.id} onClick={() => navigate(`/chat/${c.id}`)} className="w-full flex items-center gap-2 p-2.5 rounded-lg hover:bg-secondary/50 text-left">
+                  <MessageSquare className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate">{c.title || "New Chat"}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(c.updated_at).toLocaleDateString()}</p>
+                  </div>
+                </button>
+              )) : (
+                <div className="text-center py-6">
+                  <p className="text-xs text-muted-foreground mb-2">No chats yet</p>
+                  <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={handleNewChat}>
+                    <Plus className="h-3 w-3" /> Start Chat
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {id && <FileContextModal open={showFileModal} onClose={() => setShowFileModal(false)} projectId={id} projectFiles={files} selectedFileIds={[]} onToggleFile={() => {}} onFilesUploaded={loadFiles} />}
+      </div>
+    );
+  }
+
+  // Desktop: two-column layout
   return (
     <div className="h-full flex animate-fade-in">
-      {/* Left side: Chats - takes more space */}
+      {/* Left side: Chats */}
       <div className="flex-1 flex flex-col min-w-0 border-r border-border/30">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/30">
           <h2 className="text-lg font-semibold font-['Space_Grotesk'] flex items-center gap-2">
@@ -114,7 +218,7 @@ export default function ProjectDetail() {
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <MessageSquare className="h-10 w-10 text-muted-foreground/30 mb-3" />
-              <p className="text-sm text-muted-foreground mb-3">No chats yet in this project</p>
+              <p className="text-sm text-muted-foreground mb-3">No chats yet</p>
               <Button variant="outline" size="sm" className="gap-1.5" onClick={handleNewChat}>
                 <Plus className="h-3.5 w-3.5" /> Start a Chat
               </Button>
@@ -123,9 +227,8 @@ export default function ProjectDetail() {
         </div>
       </div>
 
-      {/* Right side: Project Settings + Files */}
+      {/* Right side: Settings + Files */}
       <div className="w-[420px] shrink-0 flex flex-col overflow-y-auto bg-card/30">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/30">
           <h1 className="text-lg font-semibold font-['Space_Grotesk'] flex items-center gap-2">
             <FolderOpen className="h-5 w-5 text-primary" /> Project Settings
@@ -135,7 +238,6 @@ export default function ProjectDetail() {
           </Button>
         </div>
 
-        {/* Project Settings */}
         <div className="p-6 space-y-4 border-b border-border/30">
           <div className="space-y-1.5">
             <Label className="text-xs">Project Name</Label>

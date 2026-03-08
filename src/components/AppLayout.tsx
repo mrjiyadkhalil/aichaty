@@ -6,6 +6,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TopBar } from "@/components/TopBar";
 import { ChatTagManager } from "@/components/ChatTagManager";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Project { id: string; name: string; }
 interface Chat { id: string; title: string | null; project_id: string | null; updated_at?: string; }
@@ -13,6 +14,7 @@ interface Chat { id: string; title: string | null; project_id: string | null; up
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
+  const isMobile = useIsMobile();
   const [projects, setProjects] = useState<Project[]>([]);
   const [recentChats, setRecentChats] = useState<Chat[]>([]);
   const [projectChats, setProjectChats] = useState<Chat[]>([]);
@@ -75,14 +77,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar projects={projects} recentChats={recentChats} projectChats={projectChats} selectedProjectId={selectedProjectId} onProjectsChanged={loadData} />
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex items-center">
             <TopBar title={getTitle()} />
             {currentChatId && (
-              <div className="shrink-0 pr-3 h-12 flex items-center border-b border-border bg-background">
+              <div className="shrink-0 pr-2 md:pr-3 h-12 flex items-center border-b border-border bg-background">
                 <ChatTagManager chatId={currentChatId} />
               </div>
             )}
