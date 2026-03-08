@@ -6,6 +6,8 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  banned: boolean;
+  suspended: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -13,23 +15,62 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   loading: true,
+  banned: false,
+  suspended: false,
   signOut: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [banned, setBanned] = useState(false);
+  const [suspended, setSuspended] = useState(false);
+
+  const checkBanStatus = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("status, suspended_until")
+      .eq("user_id", userId)
+      .single();
+    if (data) {
+      if (data.status === "banned") {
+        setBanned(true);
+        setSuspended(false);
+        return;
+      }
+      if (data.status === "suspended") {
+        const until = data.suspended_until ? new Date(data.suspended_until) : null;
+        if (until && until > new Date()) {
+          setSuspended(true);
+          setBanned(false);
+          return;
+        }
+        // Suspension expired, status should be reactivated but we treat as active
+        setSuspended(false);
+      }
+      setBanned(false);
+    }
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
+        if (session?.user) {
+          checkBanStatus(session.user.id);
+        } else {
+          setBanned(false);
+          setSuspended(false);
+        }
         setLoading(false);
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session?.user) {
+        checkBanStatus(session.user.id);
+      }
       setLoading(false);
     });
 
@@ -41,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, loading, banned, suspended, signOut }}>
       {children}
     </AuthContext.Provider>
   );
