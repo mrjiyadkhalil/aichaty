@@ -53,15 +53,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const registerSession = async (userId: string) => {
+    if (sessionRegistered.current) return;
+    sessionRegistered.current = true;
+    const ua = navigator.userAgent;
+    let browser = "Unknown", os = "Unknown", device = "Desktop";
+    if (ua.includes("Firefox")) browser = "Firefox";
+    else if (ua.includes("Edg/")) browser = "Edge";
+    else if (ua.includes("Chrome")) browser = "Chrome";
+    else if (ua.includes("Safari")) browser = "Safari";
+    if (ua.includes("Windows")) os = "Windows";
+    else if (ua.includes("Mac OS")) os = "macOS";
+    else if (ua.includes("Linux")) os = "Linux";
+    else if (ua.includes("Android")) { os = "Android"; device = "Mobile"; }
+    else if (ua.includes("iPhone")) { os = "iOS"; device = "Mobile"; }
+    
+    await supabase.from("user_sessions").update({ is_current: false } as any).eq("user_id", userId);
+    await supabase.from("user_sessions").insert({ user_id: userId, browser, os, device_name: device, is_current: true } as any);
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
         if (session?.user) {
           checkBanStatus(session.user.id);
+          registerSession(session.user.id);
         } else {
           setBanned(false);
           setSuspended(false);
+          sessionRegistered.current = false;
         }
         setLoading(false);
       }
