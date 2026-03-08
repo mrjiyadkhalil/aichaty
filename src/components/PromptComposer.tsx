@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send, Sparkles, Paperclip, X } from "lucide-react";
+import { Send, Sparkles, Paperclip, X, Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -7,20 +7,22 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AI_CONFIG } from "@/lib/aiConfig";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { cn } from "@/lib/utils";
 
 interface SelectedFile { id: string; name: string; }
 
 interface PromptComposerProps {
   onSend: (prompt: string) => void;
   onEnhance: (prompt: string) => void;
-  onAttachFiles: () => void;
+  onAttachFiles?: () => void;
   selectedModels: string[];
   onToggleModel: (modelId: string) => void;
-  selectedFiles: SelectedFile[];
-  onRemoveFile: (fileId: string) => void;
-  useProjectInstruction: boolean;
-  onToggleInstruction: (v: boolean) => void;
-  hasProjectInstruction: boolean;
+  selectedFiles?: SelectedFile[];
+  onRemoveFile?: (fileId: string) => void;
+  useProjectInstruction?: boolean;
+  onToggleInstruction?: (v: boolean) => void;
+  hasProjectInstruction?: boolean;
   disabled: boolean;
   enhancing: boolean;
   enabledModels?: string[];
@@ -28,11 +30,15 @@ interface PromptComposerProps {
 
 export function PromptComposer({
   onSend, onEnhance, onAttachFiles, selectedModels, onToggleModel,
-  selectedFiles, onRemoveFile, useProjectInstruction, onToggleInstruction,
-  hasProjectInstruction, disabled, enhancing, enabledModels,
+  selectedFiles = [], onRemoveFile, useProjectInstruction = false, onToggleInstruction,
+  hasProjectInstruction = false, disabled, enhancing, enabledModels,
 }: PromptComposerProps) {
   const [prompt, setPrompt] = useState("");
   const allowedModels = enabledModels || AI_CONFIG.allModels;
+
+  const { isRecording, toggleRecording } = useVoiceInput((text) => {
+    setPrompt((prev) => (prev ? prev + " " + text : text));
+  });
 
   const handleSend = () => {
     if (!prompt.trim()) return;
@@ -79,12 +85,12 @@ export function PromptComposer({
               {selectedFiles.map((f) => (
                 <Badge key={f.id} variant="secondary" className="text-xs gap-1 bg-secondary/50">
                   {f.name}
-                  <X className="h-3 w-3 cursor-pointer hover:text-foreground" onClick={() => onRemoveFile(f.id)} />
+                  <X className="h-3 w-3 cursor-pointer hover:text-foreground" onClick={() => onRemoveFile?.(f.id)} />
                 </Badge>
               ))}
             </div>
           )}
-          {hasProjectInstruction && (
+          {hasProjectInstruction && onToggleInstruction && (
             <div className="flex items-center gap-2 ml-auto">
               <Switch id="use-instruction" checked={useProjectInstruction} onCheckedChange={onToggleInstruction} />
               <Label htmlFor="use-instruction" className="text-xs text-muted-foreground cursor-pointer">Use Project Instruction</Label>
@@ -107,14 +113,31 @@ export function PromptComposer({
               <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-primary" onClick={() => onEnhance(prompt)} disabled={!prompt.trim() || enhancing || disabled}>
                 <Sparkles className="h-3.5 w-3.5" /> Enhance
               </Button>
-              <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-primary" onClick={onAttachFiles} disabled={disabled}>
-                <Paperclip className="h-3.5 w-3.5" /> Attach
+              {onAttachFiles && (
+                <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-primary" onClick={onAttachFiles} disabled={disabled}>
+                  <Paperclip className="h-3.5 w-3.5" /> Attach
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-8 gap-1.5 text-xs transition-all",
+                  isRecording
+                    ? "text-destructive hover:text-destructive animate-pulse"
+                    : "text-muted-foreground hover:text-primary"
+                )}
+                onClick={toggleRecording}
+                disabled={disabled}
+              >
+                {isRecording ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                {isRecording ? "Stop" : "Voice"}
               </Button>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">{prompt.length}/{AI_CONFIG.limits.maxPromptLength}</span>
               <Button size="sm" className="h-8 gap-1.5 shadow-glow-sm hover:shadow-glow transition-shadow" onClick={handleSend} disabled={!prompt.trim() || disabled}>
-                <Send className="h-3.5 w-3.5" /> Send to Models
+                <Send className="h-3.5 w-3.5" /> Send
               </Button>
             </div>
           </div>

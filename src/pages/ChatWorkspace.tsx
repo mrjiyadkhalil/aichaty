@@ -57,15 +57,26 @@ export default function ChatWorkspace() {
     const load = async () => {
       const { data: chat } = await supabase.from("chats").select("project_id, title").eq("id", chatId).single();
       if (!chat) { navigate("/dashboard"); return; }
-      setProjectId(chat.project_id);
-      const { data: project } = await supabase.from("projects").select("name, custom_instruction, preferred_models").eq("id", chat.project_id).single();
-      if (project) {
-        setProjectName(project.name);
-        setProjectInstruction(project.custom_instruction || "");
-        if (project.preferred_models?.length) setSelectedModels(project.preferred_models.filter((m: string) => enabledModels.includes(m)));
+      
+      const chatProjectId = chat.project_id;
+      setProjectId(chatProjectId);
+      
+      // Only load project data if chat has a project
+      if (chatProjectId) {
+        const { data: project } = await supabase.from("projects").select("name, custom_instruction, preferred_models").eq("id", chatProjectId).single();
+        if (project) {
+          setProjectName(project.name);
+          setProjectInstruction(project.custom_instruction || "");
+          if (project.preferred_models?.length) setSelectedModels(project.preferred_models.filter((m: string) => enabledModels.includes(m)));
+        }
+        const { data: files } = await supabase.from("project_files").select("*").eq("project_id", chatProjectId);
+        if (files) setProjectFiles(files as ProjectFile[]);
+      } else {
+        setProjectName("");
+        setProjectInstruction("");
+        setProjectFiles([]);
       }
-      const { data: files } = await supabase.from("project_files").select("*").eq("project_id", chat.project_id);
-      if (files) setProjectFiles(files as ProjectFile[]);
+      
       const { data: msgs } = await supabase.from("messages").select("*").eq("chat_id", chatId).order("created_at", { ascending: true });
       if (!msgs) return;
       const loaded: MessageWithResponses[] = [];
@@ -198,87 +209,39 @@ export default function ChatWorkspace() {
 
   return (
     <div className="flex flex-col h-full relative">
-      {/* Radial glow background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-primary/[0.04] rounded-full blur-[120px]" />
       </div>
 
       <div className="flex-1 overflow-y-auto relative z-10">
         {!hasMessages ? (
-          /* Empty state — show mode switcher + prompt + explore */
           <div className="flex flex-col items-center justify-center min-h-full px-4 py-8">
-            {/* Mode Switcher */}
             <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
-
             <AnimatePresence mode="wait">
               {chatMode === "superfiesta" ? (
-                <motion.div
-                  key="superfiesta"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.25 }}
-                  className="w-full max-w-3xl mt-8"
-                >
-                  <SuperFiestaView
-                    onSend={handleSend}
-                    onEnhance={handleEnhance}
-                    onAttachFiles={() => setShowFileModal(true)}
-                    disabled={sending}
-                    enhancing={enhancing}
-                    selectedModels={selectedModels}
-                    enabledModels={enabledModels}
-                    onToggleModel={toggleModel}
-                  />
+                <motion.div key="superfiesta" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }} className="w-full max-w-3xl mt-8">
+                  <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} />
                 </motion.div>
               ) : (
-                <motion.div
-                  key="multichat"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.25 }}
-                  className="w-full mt-8"
-                >
-                  <MultiChatColumns
-                    selectedModels={selectedModels}
-                    enabledModels={enabledModels}
-                    onToggleModel={toggleModel}
-                    onSend={handleSend}
-                    onEnhance={handleEnhance}
-                    onAttachFiles={() => setShowFileModal(true)}
-                    disabled={sending}
-                    enhancing={enhancing}
-                  />
+                <motion.div key="multichat" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }} className="w-full mt-8">
+                  <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} />
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* Explore section */}
             <div className="w-full max-w-4xl mt-12">
               <ExploreSection />
             </div>
           </div>
         ) : (
-          /* Has messages — show conversation */
           <div className="max-w-6xl mx-auto p-4 space-y-6">
-            {/* Mode switcher stays at top */}
             <div className="flex justify-center">
               <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
             </div>
-
             {chatMode === "multichat" && (
-              <MultiChatColumns
-                selectedModels={selectedModels}
-                enabledModels={enabledModels}
-                onToggleModel={toggleModel}
-                compact
-              />
+              <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />
             )}
-
             {messages.map((msg) => (
               <div key={msg.id} className="space-y-4 animate-fade-in">
-                {/* User message */}
                 <div className="glass-card p-4 border-l-2 border-l-primary/40">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-primary font-['Space_Grotesk']">You</p>
@@ -303,12 +266,11 @@ export default function ChatWorkspace() {
         )}
       </div>
 
-      {/* Bottom prompt composer for when messages exist */}
       {hasMessages && (
         <PromptComposer
           onSend={handleSend}
           onEnhance={handleEnhance}
-          onAttachFiles={() => setShowFileModal(true)}
+          onAttachFiles={projectId ? () => setShowFileModal(true) : undefined}
           selectedModels={selectedModels}
           onToggleModel={toggleModel}
           selectedFiles={selectedFilesForComposer}
