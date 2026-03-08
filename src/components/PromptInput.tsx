@@ -46,18 +46,6 @@ export function PromptInput({ onSend, onEnhance, disabled, enhancing }: PromptIn
             <Button
               variant="ghost"
               size="sm"
-              className={cn(
-                "h-8 gap-1 text-xs",
-                isRecording ? "text-destructive animate-pulse" : "text-muted-foreground hover:text-primary"
-              )}
-              onClick={toggleRecording}
-              disabled={disabled}
-            >
-              {isRecording ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
               className="h-8 gap-1 text-xs text-muted-foreground hover:text-accent"
               onClick={() => onEnhance(prompt)}
               disabled={!prompt.trim() || enhancing}
