@@ -1,8 +1,5 @@
 import { useState } from "react";
-import { Send, Plus, Mic, MicOff, Sparkles, Globe, Image } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { AI_CONFIG } from "@/lib/aiConfig";
+import { Send, Plus, Mic, MicOff, Sparkles, Zap } from "lucide-react";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { cn } from "@/lib/utils";
 
@@ -12,14 +9,10 @@ interface SuperFiestaViewProps {
   onAttachFiles?: () => void;
   disabled: boolean;
   enhancing: boolean;
-  selectedModels: string[];
-  enabledModels: string[];
-  onToggleModel: (modelId: string) => void;
 }
 
 export function SuperFiestaView({
   onSend, onEnhance, onAttachFiles, disabled, enhancing,
-  selectedModels, enabledModels, onToggleModel,
 }: SuperFiestaViewProps) {
   const [prompt, setPrompt] = useState("");
 
@@ -45,7 +38,7 @@ export function SuperFiestaView({
           What can I help you with?
         </h1>
         <p className="text-muted-foreground text-sm">
-          Ask anything — powered by the best AI models
+          Ask anything — the best model is chosen automatically
         </p>
       </div>
 
@@ -104,39 +97,10 @@ export function SuperFiestaView({
         </div>
       </div>
 
-      {/* Action chips */}
-      <div className="flex items-center gap-2">
-        <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-card/60 border border-border/40 text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all">
-          <Globe className="h-3.5 w-3.5" />
-          Web Search
-        </button>
-        <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-card/60 border border-border/40 text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all">
-          <Image className="h-3.5 w-3.5" />
-          Generate Image
-        </button>
-      </div>
-
-      {/* Model selection */}
-      <div className="flex items-center gap-1.5 flex-wrap justify-center">
-        <span className="text-xs text-muted-foreground/60 mr-1">Models:</span>
-        {AI_CONFIG.allModels.map((modelId) => {
-          const isSelected = selectedModels.includes(modelId);
-          const isEnabled = enabledModels.includes(modelId);
-          return (
-            <Badge
-              key={modelId}
-              variant={isSelected ? "default" : "outline"}
-              className={`cursor-pointer text-xs transition-all select-none ${
-                isSelected
-                  ? "bg-primary/20 text-primary border-primary/30 shadow-glow-sm"
-                  : "border-border/40 text-muted-foreground/60 hover:border-primary/30 hover:text-muted-foreground"
-              } ${!isEnabled ? "opacity-20 cursor-not-allowed" : "hover:scale-105"}`}
-              onClick={() => isEnabled && onToggleModel(modelId)}
-            >
-              {AI_CONFIG.modelShortLabels[modelId] || modelId}
-            </Badge>
-          );
-        })}
+      {/* Auto-routing indicator */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+        <Zap className="h-3.5 w-3.5 text-primary/60" />
+        <span>Auto-routing enabled — best model selected for each query</span>
       </div>
     </div>
   );
