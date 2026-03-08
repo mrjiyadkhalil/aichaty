@@ -1,4 +1,4 @@
-import { FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Settings, Plus, Shield, Bookmark } from "lucide-react";
+import { FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Settings, Plus, Shield, Bookmark, BookOpen } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdmin";
 import { useNavigate, useLocation } from "react-router-dom";
