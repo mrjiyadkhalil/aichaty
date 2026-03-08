@@ -135,11 +135,25 @@ export default function AdminUserDetail() {
             <Eye className="h-4 w-4" /> Impersonate
           </Button>
 
+          {/* Plan management */}
+          <Button variant="outline" size="sm" onClick={() => setPlanModal(true)} className="gap-1.5">
+            <Crown className="h-4 w-4" /> Change Plan
+          </Button>
+
           {/* Quota Override */}
           <Button variant="outline" size="sm" onClick={() => setQuotaModal(true)} className="gap-1.5">
             <DollarSign className="h-4 w-4" /> Set Quota
           </Button>
-
+          
+          {/* Revoke Sessions */}
+          <Button variant="outline" size="sm" disabled={acting || userSessions.length === 0} onClick={async () => {
+            setActing(true);
+            try { await adminApi("revoke_user_sessions", { target_user_id: id }); toast.success("All sessions revoked"); load(); }
+            catch (e: any) { toast.error(e.message || "Failed"); }
+            setActing(false);
+          }} className="gap-1.5">
+            <Monitor className="h-4 w-4" /> Revoke Sessions ({userSessions.length})
+          </Button>
           {/* Role management */}
           {isAdmin ? (
             <Button variant="outline" size="sm" disabled={acting} onClick={() => handleAction("update_user_role", { role: "admin", grant: false })} className="gap-1.5">
