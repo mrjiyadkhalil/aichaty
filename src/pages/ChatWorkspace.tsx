@@ -268,12 +268,13 @@ export default function ChatWorkspace() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Multi-chat model bar */}
-      {!isSuperFiesta && hasMessages && (
-        <div className="relative z-40 shrink-0 overflow-visible">
-          <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />
-        </div>
-      )}
+      {/* Multi-chat model bar — portaled above TopBar */}
+      {!isSuperFiesta && hasMessages && document.getElementById("model-bar-slot") &&
+        createPortal(
+          <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />,
+          document.getElementById("model-bar-slot")!
+        )
+      }
 
       <div className="flex-1 overflow-y-auto">
         {!hasMessages ? (
