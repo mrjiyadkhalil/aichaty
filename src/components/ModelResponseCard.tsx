@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Copy, Check, ToggleLeft, ToggleRight, AlertCircle, RefreshCw, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -45,12 +44,12 @@ export function ModelResponseCard({
   };
 
   return (
-    <Card className="overflow-hidden border-border/50 transition-shadow hover:shadow-md">
-      <CardHeader
-        className="py-3 px-4 flex flex-row items-center justify-between"
-        style={{ borderBottom: `2px solid hsl(var(${colorVar}))` }}
-      >
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+    <div
+      className="glass-card overflow-hidden transition-all duration-300 hover:shadow-glow animate-fade-in"
+      style={{ borderTopColor: `hsl(var(${colorVar}))`, borderTopWidth: "2px" }}
+    >
+      <div className="py-3 px-4 flex items-center justify-between border-b border-border/30">
+        <div className="flex items-center gap-2 text-sm font-semibold font-['Space_Grotesk']">
           <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: `hsl(var(${colorVar}))` }} />
           {MODEL_LABELS[model] || model}
           {latencyMs != null && status === "success" && (
@@ -59,16 +58,16 @@ export function ModelResponseCard({
               {(latencyMs / 1000).toFixed(1)}s
             </span>
           )}
-        </CardTitle>
+        </div>
         <div className="flex items-center gap-1">
           {status === "success" && (
             <>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopy} title="Copy">
-                {copied ? <Check className="h-3.5 w-3.5 text-accent" /> : <Copy className="h-3.5 w-3.5" />}
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={handleCopy} title="Copy">
+                {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onToggleInclude} title="Include in Final Answer">
                 {includedInSynthesis ? (
-                  <ToggleRight className="h-4 w-4 text-accent" />
+                  <ToggleRight className="h-4 w-4 text-primary" />
                 ) : (
                   <ToggleLeft className="h-4 w-4 text-muted-foreground" />
                 )}
@@ -76,18 +75,18 @@ export function ModelResponseCard({
             </>
           )}
           {status === "error" && onRetry && (
-            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={onRetry}>
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground" onClick={onRetry}>
               <RefreshCw className="h-3 w-3" /> Retry
             </Button>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="p-4">
+      </div>
+      <div className="p-4">
         {status === "loading" && (
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-4/5" />
-            <Skeleton className="h-4 w-3/5" />
+          <div className="space-y-2.5">
+            <Skeleton className="h-4 w-full bg-muted/50" />
+            <Skeleton className="h-4 w-4/5 bg-muted/50" />
+            <Skeleton className="h-4 w-3/5 bg-muted/50" />
           </div>
         )}
         {status === "error" && (
@@ -97,11 +96,11 @@ export function ModelResponseCard({
           </div>
         )}
         {status === "success" && content && (
-          <div className="prose prose-sm max-w-none text-foreground text-sm leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+          <div className="prose-dark text-sm leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
             <ReactMarkdown>{content}</ReactMarkdown>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

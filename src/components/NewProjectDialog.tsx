@@ -5,11 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-interface NewProjectDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (name: string, description: string) => void;
-}
+interface NewProjectDialogProps { open: boolean; onClose: () => void; onSubmit: (name: string, description: string) => void; }
 
 export function NewProjectDialog({ open, onClose, onSubmit }: NewProjectDialogProps) {
   const [name, setName] = useState("");
@@ -19,29 +15,27 @@ export function NewProjectDialog({ open, onClose, onSubmit }: NewProjectDialogPr
     e.preventDefault();
     if (!name.trim()) return;
     onSubmit(name.trim(), description.trim());
-    setName("");
-    setDescription("");
-    onClose();
+    setName(""); setDescription(""); onClose();
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="glass-card border-border/30">
         <DialogHeader>
-          <DialogTitle>New Project</DialogTitle>
+          <DialogTitle className="font-['Space_Grotesk']">New Project</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="project-name">Project Name</Label>
-            <Input id="project-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="My AI Research" required />
+            <Input id="project-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="My AI Research" required className="bg-background/50 border-border/30 focus:border-primary/50" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="project-desc">Description (optional)</Label>
-            <Textarea id="project-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's this project about?" />
+            <Textarea id="project-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's this project about?" className="bg-background/50 border-border/30 focus:border-primary/50" />
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit">Create Project</Button>
+            <Button type="button" variant="outline" onClick={onClose} className="border-border/50">Cancel</Button>
+            <Button type="submit" className="shadow-glow-sm">Create Project</Button>
           </DialogFooter>
         </form>
       </DialogContent>

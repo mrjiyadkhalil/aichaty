@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Save, Trash2, MessageSquare, Plus, FolderOpen, Upload, File, X } from "lucide-react";
 import { FileContextModal } from "@/components/FileContextModal";
@@ -21,14 +20,7 @@ const AVAILABLE_MODELS = [
   { id: "openai/gpt-5-nano", label: "GPT-5 Nano", short: "GPT5n" },
 ];
 
-interface ProjectFile {
-  id: string;
-  file_name: string;
-  file_path: string;
-  extracted_text: string | null;
-  file_size: number | null;
-  mime_type: string | null;
-}
+interface ProjectFile { id: string; file_name: string; file_path: string; extracted_text: string | null; file_size: number | null; mime_type: string | null; }
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -47,12 +39,7 @@ export default function ProjectDetail() {
     if (!id || !user) return;
     const load = async () => {
       const { data: p } = await supabase.from("projects").select("*").eq("id", id).single();
-      if (p) {
-        setName(p.name);
-        setDescription(p.description || "");
-        setCustomInstruction(p.custom_instruction || "");
-        setPreferredModels(p.preferred_models || []);
-      }
+      if (p) { setName(p.name); setDescription(p.description || ""); setCustomInstruction(p.custom_instruction || ""); setPreferredModels(p.preferred_models || []); }
       const { data: c } = await supabase.from("chats").select("id, title, updated_at").eq("project_id", id).order("updated_at", { ascending: false });
       if (c) setChats(c);
       const { data: f } = await supabase.from("project_files").select("*").eq("project_id", id).order("created_at", { ascending: false });
@@ -64,19 +51,15 @@ export default function ProjectDetail() {
   const handleSave = async () => {
     if (!id) return;
     setSaving(true);
-    const { error } = await supabase.from("projects").update({
-      name, description, custom_instruction: customInstruction, preferred_models: preferredModels,
-    }).eq("id", id);
-    if (error) toast.error(error.message);
-    else toast.success("Project saved");
+    const { error } = await supabase.from("projects").update({ name, description, custom_instruction: customInstruction, preferred_models: preferredModels }).eq("id", id);
+    if (error) toast.error(error.message); else toast.success("Project saved");
     setSaving(false);
   };
 
   const handleDelete = async () => {
     if (!id || !confirm("Delete this project and all its chats?")) return;
     await supabase.from("projects").delete().eq("id", id);
-    toast.success("Project deleted");
-    navigate("/dashboard");
+    toast.success("Project deleted"); navigate("/dashboard");
   };
 
   const handleNewChat = async () => {
@@ -100,103 +83,82 @@ export default function ProjectDetail() {
   };
 
   const toggleModel = (modelId: string) => {
-    setPreferredModels((prev) =>
-      prev.includes(modelId) ? prev.filter((m) => m !== modelId) : [...prev, modelId]
-    );
+    setPreferredModels((prev) => prev.includes(modelId) ? prev.filter((m) => m !== modelId) : [...prev, modelId]);
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold font-['Space_Grotesk'] flex items-center gap-2">
-          <FolderOpen className="h-6 w-6 text-primary" />
-          Edit Project
+          <FolderOpen className="h-6 w-6 text-primary" /> Edit Project
         </h1>
-        <div className="flex items-center gap-2">
-          <Button variant="destructive" size="sm" onClick={handleDelete} className="gap-1.5">
-            <Trash2 className="h-3.5 w-3.5" /> Delete Project
-          </Button>
-        </div>
+        <Button variant="destructive" size="sm" onClick={handleDelete} className="gap-1.5"><Trash2 className="h-3.5 w-3.5" /> Delete Project</Button>
       </div>
 
       {/* Settings */}
-      <Card>
-        <CardContent className="p-6 space-y-4">
-          <div className="space-y-2">
-            <Label>Project Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+      <div className="glass-card p-6 space-y-4">
+        <div className="space-y-2">
+          <Label>Project Name</Label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-background/50 border-border/30 focus:border-primary/50" />
+        </div>
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's this project about?" className="bg-background/50 border-border/30 focus:border-primary/50" />
+        </div>
+        <div className="space-y-2">
+          <Label>Custom Instruction</Label>
+          <Textarea value={customInstruction} onChange={(e) => setCustomInstruction(e.target.value)} placeholder="Special instructions for AI models..." className="min-h-[100px] bg-background/50 border-border/30 focus:border-primary/50" />
+        </div>
+        <div className="space-y-2">
+          <Label>Preferred Models</Label>
+          <div className="flex flex-wrap gap-1.5">
+            {AVAILABLE_MODELS.map((m) => (
+              <Badge key={m.id} variant={preferredModels.includes(m.id) ? "default" : "outline"} className={`cursor-pointer select-none ${preferredModels.includes(m.id) ? "bg-primary text-primary-foreground shadow-glow-sm" : "border-border/50 text-muted-foreground hover:border-primary/50"}`} onClick={() => toggleModel(m.id)}>
+                {m.short}
+              </Badge>
+            ))}
           </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's this project about?" />
-          </div>
-          <div className="space-y-2">
-            <Label>Custom Instruction</Label>
-            <Textarea value={customInstruction} onChange={(e) => setCustomInstruction(e.target.value)} placeholder="Special instructions for AI models in this project..." className="min-h-[100px]" />
-          </div>
-          <div className="space-y-2">
-            <Label>Preferred Models</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {AVAILABLE_MODELS.map((m) => (
-                <Badge key={m.id} variant={preferredModels.includes(m.id) ? "default" : "outline"} className="cursor-pointer select-none" onClick={() => toggleModel(m.id)}>
-                  {m.short}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          <Button onClick={handleSave} disabled={saving} className="gap-1.5">
-            <Save className="h-3.5 w-3.5" /> Save Project
-          </Button>
-        </CardContent>
-      </Card>
+        </div>
+        <Button onClick={handleSave} disabled={saving} className="gap-1.5 shadow-glow-sm"><Save className="h-3.5 w-3.5" /> Save Project</Button>
+      </div>
 
       {/* Files */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-base font-['Space_Grotesk']">Files</CardTitle>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowFileModal(true)}>
-            <Upload className="h-3.5 w-3.5" /> Upload File
-          </Button>
-        </CardHeader>
-        <CardContent>
+      <div className="glass-card overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border/30">
+          <h2 className="text-base font-semibold font-['Space_Grotesk']">Files</h2>
+          <Button variant="outline" size="sm" className="gap-1.5 border-border/50" onClick={() => setShowFileModal(true)}><Upload className="h-3.5 w-3.5" /> Upload</Button>
+        </div>
+        <div className="p-4">
           {files.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {files.map((f) => (
-                <div key={f.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
+                <div key={f.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-surface-hover transition-colors">
                   <File className="h-4 w-4 text-muted-foreground" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm truncate">{f.file_name}</p>
                     <p className="text-xs text-muted-foreground">{f.file_size ? `${(f.file_size / 1024).toFixed(1)} KB` : ""}</p>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteFile(f.id, f.file_path)}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => handleDeleteFile(f.id, f.file_path)}><X className="h-3.5 w-3.5" /></Button>
                 </div>
               ))}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-4">No files uploaded</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Chats */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-base font-['Space_Grotesk']">Chats</CardTitle>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleNewChat}>
-            <Plus className="h-3.5 w-3.5" /> New Chat
-          </Button>
-        </CardHeader>
-        <CardContent>
+      <div className="glass-card overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border/30">
+          <h2 className="text-base font-semibold font-['Space_Grotesk']">Chats</h2>
+          <Button variant="outline" size="sm" className="gap-1.5 border-border/50" onClick={handleNewChat}><Plus className="h-3.5 w-3.5" /> New Chat</Button>
+        </div>
+        <div className="p-4">
           {chats.length > 0 ? (
             <div className="space-y-1">
               {chats.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => navigate(`/chat/${c.id}`)}
-                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors text-left"
-                >
+                <button key={c.id} onClick={() => navigate(`/chat/${c.id}`)} className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-surface-hover transition-colors text-left">
                   <MessageSquare className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm truncate">{c.title || "New Chat"}</span>
                 </button>
@@ -205,20 +167,10 @@ export default function ProjectDetail() {
           ) : (
             <p className="text-sm text-muted-foreground text-center py-4">No chats yet</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {id && (
-        <FileContextModal
-          open={showFileModal}
-          onClose={() => setShowFileModal(false)}
-          projectId={id}
-          projectFiles={files}
-          selectedFileIds={[]}
-          onToggleFile={() => {}}
-          onFilesUploaded={loadFiles}
-        />
-      )}
+      {id && <FileContextModal open={showFileModal} onClose={() => setShowFileModal(false)} projectId={id} projectFiles={files} selectedFileIds={[]} onToggleFile={() => {}} onFilesUploaded={loadFiles} />}
     </div>
   );
 }

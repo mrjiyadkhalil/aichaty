@@ -1,5 +1,5 @@
 import { useState, useEffect, ReactNode } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -17,13 +17,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [layout, setLayout] = useState<"grid" | "stacked">("grid");
 
-  // Extract IDs from URL
   const projectMatch = location.pathname.match(/\/project\/([^/]+)/);
   const chatMatch = location.pathname.match(/\/chat\/([^/]+)/);
   const currentProjectId = projectMatch?.[1] || null;
   const currentChatId = chatMatch?.[1] || null;
 
-  // Load projects
   useEffect(() => {
     if (!user) return;
     supabase.from("projects").select("id, name").order("updated_at", { ascending: false }).then(({ data }) => {
@@ -31,7 +29,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
     });
   }, [user, location.pathname]);
 
-  // Determine selected project (from URL or chat)
   useEffect(() => {
     if (currentProjectId) {
       setSelectedProjectId(currentProjectId);
@@ -44,7 +41,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
     }
   }, [currentProjectId, currentChatId]);
 
-  // Load chats for selected project
   useEffect(() => {
     if (!selectedProjectId) { setChats([]); return; }
     supabase.from("chats").select("id, title, project_id").eq("project_id", selectedProjectId)
@@ -52,8 +48,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
         if (data) setChats(data);
       });
   }, [selectedProjectId, location.pathname]);
-
-  const toggleTheme = () => document.documentElement.classList.toggle("dark");
 
   const getTitle = () => {
     if (location.pathname === "/dashboard") return "Dashboard";
@@ -73,14 +67,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-background">
         <AppSidebar projects={projects} chats={chats} selectedProjectId={selectedProjectId} />
         <div className="flex-1 flex flex-col min-w-0">
           <TopBar
             title={getTitle()}
             layout={isChatPage ? layout : undefined}
             onToggleLayout={isChatPage ? () => setLayout((l) => l === "grid" ? "stacked" : "grid") : undefined}
-            onToggleTheme={toggleTheme}
           />
           <div className="flex-1 flex flex-col overflow-hidden">
             {children}
