@@ -78,11 +78,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar projects={projects} recentChats={recentChats} projectChats={projectChats} selectedProjectId={selectedProjectId} />
         <div className="flex-1 flex flex-col min-w-0">
-          <TopBar
-            title={getTitle()}
-            layout={isChatPage ? layout : undefined}
-            onToggleLayout={isChatPage ? () => setLayout((l) => l === "grid" ? "stacked" : "grid") : undefined}
-          />
+          <div className="flex items-center">
+            <TopBar
+              title={getTitle()}
+              layout={isChatPage ? layout : undefined}
+              onToggleLayout={isChatPage ? () => setLayout((l) => l === "grid" ? "stacked" : "grid") : undefined}
+            />
+            {currentChatId && <div className="shrink-0 pr-3 h-14 flex items-center border-b border-border/30 bg-card/30 backdrop-blur-xl"><ChatTagManager chatId={currentChatId} /></div>}
+          </div>
           <div className="flex-1 flex flex-col overflow-hidden">
             {children}
           </div>
