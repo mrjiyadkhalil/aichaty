@@ -3,7 +3,14 @@ import { createPortal } from "react-dom";
 import { useModels } from "@/hooks/useModels";
 import { AI_CONFIG } from "@/lib/aiConfig";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Check, Lock, ExternalLink, Info } from "lucide-react";
+import { ChevronDown, Check, Lock, MessageSquareShare, Info } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const PROVIDER_META: Record<string, { label: string; icon: string; color: string }> = {
@@ -209,11 +216,13 @@ export function MultiChatColumns({
                     </button>
                   </div>
                   <div className="flex items-center space-x-0.5">
-                    <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+                    <button className="inline-flex items-center justify-center cursor-pointer size-8 p-0 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors">
+                      <MessageSquareShare className="size-4" />
+                    </button>
                     <Switch
                       checked={isActive}
                       onCheckedChange={() => handleToggleProvider(provider)}
-                      className="data-[state=checked]:bg-emerald-500 shrink-0 scale-75"
+                      className="data-[state=checked]:bg-accent shrink-0 scale-75 transform"
                     />
                   </div>
                 </div>
