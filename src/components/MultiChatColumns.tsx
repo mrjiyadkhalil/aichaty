@@ -4,7 +4,6 @@ import { Switch } from "@/components/ui/switch";
 import { AI_CONFIG } from "@/lib/aiConfig";
 import { useModels } from "@/hooks/useModels";
 import { motion, AnimatePresence } from "framer-motion";
-import { motion, AnimatePresence } from "framer-motion";
 
 const MODEL_ICONS: Record<string, { label: string; color: string; icon: string }> = {
   "google/gemini-3-flash-preview": { label: "Gemini 3 Flash", color: "var(--model-1)", icon: "✦" },
