@@ -86,7 +86,7 @@ export function useSubscription(): UseSubscriptionReturn {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    if (!user) { setLoading(false); return; }
+    if (!user || adminLoading) { if (!user) setLoading(false); return; }
     setLoading(true);
 
     if (isAdmin) {
@@ -124,7 +124,7 @@ export function useSubscription(): UseSubscriptionReturn {
     const currentPlan = allPlans.find((p) => p.plan_name === userPlan);
     setFeatures(currentPlan?.features || DEFAULT_FREE_FEATURES);
     setLoading(false);
-  }, [user, isAdmin]);
+  }, [user, isAdmin, adminLoading]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -144,5 +144,5 @@ export function useSubscription(): UseSubscriptionReturn {
     return (features.models as string[]).includes(model);
   }, [features, isAdmin]);
 
-  return { plan, features, plans, loading, canAccess, isModelAllowed, refresh: fetchData };
+  return { plan, features, plans, loading: loading || adminLoading, canAccess, isModelAllowed, refresh: fetchData };
 }
