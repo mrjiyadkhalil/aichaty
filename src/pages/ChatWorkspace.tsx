@@ -383,6 +383,7 @@ export default function ChatWorkspace() {
 
       <PromptEnhancerModal open={showEnhancer} onClose={() => setShowEnhancer(false)} originalPrompt={enhanceOriginal} enhancedPrompt={enhancedPrompt} loading={enhancing} onKeepOriginal={() => setShowEnhancer(false)} onUseEnhanced={(p) => { setShowEnhancer(false); handleSend(p); }} />
       {projectId && <FileContextModal open={showFileModal} onClose={() => setShowFileModal(false)} projectId={projectId} projectFiles={projectFiles} selectedFileIds={selectedFileIds} onToggleFile={toggleFileSelection} onFilesUploaded={async () => { const { data } = await supabase.from("project_files").select("*").eq("project_id", projectId); if (data) setProjectFiles(data as ProjectFile[]); }} />}
+      <UpgradePrompt open={showUpgrade} onClose={() => setShowUpgrade(false)} feature={upgradeFeature} requiredPlan={upgradeRequiredPlan} />
     </div>
   );
 }
