@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { Save, User, BarChart3, Settings2, Sun, Moon, Monitor, RotateCcw } from "lucide-react";
+import { Save, User, BarChart3, Settings2, Sun, Moon, Monitor, RotateCcw, Brain, MessageSquare } from "lucide-react";
 import { AI_CONFIG, CostMode } from "@/lib/aiConfig";
+import { MemoryManager } from "@/components/MemoryManager";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Settings() {
   const { user, signOut } = useAuth();
