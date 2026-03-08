@@ -275,7 +275,15 @@ export default function ChatWorkspace() {
       <div className="flex-1 overflow-y-auto">
         {!hasMessages ? (
           <div className="flex flex-col items-center justify-center min-h-full px-4 py-16">
-            <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
+            <ChatModeSwitcher mode={chatMode} onModeChange={(mode) => {
+              if (mode === "multichat" && !canAccess("multi_chat")) {
+                setUpgradeFeature("Multi-Chat Mode");
+                setUpgradeRequiredPlan("pro");
+                setShowUpgrade(true);
+                return;
+              }
+              setChatMode(mode);
+            }} />
             <div className="w-full mt-10">
               <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} showGreeting={isSuperFiesta} onImageSelected={(b64, mime) => { setImageBase64(b64); setImageMimeType(mime); }} onImageRemoved={() => { setImageBase64(null); setImageMimeType(null); }} hasImage={!!imageBase64} />
             </div>
