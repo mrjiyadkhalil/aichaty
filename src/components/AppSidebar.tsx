@@ -78,6 +78,22 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
     if (location.pathname === `/chat/${chatId}`) navigate("/chat");
   };
 
+  const handleDeleteProject = async (projectId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const { error } = await supabase.from("projects").delete().eq("id", projectId);
+    if (error) { toast.error("Failed to delete project"); return; }
+    toast.success("Project deleted");
+    onProjectsChanged?.();
+    if (location.pathname === `/project/${projectId}`) navigate("/chat");
+  };
+
+  const handleCreateProject = async (name: string, description: string) => {
+    if (!user) return;
+    const { error } = await supabase.from("projects").insert({ name, description, user_id: user.id }).select().single();
+    if (error) { toast.error(error.message); return; }
+    onProjectsChanged?.();
+  };
+
   // Determine upgrade CTA
   const nextPlan = plan === "free" ? "Pro" : plan === "pro" ? "Enterprise" : null;
 
