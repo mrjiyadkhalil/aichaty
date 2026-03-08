@@ -303,9 +303,6 @@ export default function ChatWorkspace() {
           </div>
         ) : (
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
-            <div className="flex justify-center mb-2">
-              <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
-            </div>
             {messages.map((msg) => (
               <div key={msg.id} className="space-y-4 animate-fade-in">
                 {/* User message — right aligned, dark bubble */}
