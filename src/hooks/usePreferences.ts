@@ -15,6 +15,7 @@ interface Preferences {
 interface UsePreferencesReturn extends Preferences {
   loading: boolean;
   savePreferences: (prefs: Partial<Preferences>) => Promise<void>;
+  setLayout: (layout: "grid" | "stacked") => void;
 }
 
 export function usePreferences(): UsePreferencesReturn {
