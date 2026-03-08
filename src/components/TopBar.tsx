@@ -18,11 +18,6 @@ export function TopBar({ title, layout, onToggleLayout, exportMessages, projectN
       <h2 className="font-semibold text-sm truncate font-['Space_Grotesk'] flex-1 text-foreground/90">{title}</h2>
 
       <div className="flex items-center gap-1">
-        {onToggleLayout && (
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={onToggleLayout} title={layout === "grid" ? "Stacked view" : "Grid view"}>
-            {layout === "grid" ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
-          </Button>
-        )}
         {exportMessages && projectName && (
           <ExportMenu messages={exportMessages} projectName={projectName} />
         )}
