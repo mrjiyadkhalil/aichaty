@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { adminApi } from "@/hooks/useAdmin";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search } from "lucide-react";
@@ -11,23 +12,56 @@ export default function AdminUsers() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sort, setSort] = useState("newest");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    adminApi("list_users", { search, sort: "newest" })
+    adminApi("list_users", {
+      search,
+      sort,
+      role: roleFilter === "all" ? undefined : roleFilter,
+      status: statusFilter === "all" ? undefined : statusFilter,
+    })
       .then((d) => setUsers(d.users || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [search]);
+  }, [search, roleFilter, statusFilter, sort]);
 
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold font-['Space_Grotesk']">Users</h1>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name..." className="pl-9" />
+      <div className="flex flex-wrap gap-3">
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name..." className="pl-9" />
+        </div>
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <SelectTrigger className="w-28"><SelectValue placeholder="Role" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Roles</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="user">User</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-28"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="suspended">Suspended</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sort} onValueChange={setSort}>
+          <SelectTrigger className="w-32"><SelectValue placeholder="Sort" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest</SelectItem>
+            <SelectItem value="oldest">Oldest</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>
