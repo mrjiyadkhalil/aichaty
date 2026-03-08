@@ -199,6 +199,18 @@
   .provider-border-openai {
     border-left: 3px solid hsl(var(--provider-openai));
   }
+  .provider-border-anthropic {
+    border-left: 3px solid hsl(var(--provider-anthropic));
+  }
+  .provider-border-deepseek {
+    border-left: 3px solid hsl(var(--provider-deepseek));
+  }
+  .provider-border-mistral {
+    border-left: 3px solid hsl(var(--provider-mistral));
+  }
+  .provider-border-kimi {
+    border-left: 3px solid hsl(var(--provider-kimi));
+  }
 }
 
 /* Custom scrollbar */

@@ -28,18 +28,39 @@ const MODEL_LABELS: Record<string, string> = {
   "openai/gpt-5": "GPT-5",
   "openai/gpt-5-mini": "GPT-5 Mini",
   "openai/gpt-5-nano": "GPT-5 Nano",
+  "anthropic/claude-4-sonnet": "Claude 4 Sonnet",
+  "anthropic/claude-4-haiku": "Claude 4 Haiku",
+  "deepseek/deepseek-v3": "DeepSeek V3",
+  "deepseek/deepseek-r1": "DeepSeek R1",
+  "mistral/mistral-large": "Mistral Large",
+  "mistral/codestral": "Codestral",
+  "kimi/moonshot-v1": "Moonshot V1",
 };
 
 function getProviderClass(model: string): string {
-  if (model.startsWith("google/")) return "provider-border-google";
-  if (model.startsWith("openai/")) return "provider-border-openai";
-  return "";
+  const provider = model.split("/")[0];
+  const map: Record<string, string> = {
+    google: "provider-border-google",
+    openai: "provider-border-openai",
+    anthropic: "provider-border-anthropic",
+    deepseek: "provider-border-deepseek",
+    mistral: "provider-border-mistral",
+    kimi: "provider-border-kimi",
+  };
+  return map[provider] || "";
 }
 
 function getProviderLabel(model: string): string {
-  if (model.startsWith("google/")) return "Google";
-  if (model.startsWith("openai/")) return "OpenAI";
-  return "";
+  const provider = model.split("/")[0];
+  const map: Record<string, string> = {
+    google: "Google",
+    openai: "OpenAI",
+    anthropic: "Anthropic",
+    deepseek: "DeepSeek",
+    mistral: "Mistral",
+    kimi: "Kimi",
+  };
+  return map[provider] || provider;
 }
 
 export function ModelResponseCard({

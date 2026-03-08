@@ -110,6 +110,13 @@ export const AI_CONFIG = {
     "openai/gpt-5": "GPT5",
     "openai/gpt-5-mini": "GPT5m",
     "openai/gpt-5-nano": "GPT5n",
+    "anthropic/claude-4-sonnet": "C4S",
+    "anthropic/claude-4-haiku": "C4H",
+    "deepseek/deepseek-v3": "DSv3",
+    "deepseek/deepseek-r1": "DSr1",
+    "mistral/mistral-large": "MisL",
+    "mistral/codestral": "CdSt",
+    "kimi/moonshot-v1": "Moon",
   } as Record<string, string>,
 } as const;
 
