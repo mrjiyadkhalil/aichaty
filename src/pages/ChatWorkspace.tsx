@@ -18,6 +18,7 @@ import { ExploreSection } from "@/components/ExploreSection";
 import { SavePromptButton } from "@/components/SavePromptButton";
 import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { AI_CONFIG } from "@/lib/aiConfig";
+import { useModels } from "@/hooks/useModels";
 import { pickBestModel } from "@/lib/autoRouter";
 import { toast } from "sonner";
 import { Copy, Check } from "lucide-react";
