@@ -148,7 +148,7 @@ export default function ChatWorkspace() {
       fileContext = selectedFiles.map((f) => `[File: ${f.file_name}]\n${f.extracted_text || "(no text extracted)"}`).join("\n\n");
     }
     const fullPrompt = [useInstruction && projectInstruction ? `[Project Instruction]: ${projectInstruction}` : "", fileContext ? `[File Context]:\n${fileContext}` : "", prompt].filter(Boolean).join("\n\n");
-    const { data: msg, error: msgErr } = await supabase.from("messages").insert({ chat_id: chatId, user_id: user.id, content: prompt }).select().single();
+    const { data: msg, error: msgErr } = await supabase.from("messages").insert({ chat_id: activeChatId, user_id: user.id, content: prompt }).select().single();
     if (msgErr || !msg) { toast.error("Failed to save message"); setSending(false); return; }
     const placeholders = modelsToUse.map((model) => ({ message_id: msg.id, user_id: user.id, model, status: "loading" as const, content: null, error_message: null, included_in_synthesis: true }));
     const { data: responseRows } = await supabase.from("model_responses").insert(placeholders).select();
