@@ -116,37 +116,59 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
 
       <SidebarContent className="px-2">
         {/* Projects - above chat history */}
-        {projects.length > 0 && (
-          <SidebarGroup>
-            <Collapsible defaultOpen={!!selectedProjectId}>
-              <CollapsibleTrigger className="flex items-center justify-between w-full px-2">
+        <SidebarGroup>
+          <Collapsible defaultOpen={projects.length > 0}>
+            <div className="flex items-center justify-between w-full px-2">
+              <CollapsibleTrigger className="flex items-center gap-1 flex-1">
                 <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-medium cursor-pointer">
                   Projects
                 </SidebarGroupLabel>
                 {!collapsed && <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/40" />}
               </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {projects.map((project) => (
-                      <SidebarMenuItem key={project.id}>
-                        <SidebarMenuButton
-                          onClick={() => navigate(`/project/${project.id}`)}
-                          isActive={selectedProjectId === project.id}
-                          tooltip={project.name}
-                          className="h-9 rounded-lg text-[13px] transition-colors duration-150"
-                        >
-                          <FolderOpen className="h-4 w-4 shrink-0" />
-                          {!collapsed && <span className="truncate">{project.name}</span>}
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </CollapsibleContent>
-            </Collapsible>
-          </SidebarGroup>
-        )}
+              {!collapsed && (
+                <button
+                  onClick={() => setShowNewProject(true)}
+                  className="p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+                  title="New Project"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {projects.map((project) => (
+                    <SidebarMenuItem key={project.id}>
+                      <SidebarMenuButton
+                        onClick={() => navigate(`/project/${project.id}`)}
+                        isActive={selectedProjectId === project.id}
+                        tooltip={project.name}
+                        className="h-9 rounded-lg text-[13px] group/project transition-colors duration-150"
+                        onMouseEnter={() => setHoveredProject(project.id)}
+                        onMouseLeave={() => setHoveredProject(null)}
+                      >
+                        <FolderOpen className="h-4 w-4 shrink-0" />
+                        {!collapsed && <span className="truncate flex-1 text-left">{project.name}</span>}
+                        {hoveredProject === project.id && (
+                          <button
+                            onClick={(e) => handleDeleteProject(project.id, e)}
+                            className="shrink-0 p-0.5 rounded text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                  {projects.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground/50 px-3 py-2">No projects yet</p>
+                  )}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
 
         {/* Chat History grouped by date */}
         {!collapsed && chatGroups.map((group) => (
