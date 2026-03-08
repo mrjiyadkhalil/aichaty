@@ -179,6 +179,12 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
               {!collapsed && <span>Bookmarks</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => navigate("/pricing")} isActive={location.pathname === "/pricing"} tooltip="Pricing" className="h-9 rounded-lg text-[13px] transition-colors duration-150">
+              <Crown className="h-4 w-4 shrink-0" />
+              {!collapsed && <span>Pricing</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           {isAdmin && (
             <SidebarMenuItem>
               <SidebarMenuButton onClick={() => navigate("/admin")} isActive={location.pathname.startsWith("/admin")} tooltip="Admin" className="h-9 rounded-lg text-[13px] transition-colors duration-150">
