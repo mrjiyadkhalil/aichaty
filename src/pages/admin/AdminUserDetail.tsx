@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { adminApi } from "@/hooks/useAdmin";
+import { useImpersonation } from "@/hooks/useImpersonation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -8,28 +9,36 @@ import { MetricCard } from "@/components/admin/MetricCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Shield, ShieldOff, Ban, CheckCircle, Zap, ZapOff, AlertTriangle, Clock } from "lucide-react";
+import { ArrowLeft, Shield, ShieldOff, Ban, CheckCircle, Zap, ZapOff, Clock, Eye, DollarSign, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminUserDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { startImpersonation } = useImpersonation();
   const [detail, setDetail] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
 
-  // Modal state
   const [banModal, setBanModal] = useState(false);
   const [suspendModal, setSuspendModal] = useState(false);
+  const [quotaModal, setQuotaModal] = useState(false);
   const [banReason, setBanReason] = useState("");
   const [suspendDuration, setSuspendDuration] = useState("1d");
   const [suspendReason, setSuspendReason] = useState("");
+  const [softCap, setSoftCap] = useState("");
+  const [hardCap, setHardCap] = useState("");
 
   const load = () => {
     setLoading(true);
     adminApi("get_user_detail", { target_user_id: id })
-      .then(setDetail)
+      .then((d) => {
+        setDetail(d);
+        setSoftCap(d.profile?.custom_soft_cap?.toString() || "");
+        setHardCap(d.profile?.custom_hard_cap?.toString() || "");
+      })
       .catch(() => toast.error("Failed to load user"))
       .finally(() => setLoading(false));
   };
@@ -42,27 +51,35 @@ export default function AdminUserDetail() {
       await adminApi(action, { target_user_id: id, ...params });
       toast.success("Action completed");
       load();
-    } catch (e: any) {
-      toast.error(e.message || "Action failed");
-    }
+    } catch (e: any) { toast.error(e.message || "Action failed"); }
     setActing(false);
   };
 
-  const handleBan = async () => {
-    await handleAction("ban_user", { reason: banReason });
-    setBanModal(false);
-    setBanReason("");
+  const handleBan = async () => { await handleAction("ban_user", { reason: banReason }); setBanModal(false); setBanReason(""); };
+  const handleSuspend = async () => { await handleAction("suspend_user", { duration: suspendDuration, reason: suspendReason }); setSuspendModal(false); setSuspendReason(""); };
+
+  const handleSaveQuota = async () => {
+    setActing(true);
+    try {
+      await adminApi("update_user_quota", {
+        target_user_id: id,
+        custom_soft_cap: softCap ? parseFloat(softCap) : null,
+        custom_hard_cap: hardCap ? parseFloat(hardCap) : null,
+      });
+      toast.success("Quota updated");
+      setQuotaModal(false);
+      load();
+    } catch (e: any) { toast.error(e.message || "Failed"); }
+    setActing(false);
   };
 
-  const handleSuspend = async () => {
-    await handleAction("suspend_user", { duration: suspendDuration, reason: suspendReason });
-    setSuspendModal(false);
-    setSuspendReason("");
+  const handleImpersonate = () => {
+    if (!detail?.profile) return;
+    startImpersonation(detail.profile.user_id, detail.profile.display_name || "User");
+    navigate("/chat");
   };
 
-  if (loading || !detail) {
-    return <div className="p-6"><div className="h-64 animate-pulse bg-muted rounded-lg" /></div>;
-  }
+  if (loading || !detail) return <div className="p-6"><div className="h-64 animate-pulse bg-muted rounded-lg" /></div>;
 
   const isAdmin = detail.roles?.includes("admin");
   const status = detail.profile?.status || "active";
@@ -80,20 +97,13 @@ export default function AdminUserDetail() {
         <div>
           <h1 className="text-2xl font-bold font-['Space_Grotesk']">{detail.profile?.display_name || "User"}</h1>
           <p className="text-sm text-muted-foreground">{detail.profile?.user_id}</p>
-          {detail.profile?.last_active_at && (
-            <p className="text-xs text-muted-foreground">Last active: {new Date(detail.profile.last_active_at).toLocaleString()}</p>
-          )}
-          {detail.profile?.ban_reason && (
-            <p className="text-xs text-destructive mt-1">Ban reason: {detail.profile.ban_reason}</p>
-          )}
-          {detail.profile?.suspended_until && (
-            <p className="text-xs text-yellow-600 mt-1">Suspended until: {new Date(detail.profile.suspended_until).toLocaleString()}</p>
-          )}
+          {detail.profile?.last_active_at && <p className="text-xs text-muted-foreground">Last active: {new Date(detail.profile.last_active_at).toLocaleString()}</p>}
+          {detail.profile?.ban_reason && <p className="text-xs text-destructive mt-1">Ban reason: {detail.profile.ban_reason}</p>}
+          {detail.profile?.suspended_until && <p className="text-xs text-muted-foreground mt-1">Suspended until: {new Date(detail.profile.suspended_until).toLocaleString()}</p>}
         </div>
         <div className="flex gap-2 flex-wrap">
           {detail.roles?.map((r: string) => <StatusBadge key={r} status={r} />)}
           <StatusBadge status={status} />
-          {!aiEnabled && <StatusBadge status="warning" />}
         </div>
       </div>
 
@@ -101,13 +111,23 @@ export default function AdminUserDetail() {
         <MetricCard label="Projects" value={detail.project_count} />
         <MetricCard label="Chats" value={detail.chat_count} />
         <MetricCard label="Total Cost" value={`$${detail.total_cost}`} />
-        <MetricCard label="Errors" value={detail.error_count || 0} />
-        <MetricCard label="Cost Mode" value={detail.preferences?.cost_mode || "balanced"} />
+        <MetricCard label="Soft Cap" value={detail.profile?.custom_soft_cap ? `$${detail.profile.custom_soft_cap}` : "$5 (default)"} />
+        <MetricCard label="Hard Cap" value={detail.profile?.custom_hard_cap ? `$${detail.profile.custom_hard_cap}` : "$10 (default)"} />
       </div>
 
       <Card>
         <CardHeader><CardTitle className="text-base">Admin Actions</CardTitle></CardHeader>
         <CardContent className="flex flex-wrap gap-3">
+          {/* Impersonate */}
+          <Button variant="outline" size="sm" onClick={handleImpersonate} className="gap-1.5">
+            <Eye className="h-4 w-4" /> Impersonate
+          </Button>
+
+          {/* Quota Override */}
+          <Button variant="outline" size="sm" onClick={() => setQuotaModal(true)} className="gap-1.5">
+            <DollarSign className="h-4 w-4" /> Set Quota
+          </Button>
+
           {/* Role management */}
           {isAdmin ? (
             <Button variant="outline" size="sm" disabled={acting} onClick={() => handleAction("update_user_role", { role: "admin", grant: false })} className="gap-1.5">
@@ -119,35 +139,23 @@ export default function AdminUserDetail() {
             </Button>
           )}
 
-          {/* Ban/Suspend/Reactivate */}
+          {/* Ban/Suspend */}
           {isBanned ? (
-            <Button variant="outline" size="sm" disabled={acting} onClick={() => handleAction("unban_user")} className="gap-1.5">
-              <CheckCircle className="h-4 w-4" /> Unban
-            </Button>
+            <Button variant="outline" size="sm" disabled={acting} onClick={() => handleAction("unban_user")} className="gap-1.5"><CheckCircle className="h-4 w-4" /> Unban</Button>
           ) : isSuspended ? (
-            <Button variant="outline" size="sm" disabled={acting} onClick={() => handleAction("reactivate_user")} className="gap-1.5">
-              <CheckCircle className="h-4 w-4" /> Unsuspend
-            </Button>
+            <Button variant="outline" size="sm" disabled={acting} onClick={() => handleAction("reactivate_user")} className="gap-1.5"><CheckCircle className="h-4 w-4" /> Unsuspend</Button>
           ) : (
             <>
-              <Button variant="destructive" size="sm" disabled={acting} onClick={() => setBanModal(true)} className="gap-1.5">
-                <Ban className="h-4 w-4" /> Ban
-              </Button>
-              <Button variant="outline" size="sm" disabled={acting} onClick={() => setSuspendModal(true)} className="gap-1.5 border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10">
-                <Clock className="h-4 w-4" /> Suspend
-              </Button>
+              <Button variant="destructive" size="sm" disabled={acting} onClick={() => setBanModal(true)} className="gap-1.5"><Ban className="h-4 w-4" /> Ban</Button>
+              <Button variant="outline" size="sm" disabled={acting} onClick={() => setSuspendModal(true)} className="gap-1.5"><Clock className="h-4 w-4" /> Suspend</Button>
             </>
           )}
 
           {/* AI access */}
           {aiEnabled ? (
-            <Button variant="outline" size="sm" disabled={acting} onClick={() => handleAction("disable_ai_access")} className="gap-1.5">
-              <ZapOff className="h-4 w-4" /> Disable AI
-            </Button>
+            <Button variant="outline" size="sm" disabled={acting} onClick={() => handleAction("disable_ai_access")} className="gap-1.5"><ZapOff className="h-4 w-4" /> Disable AI</Button>
           ) : (
-            <Button variant="outline" size="sm" disabled={acting} onClick={() => handleAction("enable_ai_access")} className="gap-1.5">
-              <Zap className="h-4 w-4" /> Enable AI
-            </Button>
+            <Button variant="outline" size="sm" disabled={acting} onClick={() => handleAction("enable_ai_access")} className="gap-1.5"><Zap className="h-4 w-4" /> Enable AI</Button>
           )}
         </CardContent>
       </Card>
@@ -171,17 +179,14 @@ export default function AdminUserDetail() {
         </Card>
       )}
 
-      {/* Ban Confirmation Modal */}
+      {/* Ban Modal */}
       <Dialog open={banModal} onOpenChange={setBanModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-destructive" /> Ban User</DialogTitle>
-            <DialogDescription>This will permanently block the user from accessing the app until unbanned.</DialogDescription>
+            <DialogTitle>Ban User</DialogTitle>
+            <DialogDescription>Permanently block this user from accessing the app.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <Label>Reason</Label>
-            <Textarea placeholder="Enter ban reason..." value={banReason} onChange={(e) => setBanReason(e.target.value)} />
-          </div>
+          <div className="space-y-3"><Label>Reason</Label><Textarea placeholder="Ban reason..." value={banReason} onChange={(e) => setBanReason(e.target.value)} /></div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setBanModal(false)}>Cancel</Button>
             <Button variant="destructive" disabled={acting || !banReason.trim()} onClick={handleBan}>Confirm Ban</Button>
@@ -189,16 +194,15 @@ export default function AdminUserDetail() {
         </DialogContent>
       </Dialog>
 
-      {/* Suspend Confirmation Modal */}
+      {/* Suspend Modal */}
       <Dialog open={suspendModal} onOpenChange={setSuspendModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-yellow-500" /> Suspend User</DialogTitle>
-            <DialogDescription>Temporarily block user access for a specified duration.</DialogDescription>
+            <DialogTitle>Suspend User</DialogTitle>
+            <DialogDescription>Temporarily block access.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <div>
-              <Label>Duration</Label>
+            <div><Label>Duration</Label>
               <Select value={suspendDuration} onValueChange={setSuspendDuration}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -208,14 +212,37 @@ export default function AdminUserDetail() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Reason</Label>
-              <Textarea placeholder="Enter suspension reason..." value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)} />
-            </div>
+            <div><Label>Reason</Label><Textarea placeholder="Reason..." value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)} /></div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setSuspendModal(false)}>Cancel</Button>
-            <Button className="bg-yellow-600 hover:bg-yellow-700" disabled={acting || !suspendReason.trim()} onClick={handleSuspend}>Confirm Suspend</Button>
+            <Button disabled={acting || !suspendReason.trim()} onClick={handleSuspend}>Confirm Suspend</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quota Override Modal */}
+      <Dialog open={quotaModal} onOpenChange={setQuotaModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Usage Quota Override</DialogTitle>
+            <DialogDescription>Set custom spending limits for this user. Leave blank to use defaults ($5 soft / $10 hard).</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Soft Cap ($)</Label>
+              <Input type="number" step="0.01" placeholder="5.00" value={softCap} onChange={(e) => setSoftCap(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Hard Cap ($)</Label>
+              <Input type="number" step="0.01" placeholder="10.00" value={hardCap} onChange={(e) => setHardCap(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setQuotaModal(false)}>Cancel</Button>
+            <Button disabled={acting} onClick={handleSaveQuota} className="gap-1.5">
+              {acting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
