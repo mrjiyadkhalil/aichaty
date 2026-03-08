@@ -53,14 +53,6 @@ export function AppSidebar({ projects, chats, selectedProjectId }: AppSidebarPro
                   {!collapsed && <span>Settings</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {isAdmin && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton onClick={() => navigate("/admin")} isActive={location.pathname.startsWith("/admin")} tooltip="Admin">
-                    <Shield className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span>Admin</span>}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
