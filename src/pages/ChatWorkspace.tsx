@@ -15,7 +15,7 @@ import { FileContextModal } from "@/components/FileContextModal";
 import { ChatModeSwitcher } from "@/components/ChatModeSwitcher";
 import { SuperFiestaView } from "@/components/SuperFiestaView";
 import { MultiChatColumns } from "@/components/MultiChatColumns";
-import { ExploreSection } from "@/components/ExploreSection";
+
 import { SavePromptButton } from "@/components/SavePromptButton";
 import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { AI_CONFIG } from "@/lib/aiConfig";
