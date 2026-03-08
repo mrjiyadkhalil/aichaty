@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminCheck } from "@/hooks/useAdmin";
 
 export type PlanName = "free" | "pro" | "enterprise";
 
@@ -57,8 +58,28 @@ const DEFAULT_FREE_FEATURES: PlanFeatures = {
   usage_cap_hard: 10,
 };
 
+const ADMIN_FEATURES: PlanFeatures = {
+  messages_per_day: 999999,
+  max_output_tokens: 8192,
+  models: "all",
+  file_uploads: true,
+  file_max_mb: 50,
+  projects: true,
+  multi_chat: true,
+  synthesis: true,
+  prompt_library: true,
+  bookmarks: true,
+  export: true,
+  custom_system_prompt: true,
+  priority_speed: true,
+  admin_dashboard: true,
+  usage_cap_soft: 999,
+  usage_cap_hard: 999,
+};
+
 export function useSubscription(): UseSubscriptionReturn {
   const { user } = useAuth();
+  const { isAdmin } = useAdminCheck();
   const [plan, setPlan] = useState<PlanName>("free");
   const [features, setFeatures] = useState<PlanFeatures | null>(null);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -67,6 +88,21 @@ export function useSubscription(): UseSubscriptionReturn {
   const fetchData = useCallback(async () => {
     if (!user) { setLoading(false); return; }
     setLoading(true);
+
+    if (isAdmin) {
+      setPlan("enterprise");
+      setFeatures(ADMIN_FEATURES);
+      setLoading(false);
+      const { data } = await supabase.from("subscription_plans").select("*");
+      setPlans((data || []).map((p: any) => ({
+        id: p.id,
+        plan_name: p.plan_name as PlanName,
+        price_monthly: Number(p.price_monthly),
+        price_yearly: Number(p.price_yearly),
+        features: p.features as PlanFeatures,
+      })));
+      return;
+    }
 
     const [profileRes, plansRes] = await Promise.all([
       supabase.from("profiles").select("plan").eq("user_id", user.id).single(),
@@ -88,23 +124,25 @@ export function useSubscription(): UseSubscriptionReturn {
     const currentPlan = allPlans.find((p) => p.plan_name === userPlan);
     setFeatures(currentPlan?.features || DEFAULT_FREE_FEATURES);
     setLoading(false);
-  }, [user]);
+  }, [user, isAdmin]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const canAccess = useCallback((feature: keyof PlanFeatures): boolean => {
+    if (isAdmin) return true;
     if (!features) return false;
     const val = features[feature];
     if (typeof val === "boolean") return val;
     if (typeof val === "number") return val !== 0;
     return true;
-  }, [features]);
+  }, [features, isAdmin]);
 
   const isModelAllowed = useCallback((model: string): boolean => {
+    if (isAdmin) return true;
     if (!features) return false;
     if (features.models === "all") return true;
     return (features.models as string[]).includes(model);
-  }, [features]);
+  }, [features, isAdmin]);
 
   return { plan, features, plans, loading, canAccess, isModelAllowed, refresh: fetchData };
 }
