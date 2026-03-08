@@ -1,17 +1,78 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const COST_PER_1K: Record<string, { input: number; output: number }> = {
+  "google/gemini-3-flash-preview": { input: 0.00015, output: 0.0006 },
+  "google/gemini-2.5-flash": { input: 0.00015, output: 0.0006 },
+  "google/gemini-2.5-pro": { input: 0.00125, output: 0.005 },
+  "openai/gpt-5": { input: 0.005, output: 0.015 },
+  "openai/gpt-5-mini": { input: 0.0004, output: 0.0016 },
+  "openai/gpt-5-nano": { input: 0.0001, output: 0.0004 },
+};
+
+const HARD_CAP = 10.0;
+const SOFT_CAP = 5.0;
+const RATE_LIMIT = 30;
+
+function getServiceClient() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+}
+
+function getUserId(req: Request): string | null {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader) return null;
+  try {
+    const token = authHeader.replace("Bearer ", "");
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.sub || null;
+  } catch { return null; }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  const start = Date.now();
+  const userId = getUserId(req);
+
   try {
-    const { prompt, model } = await req.json();
+    const { prompt, model, projectId, chatId, messageId, max_tokens, request_type } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const sb = getServiceClient();
+    const reqType = request_type || "model_compare";
+
+    // Rate limit check
+    if (userId) {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count } = await sb.from("usage_events").select("id", { count: "exact", head: true })
+        .eq("user_id", userId).gte("created_at", oneHourAgo);
+      if ((count || 0) >= RATE_LIMIT) {
+        return new Response(JSON.stringify({ error: "Too many requests, please wait", code: "RATE_LIMIT" }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Monthly cap check
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+      const { data: costData } = await sb.from("usage_events").select("estimated_cost")
+        .eq("user_id", userId).gte("created_at", startOfMonth.toISOString());
+      const monthlyCost = (costData || []).reduce((s, r) => s + (Number(r.estimated_cost) || 0), 0);
+      if (monthlyCost >= HARD_CAP) {
+        return new Response(JSON.stringify({ error: "Monthly usage limit reached", code: "HARD_CAP" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -26,29 +87,59 @@ serve(async (req) => {
           { role: "user", content: prompt },
         ],
         stream: false,
+        ...(max_tokens ? { max_tokens } : {}),
       }),
     });
 
+    const latency = Date.now() - start;
+
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const status = response.status;
+      const errorMsg = status === 429 ? "Rate limit exceeded. Please try again later."
+        : status === 402 ? "Usage limit reached. Please add credits."
+        : "AI model error";
+
+      // Log failed usage
+      if (userId) {
+        await sb.from("usage_events").insert({
+          user_id: userId, project_id: projectId || null, chat_id: chatId || null,
+          message_id: messageId || null, provider: (model || "google/gemini-3-flash-preview").split("/")[0],
+          model: model || "google/gemini-3-flash-preview", request_type: reqType,
+          latency_ms: latency, status: "error", error_code: String(status),
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Usage limit reached. Please add credits." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const text = await response.text();
-      console.error("AI gateway error:", response.status, text);
-      return new Response(JSON.stringify({ error: "AI model error" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+
+      return new Response(JSON.stringify({ error: errorMsg }), {
+        status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "No response generated";
+    const usage = data.usage || {};
+    const inputTokens = usage.prompt_tokens || 0;
+    const outputTokens = usage.completion_tokens || 0;
+    const modelId = model || "google/gemini-3-flash-preview";
+    const rates = COST_PER_1K[modelId] || { input: 0.001, output: 0.002 };
+    const estCost = (inputTokens / 1000) * rates.input + (outputTokens / 1000) * rates.output;
+
+    // Log successful usage
+    if (userId) {
+      const monthlyCostNow = await getMonthlyCost(sb, userId);
+      const warning = monthlyCostNow + estCost >= SOFT_CAP ? "Approaching usage limit" : undefined;
+
+      await sb.from("usage_events").insert({
+        user_id: userId, project_id: projectId || null, chat_id: chatId || null,
+        message_id: messageId || null, provider: modelId.split("/")[0],
+        model: modelId, request_type: reqType,
+        input_tokens: inputTokens, output_tokens: outputTokens,
+        estimated_cost: estCost, latency_ms: latency, status: "success",
+      });
+
+      return new Response(JSON.stringify({ content, usage: { input_tokens: inputTokens, output_tokens: outputTokens, estimated_cost: estCost }, warning }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     return new Response(JSON.stringify({ content }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -60,3 +151,11 @@ serve(async (req) => {
     });
   }
 });
+
+async function getMonthlyCost(sb: any, userId: string): Promise<number> {
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+  const { data } = await sb.from("usage_events").select("estimated_cost")
+    .eq("user_id", userId).gte("created_at", startOfMonth.toISOString());
+  return (data || []).reduce((s: number, r: any) => s + (Number(r.estimated_cost) || 0), 0);
+}
