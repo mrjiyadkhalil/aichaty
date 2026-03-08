@@ -132,10 +132,12 @@
     background-size: 60px 60px;
   }
   .prose-dark {
-    @apply prose prose-invert prose-sm max-w-none;
+    color: hsl(var(--foreground) / 0.9);
     --tw-prose-headings: hsl(var(--foreground));
     --tw-prose-body: hsl(var(--foreground) / 0.9);
     --tw-prose-links: hsl(var(--primary));
     --tw-prose-code: hsl(var(--primary));
+    font-size: 0.875rem;
+    line-height: 1.7;
   }
 }
