@@ -297,9 +297,6 @@ export default function ChatWorkspace() {
             <div className="w-full mt-10">
               <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} showGreeting={isSuperFiesta} onImageSelected={(b64, mime) => { setImageBase64(b64); setImageMimeType(mime); }} onImageRemoved={() => { setImageBase64(null); setImageMimeType(null); }} hasImage={!!imageBase64} />
             </div>
-            <div className="w-full max-w-2xl mt-16">
-              <ExploreSection />
-            </div>
           </div>
         ) : (
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
