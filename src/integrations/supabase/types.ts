@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action_type: string
+          admin_user_id: string
+          created_at: string
+          details_json: Json | null
+          id: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_user_id: string
+          created_at?: string
+          details_json?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_user_id?: string
+          created_at?: string
+          details_json?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       chats: {
         Row: {
           created_at: string
@@ -48,6 +78,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      error_logs: {
+        Row: {
+          created_at: string
+          details_json: Json | null
+          error_type: string
+          id: string
+          message: string
+          model: string | null
+          provider: string | null
+          request_type: string | null
+          resolved_at: string | null
+          severity: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details_json?: Json | null
+          error_type: string
+          id?: string
+          message: string
+          model?: string | null
+          provider?: string | null
+          request_type?: string | null
+          resolved_at?: string | null
+          severity?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details_json?: Json | null
+          error_type?: string
+          id?: string
+          message?: string
+          model?: string | null
+          provider?: string | null
+          request_type?: string | null
+          resolved_at?: string | null
+          severity?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -89,6 +161,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      model_configs: {
+        Row: {
+          cost_tier: string
+          enabled: boolean
+          id: string
+          max_output_tokens: number
+          model_name: string
+          premium_only: boolean
+          provider_name: string
+          retry_enabled: boolean
+          timeout_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          cost_tier?: string
+          enabled?: boolean
+          id?: string
+          max_output_tokens?: number
+          model_name: string
+          premium_only?: boolean
+          provider_name: string
+          retry_enabled?: boolean
+          timeout_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          cost_tier?: string
+          enabled?: boolean
+          id?: string
+          max_output_tokens?: number
+          model_name?: string
+          premium_only?: boolean
+          provider_name?: string
+          retry_enabled?: boolean
+          timeout_seconds?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       model_responses: {
         Row: {
@@ -143,6 +254,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          status: string
           updated_at: string
           user_id: string
         }
@@ -151,6 +263,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          status?: string
           updated_at?: string
           user_id: string
         }
@@ -159,6 +272,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          status?: string
           updated_at?: string
           user_id?: string
         }
@@ -241,6 +355,33 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_configs: {
+        Row: {
+          enabled: boolean
+          id: string
+          provider_name: string
+          retry_enabled: boolean
+          timeout_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          id?: string
+          provider_name: string
+          retry_enabled?: boolean
+          timeout_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: string
+          provider_name?: string
+          retry_enabled?: boolean
+          timeout_seconds?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       synthesis_results: {
         Row: {
           content: string
@@ -275,6 +416,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_config: {
+        Row: {
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value_json: Json
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value_json: Json
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value_json?: Json
+        }
+        Relationships: []
       }
       usage_events: {
         Row: {
