@@ -231,12 +231,6 @@ export default function ChatWorkspace() {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-primary/[0.04] rounded-full blur-[120px]" />
       </div>
 
-      {/* Model bar — sticky beneath top bar, only in multichat mode */}
-      {!isSuperFiesta && (
-        <div className="relative z-20 shrink-0">
-          <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />
-        </div>
-      )}
 
       <div className="flex-1 overflow-y-auto relative z-10">
         {!hasMessages ? (
