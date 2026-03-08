@@ -32,6 +32,9 @@ export default function AdminUserDetail() {
   const [suspendReason, setSuspendReason] = useState("");
   const [softCap, setSoftCap] = useState("");
   const [hardCap, setHardCap] = useState("");
+  const [planModal, setPlanModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanName>("free");
+  const [userSessions, setUserSessions] = useState<any[]>([]);
 
   const load = () => {
     setLoading(true);
