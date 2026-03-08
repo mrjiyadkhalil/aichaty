@@ -37,9 +37,6 @@ export function PromptComposer({
   const allowedModels = enabledModels || AI_CONFIG.allModels;
   const isSuperFiesta = chatMode === "superfiesta";
 
-  const { isRecording, toggleRecording } = useVoiceInput((text) => {
-    setPrompt((prev) => (prev ? prev + " " + text : text));
-  });
 
   const handleSend = () => {
     if (!prompt.trim()) return;

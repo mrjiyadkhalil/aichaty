@@ -13,9 +13,6 @@ interface PromptInputProps {
 export function PromptInput({ onSend, onEnhance, disabled, enhancing }: PromptInputProps) {
   const [prompt, setPrompt] = useState("");
 
-  const { isRecording, toggleRecording } = useVoiceInput((text) => {
-    setPrompt((prev) => (prev ? prev + " " + text : text));
-  });
 
   const handleSend = () => {
     if (!prompt.trim() || disabled) return;
