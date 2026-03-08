@@ -17,6 +17,13 @@ const ALL_MODELS = [
   "openai/gpt-5",
   "openai/gpt-5-mini",
   "openai/gpt-5-nano",
+  "anthropic/claude-4-sonnet",
+  "anthropic/claude-4-haiku",
+  "deepseek/deepseek-v3",
+  "deepseek/deepseek-r1",
+  "mistral/mistral-large",
+  "mistral/codestral",
+  "kimi/moonshot-v1",
 ];
 
 export const AI_CONFIG = {
@@ -69,6 +76,13 @@ export const AI_CONFIG = {
     "openai/gpt-5": { input: 0.005, output: 0.015 },
     "openai/gpt-5-mini": { input: 0.0004, output: 0.0016 },
     "openai/gpt-5-nano": { input: 0.0001, output: 0.0004 },
+    "anthropic/claude-4-sonnet": { input: 0.003, output: 0.015 },
+    "anthropic/claude-4-haiku": { input: 0.0008, output: 0.004 },
+    "deepseek/deepseek-v3": { input: 0.00027, output: 0.0011 },
+    "deepseek/deepseek-r1": { input: 0.00055, output: 0.0022 },
+    "mistral/mistral-large": { input: 0.002, output: 0.006 },
+    "mistral/codestral": { input: 0.0003, output: 0.0009 },
+    "kimi/moonshot-v1": { input: 0.001, output: 0.002 },
   } as Record<string, { input: number; output: number }>,
 
   allModels: ALL_MODELS,
@@ -80,6 +94,13 @@ export const AI_CONFIG = {
     "openai/gpt-5": "GPT-5",
     "openai/gpt-5-mini": "GPT-5 Mini",
     "openai/gpt-5-nano": "GPT-5 Nano",
+    "anthropic/claude-4-sonnet": "Claude 4 Sonnet",
+    "anthropic/claude-4-haiku": "Claude 4 Haiku",
+    "deepseek/deepseek-v3": "DeepSeek V3",
+    "deepseek/deepseek-r1": "DeepSeek R1",
+    "mistral/mistral-large": "Mistral Large",
+    "mistral/codestral": "Codestral",
+    "kimi/moonshot-v1": "Moonshot V1",
   } as Record<string, string>,
 
   modelShortLabels: {
@@ -89,6 +110,13 @@ export const AI_CONFIG = {
     "openai/gpt-5": "GPT5",
     "openai/gpt-5-mini": "GPT5m",
     "openai/gpt-5-nano": "GPT5n",
+    "anthropic/claude-4-sonnet": "C4S",
+    "anthropic/claude-4-haiku": "C4H",
+    "deepseek/deepseek-v3": "DSv3",
+    "deepseek/deepseek-r1": "DSr1",
+    "mistral/mistral-large": "MisL",
+    "mistral/codestral": "CdSt",
+    "kimi/moonshot-v1": "Moon",
   } as Record<string, string>,
 } as const;
 

@@ -47,6 +47,10 @@
 
     --provider-google: 217 91% 60%;
     --provider-openai: 142 71% 45%;
+    --provider-anthropic: 24 90% 55%;
+    --provider-deepseek: 210 80% 55%;
+    --provider-mistral: 340 75% 55%;
+    --provider-kimi: 270 70% 60%;
 
     --chart-1: 217 91% 60%;
     --chart-2: 142 71% 45%;
@@ -109,6 +113,10 @@
 
     --provider-google: 217 91% 60%;
     --provider-openai: 142 71% 45%;
+    --provider-anthropic: 24 90% 55%;
+    --provider-deepseek: 210 80% 55%;
+    --provider-mistral: 340 75% 55%;
+    --provider-kimi: 270 70% 60%;
 
     --chart-1: 217 91% 60%;
     --chart-2: 142 71% 45%;
@@ -190,6 +198,18 @@
   }
   .provider-border-openai {
     border-left: 3px solid hsl(var(--provider-openai));
+  }
+  .provider-border-anthropic {
+    border-left: 3px solid hsl(var(--provider-anthropic));
+  }
+  .provider-border-deepseek {
+    border-left: 3px solid hsl(var(--provider-deepseek));
+  }
+  .provider-border-mistral {
+    border-left: 3px solid hsl(var(--provider-mistral));
+  }
+  .provider-border-kimi {
+    border-left: 3px solid hsl(var(--provider-kimi));
   }
 }
 
