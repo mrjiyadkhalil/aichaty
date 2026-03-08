@@ -502,6 +502,7 @@ export type Database = {
           created_at: string
           custom_hard_cap: number | null
           custom_soft_cap: number | null
+          custom_system_prompt: string | null
           display_name: string | null
           id: string
           last_active_at: string | null
@@ -519,6 +520,7 @@ export type Database = {
           created_at?: string
           custom_hard_cap?: number | null
           custom_soft_cap?: number | null
+          custom_system_prompt?: string | null
           display_name?: string | null
           id?: string
           last_active_at?: string | null
@@ -536,6 +538,7 @@ export type Database = {
           created_at?: string
           custom_hard_cap?: number | null
           custom_soft_cap?: number | null
+          custom_system_prompt?: string | null
           display_name?: string | null
           id?: string
           last_active_at?: string | null
@@ -679,6 +682,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      response_ratings: {
+        Row: {
+          created_at: string
+          id: string
+          rating: number
+          response_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rating: number
+          response_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rating?: number
+          response_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "response_ratings_response_id_fkey"
+            columns: ["response_id"]
+            isOneToOne: false
+            referencedRelation: "model_responses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       share_links: {
         Row: {
@@ -904,6 +939,38 @@ export type Database = {
           },
         ]
       }
+      user_memories: {
+        Row: {
+          created_at: string
+          fact: string
+          id: string
+          source_chat_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fact: string
+          id?: string
+          source_chat_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fact?: string
+          id?: string
+          source_chat_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_memories_source_chat_id_fkey"
+            columns: ["source_chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_preferences: {
         Row: {
           cost_mode: string
@@ -936,6 +1003,39 @@ export type Database = {
           onboarding_completed?: boolean
           theme?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_prompts: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          use_count: number
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          use_count?: number
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          use_count?: number
           user_id?: string
         }
         Relationships: []
