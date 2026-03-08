@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send, Sparkles, Paperclip, X, Mic, MicOff } from "lucide-react";
+import { Send, Sparkles, Paperclip, X, Mic, MicOff, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { AI_CONFIG } from "@/lib/aiConfig";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { cn } from "@/lib/utils";
+import type { ChatMode } from "@/pages/ChatWorkspace";
 
 interface SelectedFile { id: string; name: string; }
 
@@ -26,15 +27,17 @@ interface PromptComposerProps {
   disabled: boolean;
   enhancing: boolean;
   enabledModels?: string[];
+  chatMode?: ChatMode;
 }
 
 export function PromptComposer({
   onSend, onEnhance, onAttachFiles, selectedModels, onToggleModel,
   selectedFiles = [], onRemoveFile, useProjectInstruction = false, onToggleInstruction,
-  hasProjectInstruction = false, disabled, enhancing, enabledModels,
+  hasProjectInstruction = false, disabled, enhancing, enabledModels, chatMode = "superfiesta",
 }: PromptComposerProps) {
   const [prompt, setPrompt] = useState("");
   const allowedModels = enabledModels || AI_CONFIG.allModels;
+  const isSuperFiesta = chatMode === "superfiesta";
 
   const { isRecording, toggleRecording } = useVoiceInput((text) => {
     setPrompt((prev) => (prev ? prev + " " + text : text));
@@ -42,7 +45,7 @@ export function PromptComposer({
 
   const handleSend = () => {
     if (!prompt.trim()) return;
-    if (selectedModels.length === 0) { toast.warning("Select at least one model before sending"); return; }
+    if (!isSuperFiesta && selectedModels.length === 0) { toast.warning("Select at least one model before sending"); return; }
     if (prompt.length > AI_CONFIG.limits.maxPromptLength) { toast.warning(`Prompt too long (max ${AI_CONFIG.limits.maxPromptLength} chars)`); return; }
     onSend(prompt.trim());
     setPrompt("");
@@ -55,27 +58,37 @@ export function PromptComposer({
   return (
     <div className="border-t border-border/30 bg-card/30 backdrop-blur-xl p-4 space-y-3">
       <div className="max-w-5xl mx-auto space-y-3">
-        {/* Model chips */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs text-muted-foreground mr-1">Models:</span>
-          {AI_CONFIG.allModels.map((modelId) => {
-            const isSelected = selectedModels.includes(modelId);
-            const isEnabled = allowedModels.includes(modelId);
-            return (
-              <Badge
-                key={modelId}
-                variant={isSelected ? "default" : "outline"}
-                className={`cursor-pointer text-xs transition-all select-none ${
-                  isSelected ? "bg-primary text-primary-foreground shadow-glow-sm" : "border-border/50 text-muted-foreground hover:border-primary/50 hover:text-foreground"
-                } ${!isEnabled ? "opacity-30 cursor-not-allowed" : "hover:scale-105"}`}
-                onClick={() => isEnabled && onToggleModel(modelId)}
-              >
-                {AI_CONFIG.modelShortLabels[modelId] || modelId}
-                {isSelected && <X className="h-3 w-3 ml-1" />}
-              </Badge>
-            );
-          })}
-        </div>
+        {/* Model chips — only in Multi-Chat mode */}
+        {!isSuperFiesta && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-muted-foreground mr-1">Models:</span>
+            {AI_CONFIG.allModels.map((modelId) => {
+              const isSelected = selectedModels.includes(modelId);
+              const isEnabled = allowedModels.includes(modelId);
+              return (
+                <Badge
+                  key={modelId}
+                  variant={isSelected ? "default" : "outline"}
+                  className={`cursor-pointer text-xs transition-all select-none ${
+                    isSelected ? "bg-primary text-primary-foreground shadow-glow-sm" : "border-border/50 text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                  } ${!isEnabled ? "opacity-30 cursor-not-allowed" : "hover:scale-105"}`}
+                  onClick={() => isEnabled && onToggleModel(modelId)}
+                >
+                  {AI_CONFIG.modelShortLabels[modelId] || modelId}
+                  {isSelected && <X className="h-3 w-3 ml-1" />}
+                </Badge>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Super Fiesta auto-routing indicator */}
+        {isSuperFiesta && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+            <Zap className="h-3.5 w-3.5 text-primary/60" />
+            <span>Auto-routing — best model selected automatically</span>
+          </div>
+        )}
 
         {/* File chips + instruction toggle */}
         <div className="flex items-center gap-3 flex-wrap">
@@ -104,7 +117,7 @@ export function PromptComposer({
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask anything... Compare responses across models."
+            placeholder={isSuperFiesta ? "Ask anything..." : "Ask anything... Compare responses across models."}
             className="min-h-[90px] pr-4 pb-14 resize-none bg-background/50 border-border/30 focus:border-primary/50 focus:shadow-glow-sm transition-shadow"
             disabled={disabled}
           />

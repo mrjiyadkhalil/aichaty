@@ -15,8 +15,10 @@ import { SuperFiestaView } from "@/components/SuperFiestaView";
 import { MultiChatColumns } from "@/components/MultiChatColumns";
 import { ExploreSection } from "@/components/ExploreSection";
 import { AI_CONFIG } from "@/lib/aiConfig";
+import { pickBestModel } from "@/lib/autoRouter";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { Zap } from "lucide-react";
 
 interface ProjectFile { id: string; file_name: string; file_path: string; extracted_text: string | null; file_size: number | null; mime_type: string | null; }
 interface ModelResponse { id: string; model: string; content: string | null; status: string; error_message: string | null; included_in_synthesis: boolean; latency_ms: number | null; }
@@ -61,7 +63,6 @@ export default function ChatWorkspace() {
       const chatProjectId = chat.project_id;
       setProjectId(chatProjectId);
       
-      // Only load project data if chat has a project
       if (chatProjectId) {
         const { data: project } = await supabase.from("projects").select("name, custom_instruction, preferred_models").eq("id", chatProjectId).single();
         if (project) {
@@ -118,9 +119,17 @@ export default function ChatWorkspace() {
   };
 
   const handleSend = async (prompt: string) => {
-    if (!user || !chatId || selectedModels.length === 0) { toast.error("Select at least one model"); return; }
+    if (!user || !chatId) return;
     if (isAtCap) { toast.error("Monthly usage limit reached. Check Settings for details."); return; }
     if (isNearCap) { toast.warning("Approaching usage limit"); }
+
+    // Determine models based on chat mode
+    const modelsToUse = chatMode === "superfiesta"
+      ? [pickBestModel(prompt, enabledModels)]
+      : selectedModels;
+
+    if (modelsToUse.length === 0) { toast.error("Select at least one model"); return; }
+
     setSending(true);
     let fileContext = "";
     if (selectedFileIds.length > 0) {
@@ -130,7 +139,7 @@ export default function ChatWorkspace() {
     const fullPrompt = [useInstruction && projectInstruction ? `[Project Instruction]: ${projectInstruction}` : "", fileContext ? `[File Context]:\n${fileContext}` : "", prompt].filter(Boolean).join("\n\n");
     const { data: msg, error: msgErr } = await supabase.from("messages").insert({ chat_id: chatId, user_id: user.id, content: prompt }).select().single();
     if (msgErr || !msg) { toast.error("Failed to save message"); setSending(false); return; }
-    const placeholders = selectedModels.map((model) => ({ message_id: msg.id, user_id: user.id, model, status: "loading" as const, content: null, error_message: null, included_in_synthesis: true }));
+    const placeholders = modelsToUse.map((model) => ({ message_id: msg.id, user_id: user.id, model, status: "loading" as const, content: null, error_message: null, included_in_synthesis: true }));
     const { data: responseRows } = await supabase.from("model_responses").insert(placeholders).select();
     const newMsg: MessageWithResponses = {
       id: msg.id, content: msg.content, enhanced_content: null, final_content: null,
@@ -139,10 +148,11 @@ export default function ChatWorkspace() {
     };
     setMessages((prev) => [...prev, newMsg]);
     const modeConfig = AI_CONFIG.costModes[costMode] || AI_CONFIG.costModes.balanced;
-    const calls = selectedModels.map(async (model) => {
+    const requestType = chatMode === "superfiesta" ? "auto_route" : "model_compare";
+    const calls = modelsToUse.map(async (model) => {
       const start = Date.now();
       try {
-        const resp = await supabase.functions.invoke("multi-model-chat", { body: { prompt: fullPrompt, model, projectId, chatId, messageId: msg.id, max_tokens: modeConfig.maxOutputTokens } });
+        const resp = await supabase.functions.invoke("multi-model-chat", { body: { prompt: fullPrompt, model, projectId, chatId, messageId: msg.id, max_tokens: modeConfig.maxOutputTokens, request_type: requestType } });
         const latency = Date.now() - start;
         const responseId = newMsg.responses.find((r) => r.model === model)?.id;
         if (!responseId) return;
@@ -206,6 +216,7 @@ export default function ChatWorkspace() {
   const selectedFilesForComposer = projectFiles.filter((f) => selectedFileIds.includes(f.id)).map((f) => ({ id: f.id, name: f.file_name }));
 
   const hasMessages = messages.length > 0;
+  const isSuperFiesta = chatMode === "superfiesta";
 
   return (
     <div className="flex flex-col h-full relative">
@@ -218,9 +229,9 @@ export default function ChatWorkspace() {
           <div className="flex flex-col items-center justify-center min-h-full px-4 py-8">
             <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
             <AnimatePresence mode="wait">
-              {chatMode === "superfiesta" ? (
+              {isSuperFiesta ? (
                 <motion.div key="superfiesta" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }} className="w-full max-w-3xl mt-8">
-                  <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} />
+                  <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} />
                 </motion.div>
               ) : (
                 <motion.div key="multichat" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }} className="w-full mt-8">
@@ -237,7 +248,8 @@ export default function ChatWorkspace() {
             <div className="flex justify-center">
               <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
             </div>
-            {chatMode === "multichat" && (
+            {/* Multi-Chat columns header — only in multichat mode */}
+            {!isSuperFiesta && (
               <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />
             )}
             {messages.map((msg) => (
@@ -252,13 +264,48 @@ export default function ChatWorkspace() {
                     <p className="text-xs text-muted-foreground mt-1.5 italic">Enhanced: {msg.enhanced_content.slice(0, 100)}...</p>
                   )}
                 </div>
-                <ResponseGrid layout={layout}>
-                  {msg.responses.map((resp, i) => (
-                    <ModelResponseCard key={resp.id} model={resp.model} content={resp.content} status={resp.status as "loading" | "success" | "error"} errorMessage={resp.error_message} includedInSynthesis={resp.included_in_synthesis} onToggleInclude={() => toggleInclude(resp.id, msg.id)} onRetry={() => handleRetry(msg.id, resp.model)} latencyMs={resp.latency_ms} colorIndex={i} />
-                  ))}
-                </ResponseGrid>
-                {msg.responses.some((r) => r.status === "success") && (
-                  <SynthesisPanel messageId={msg.id} prompt={msg.content} responses={msg.responses.map((r) => ({ model: r.model, content: r.content || "", included: r.included_in_synthesis }))} existingSynthesis={msg.synthesis} onSynthesized={(content) => { setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, synthesis: content } : m)); }} />
+
+                {/* Super Fiesta: single clean response. Multi-Chat: grid comparison */}
+                {isSuperFiesta ? (
+                  <div className="max-w-3xl">
+                    {msg.responses.map((resp) => (
+                      <div key={resp.id} className="glass-card p-4">
+                        {resp.status === "loading" && (
+                          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                            <div className="h-4 w-4 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
+                            Thinking...
+                          </div>
+                        )}
+                        {resp.status === "error" && (
+                          <div className="text-destructive text-sm">
+                            <p>Error: {resp.error_message || "Something went wrong"}</p>
+                            <button onClick={() => handleRetry(msg.id, resp.model)} className="text-xs text-primary hover:underline mt-1">Retry</button>
+                          </div>
+                        )}
+                        {resp.status === "success" && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Zap className="h-3 w-3 text-primary/60" />
+                              <span>{AI_CONFIG.modelLabels[resp.model] || resp.model}</span>
+                              {resp.latency_ms && <span>· {(resp.latency_ms / 1000).toFixed(1)}s</span>}
+                            </div>
+                            <div className="text-sm whitespace-pre-wrap">{resp.content}</div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <ResponseGrid layout={layout}>
+                      {msg.responses.map((resp, i) => (
+                        <ModelResponseCard key={resp.id} model={resp.model} content={resp.content} status={resp.status as "loading" | "success" | "error"} errorMessage={resp.error_message} includedInSynthesis={resp.included_in_synthesis} onToggleInclude={() => toggleInclude(resp.id, msg.id)} onRetry={() => handleRetry(msg.id, resp.model)} latencyMs={resp.latency_ms} colorIndex={i} />
+                      ))}
+                    </ResponseGrid>
+                    {msg.responses.some((r) => r.status === "success") && (
+                      <SynthesisPanel messageId={msg.id} prompt={msg.content} responses={msg.responses.map((r) => ({ model: r.model, content: r.content || "", included: r.included_in_synthesis }))} existingSynthesis={msg.synthesis} onSynthesized={(content) => { setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, synthesis: content } : m)); }} />
+                    )}
+                  </>
                 )}
               </div>
             ))}
@@ -281,6 +328,7 @@ export default function ChatWorkspace() {
           disabled={sending}
           enhancing={enhancing}
           enabledModels={enabledModels}
+          chatMode={chatMode}
         />
       )}
 
