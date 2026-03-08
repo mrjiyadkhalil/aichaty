@@ -264,7 +264,7 @@ export default function ChatWorkspace() {
   const isSuperFiesta = chatMode === "superfiesta";
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Multi-chat model bar */}
       {!isSuperFiesta && hasMessages && (
         <div className="relative z-20 shrink-0">
