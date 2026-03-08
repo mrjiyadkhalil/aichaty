@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Search, Shield, ShieldOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { PlanBadge } from "@/components/PlanBadge";
 import { toast } from "sonner";
 
 export default function AdminUsers() {
@@ -102,6 +103,7 @@ export default function AdminUsers() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Plan</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Projects</TableHead>
@@ -117,6 +119,7 @@ export default function AdminUsers() {
                   return (
                     <TableRow key={u.user_id} className="cursor-pointer hover:bg-muted/50">
                       <TableCell className="font-medium" onClick={() => navigate(`/admin/users/${u.user_id}`)}>{u.display_name || "—"}</TableCell>
+                      <TableCell onClick={() => navigate(`/admin/users/${u.user_id}`)}><PlanBadge plan={u.plan || "free"} /></TableCell>
                       <TableCell onClick={() => navigate(`/admin/users/${u.user_id}`)}>
                         <div className="flex gap-1">
                           {u.roles?.map((r: string) => <StatusBadge key={r} status={r} />)}

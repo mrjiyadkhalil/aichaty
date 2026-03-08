@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { FolderOpen, MessageSquare, LogOut, ChevronDown, Settings, Plus, Shield, Bookmark, BookOpen, Trash2, Pencil } from "lucide-react";
+import { FolderOpen, MessageSquare, LogOut, ChevronDown, Settings, Plus, Shield, Bookmark, BookOpen, Trash2, Pencil, Crown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdmin";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -177,6 +177,12 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
             <SidebarMenuButton onClick={() => navigate("/bookmarks")} isActive={location.pathname === "/bookmarks"} tooltip="Bookmarks" className="h-9 rounded-lg text-[13px] transition-colors duration-150">
               <Bookmark className="h-4 w-4 shrink-0" />
               {!collapsed && <span>Bookmarks</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => navigate("/pricing")} isActive={location.pathname === "/pricing"} tooltip="Pricing" className="h-9 rounded-lg text-[13px] transition-colors duration-150">
+              <Crown className="h-4 w-4 shrink-0" />
+              {!collapsed && <span>Pricing</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
           {isAdmin && (

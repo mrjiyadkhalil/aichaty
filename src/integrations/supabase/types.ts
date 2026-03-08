@@ -506,6 +506,7 @@ export type Database = {
           display_name: string | null
           id: string
           last_active_at: string | null
+          plan: string
           status: string
           suspended_until: string | null
           updated_at: string
@@ -524,6 +525,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           last_active_at?: string | null
+          plan?: string
           status?: string
           suspended_until?: string | null
           updated_at?: string
@@ -542,6 +544,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           last_active_at?: string | null
+          plan?: string
           status?: string
           suspended_until?: string | null
           updated_at?: string
@@ -758,6 +761,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscription_plans: {
+        Row: {
+          created_at: string
+          features: Json
+          id: string
+          plan_name: string
+          price_monthly: number
+          price_yearly: number
+        }
+        Insert: {
+          created_at?: string
+          features?: Json
+          id?: string
+          plan_name: string
+          price_monthly?: number
+          price_yearly?: number
+        }
+        Update: {
+          created_at?: string
+          features?: Json
+          id?: string
+          plan_name?: string
+          price_monthly?: number
+          price_yearly?: number
+        }
+        Relationships: []
       }
       synthesis_results: {
         Row: {
@@ -1054,6 +1084,48 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          browser: string | null
+          created_at: string
+          device_name: string | null
+          id: string
+          ip_address: string | null
+          is_current: boolean
+          last_active: string
+          location: string | null
+          os: string | null
+          session_token: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          created_at?: string
+          device_name?: string | null
+          id?: string
+          ip_address?: string | null
+          is_current?: boolean
+          last_active?: string
+          location?: string | null
+          os?: string | null
+          session_token?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          created_at?: string
+          device_name?: string | null
+          id?: string
+          ip_address?: string | null
+          is_current?: boolean
+          last_active?: string
+          location?: string | null
+          os?: string | null
+          session_token?: string | null
           user_id?: string
         }
         Relationships: []

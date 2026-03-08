@@ -86,6 +86,10 @@ Deno.serve(async (req) => {
       case "get_api_keys": return await getApiKeys(sb);
       case "update_api_key": return await updateApiKey(sb, userId, body);
       case "init_default_api_keys": return await initDefaultApiKeys(sb, userId);
+      case "update_user_plan": return await updateUserPlan(sb, userId, body);
+      case "get_plan_stats": return await getPlanStats(sb);
+      case "revoke_user_sessions": return await revokeUserSessions(sb, userId, body);
+      case "get_user_sessions": return await getUserSessions(sb, body);
       default: return json({ error: `Unknown action: ${action}` }, 400);
     }
   } catch (e: any) {
@@ -902,6 +906,47 @@ async function initDefaultApiKeys(sb: any, adminId: string) {
   await sb.from("admin_audit_logs").insert({
     admin_user_id: adminId, action_type: "init_default_api_keys",
     target_type: "system", target_id: "api_keys",
+  });
+  return json({ success: true });
+}
+
+// ==================== PLAN MANAGEMENT ====================
+
+async function updateUserPlan(sb: any, adminId: string, body: any) {
+  const { target_user_id, plan } = body;
+  if (!target_user_id || !plan) throw new Error("target_user_id and plan required");
+  if (!["free", "pro", "enterprise"].includes(plan)) throw new Error("Invalid plan");
+  await sb.from("profiles").update({ plan }).eq("user_id", target_user_id);
+  await sb.from("admin_audit_logs").insert({
+    admin_user_id: adminId, action_type: "update_user_plan",
+    target_type: "user", target_id: target_user_id, details_json: { plan },
+  });
+  return json({ success: true });
+}
+
+async function getPlanStats(sb: any) {
+  const { data: profiles } = await sb.from("profiles").select("plan");
+  const counts: Record<string, number> = { free: 0, pro: 0, enterprise: 0 };
+  (profiles || []).forEach((p: any) => { counts[p.plan || "free"] = (counts[p.plan || "free"] || 0) + 1; });
+  return json({ planStats: counts });
+}
+
+// ==================== SESSION MANAGEMENT (ADMIN) ====================
+
+async function getUserSessions(sb: any, body: any) {
+  const { target_user_id } = body;
+  if (!target_user_id) throw new Error("target_user_id required");
+  const { data } = await sb.from("user_sessions").select("*").eq("user_id", target_user_id).order("last_active", { ascending: false });
+  return json({ sessions: data || [] });
+}
+
+async function revokeUserSessions(sb: any, adminId: string, body: any) {
+  const { target_user_id } = body;
+  if (!target_user_id) throw new Error("target_user_id required");
+  await sb.from("user_sessions").delete().eq("user_id", target_user_id);
+  await sb.from("admin_audit_logs").insert({
+    admin_user_id: adminId, action_type: "revoke_user_sessions",
+    target_type: "user", target_id: target_user_id,
   });
   return json({ success: true });
 }

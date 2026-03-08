@@ -22,6 +22,7 @@ import ChatWorkspace from "./pages/ChatWorkspace";
 import Settings from "./pages/Settings";
 import Bookmarks from "./pages/Bookmarks";
 import Prompts from "./pages/Prompts";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -98,6 +99,7 @@ function AppWithShortcuts() {
       <Routes>
         <Route path="/" element={<LandingRoute />} />
         <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+        <Route path="/pricing" element={<Pricing />} />
         <Route path="/chat" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
         <Route path="/chat/:id" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
         <Route path="/project/:id" element={<ProtectedRoute><AppLayout><ProjectDetail /></AppLayout></ProtectedRoute>} />

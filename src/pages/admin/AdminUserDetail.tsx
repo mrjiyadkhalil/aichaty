@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { MetricCard } from "@/components/admin/MetricCard";
+import { PlanBadge } from "@/components/PlanBadge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Shield, ShieldOff, Ban, CheckCircle, Zap, ZapOff, Clock, Eye, DollarSign, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Shield, ShieldOff, Ban, CheckCircle, Zap, ZapOff, Clock, Eye, DollarSign, Save, Loader2, Crown, Monitor, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { PlanName } from "@/hooks/useSubscription";
 
 export default function AdminUserDetail() {
   const { id } = useParams<{ id: string }>();
@@ -30,17 +32,24 @@ export default function AdminUserDetail() {
   const [suspendReason, setSuspendReason] = useState("");
   const [softCap, setSoftCap] = useState("");
   const [hardCap, setHardCap] = useState("");
+  const [planModal, setPlanModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanName>("free");
+  const [userSessions, setUserSessions] = useState<any[]>([]);
 
   const load = () => {
     setLoading(true);
-    adminApi("get_user_detail", { target_user_id: id })
-      .then((d) => {
-        setDetail(d);
-        setSoftCap(d.profile?.custom_soft_cap?.toString() || "");
-        setHardCap(d.profile?.custom_hard_cap?.toString() || "");
-      })
-      .catch(() => toast.error("Failed to load user"))
-      .finally(() => setLoading(false));
+    Promise.all([
+      adminApi("get_user_detail", { target_user_id: id }),
+      adminApi("get_user_sessions", { target_user_id: id }),
+    ]).then(([d, s]) => {
+      setDetail(d);
+      setSoftCap(d.profile?.custom_soft_cap?.toString() || "");
+      setHardCap(d.profile?.custom_hard_cap?.toString() || "");
+      setSelectedPlan((d.profile?.plan as PlanName) || "free");
+      setUserSessions(s.sessions || []);
+    })
+    .catch(() => toast.error("Failed to load user"))
+    .finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, [id]);
@@ -95,7 +104,10 @@ export default function AdminUserDetail() {
 
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold font-['Space_Grotesk']">{detail.profile?.display_name || "User"}</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-2xl font-bold font-['Space_Grotesk']">{detail.profile?.display_name || "User"}</h1>
+            <PlanBadge plan={(detail.profile?.plan as PlanName) || "free"} />
+          </div>
           <p className="text-sm text-muted-foreground">{detail.profile?.user_id}</p>
           {detail.profile?.last_active_at && <p className="text-xs text-muted-foreground">Last active: {new Date(detail.profile.last_active_at).toLocaleString()}</p>}
           {detail.profile?.ban_reason && <p className="text-xs text-destructive mt-1">Ban reason: {detail.profile.ban_reason}</p>}
@@ -123,11 +135,25 @@ export default function AdminUserDetail() {
             <Eye className="h-4 w-4" /> Impersonate
           </Button>
 
+          {/* Plan management */}
+          <Button variant="outline" size="sm" onClick={() => setPlanModal(true)} className="gap-1.5">
+            <Crown className="h-4 w-4" /> Change Plan
+          </Button>
+
           {/* Quota Override */}
           <Button variant="outline" size="sm" onClick={() => setQuotaModal(true)} className="gap-1.5">
             <DollarSign className="h-4 w-4" /> Set Quota
           </Button>
-
+          
+          {/* Revoke Sessions */}
+          <Button variant="outline" size="sm" disabled={acting || userSessions.length === 0} onClick={async () => {
+            setActing(true);
+            try { await adminApi("revoke_user_sessions", { target_user_id: id }); toast.success("All sessions revoked"); load(); }
+            catch (e: any) { toast.error(e.message || "Failed"); }
+            setActing(false);
+          }} className="gap-1.5">
+            <Monitor className="h-4 w-4" /> Revoke Sessions ({userSessions.length})
+          </Button>
           {/* Role management */}
           {isAdmin ? (
             <Button variant="outline" size="sm" disabled={acting} onClick={() => handleAction("update_user_role", { role: "admin", grant: false })} className="gap-1.5">
@@ -241,6 +267,42 @@ export default function AdminUserDetail() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setQuotaModal(false)}>Cancel</Button>
             <Button disabled={acting} onClick={handleSaveQuota} className="gap-1.5">
+              {acting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Plan Modal */}
+      <Dialog open={planModal} onOpenChange={setPlanModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Subscription Plan</DialogTitle>
+            <DialogDescription>Manually set the user's subscription plan.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label>Plan</Label>
+            <Select value={selectedPlan} onValueChange={(v) => setSelectedPlan(v as PlanName)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="pro">Pro ($12/mo)</SelectItem>
+                <SelectItem value="enterprise">Enterprise ($49/mo)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPlanModal(false)}>Cancel</Button>
+            <Button disabled={acting} onClick={async () => {
+              setActing(true);
+              try {
+                await adminApi("update_user_plan", { target_user_id: id, plan: selectedPlan });
+                toast.success("Plan updated");
+                setPlanModal(false);
+                load();
+              } catch (e: any) { toast.error(e.message || "Failed"); }
+              setActing(false);
+            }} className="gap-1.5">
               {acting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save
             </Button>
           </DialogFooter>

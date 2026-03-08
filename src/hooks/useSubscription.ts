@@ -1,0 +1,110 @@
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+
+export type PlanName = "free" | "pro" | "enterprise";
+
+export interface PlanFeatures {
+  messages_per_day: number;
+  max_output_tokens: number;
+  models: string[] | "all";
+  file_uploads: boolean;
+  file_max_mb?: number;
+  projects: boolean;
+  multi_chat: boolean;
+  synthesis: boolean;
+  prompt_library: boolean;
+  bookmarks: boolean;
+  export: boolean;
+  custom_system_prompt: boolean;
+  priority_speed?: boolean;
+  admin_dashboard?: boolean;
+  usage_cap_soft: number;
+  usage_cap_hard: number;
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  plan_name: PlanName;
+  price_monthly: number;
+  price_yearly: number;
+  features: PlanFeatures;
+}
+
+interface UseSubscriptionReturn {
+  plan: PlanName;
+  features: PlanFeatures | null;
+  plans: SubscriptionPlan[];
+  loading: boolean;
+  canAccess: (feature: keyof PlanFeatures) => boolean;
+  isModelAllowed: (model: string) => boolean;
+  refresh: () => void;
+}
+
+const DEFAULT_FREE_FEATURES: PlanFeatures = {
+  messages_per_day: 20,
+  max_output_tokens: 2048,
+  models: ["google/gemini-2.5-flash", "openai/gpt-5-nano"],
+  file_uploads: false,
+  projects: false,
+  multi_chat: false,
+  synthesis: false,
+  prompt_library: false,
+  bookmarks: false,
+  export: false,
+  custom_system_prompt: false,
+  usage_cap_soft: 5,
+  usage_cap_hard: 10,
+};
+
+export function useSubscription(): UseSubscriptionReturn {
+  const { user } = useAuth();
+  const [plan, setPlan] = useState<PlanName>("free");
+  const [features, setFeatures] = useState<PlanFeatures | null>(null);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    if (!user) { setLoading(false); return; }
+    setLoading(true);
+
+    const [profileRes, plansRes] = await Promise.all([
+      supabase.from("profiles").select("plan").eq("user_id", user.id).single(),
+      supabase.from("subscription_plans").select("*"),
+    ]);
+
+    const userPlan = ((profileRes.data as any)?.plan as PlanName) || "free";
+    setPlan(userPlan);
+
+    const allPlans = (plansRes.data || []).map((p: any) => ({
+      id: p.id,
+      plan_name: p.plan_name as PlanName,
+      price_monthly: Number(p.price_monthly),
+      price_yearly: Number(p.price_yearly),
+      features: p.features as PlanFeatures,
+    }));
+    setPlans(allPlans);
+
+    const currentPlan = allPlans.find((p) => p.plan_name === userPlan);
+    setFeatures(currentPlan?.features || DEFAULT_FREE_FEATURES);
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const canAccess = useCallback((feature: keyof PlanFeatures): boolean => {
+    if (!features) return false;
+    const val = features[feature];
+    if (typeof val === "boolean") return val;
+    if (typeof val === "number") return val !== 0;
+    return true;
+  }, [features]);
+
+  const isModelAllowed = useCallback((model: string): boolean => {
+    if (!features) return false;
+    if (features.models === "all") return true;
+    return (features.models as string[]).includes(model);
+  }, [features]);
+
+  return { plan, features, plans, loading, canAccess, isModelAllowed, refresh: fetchData };
+}

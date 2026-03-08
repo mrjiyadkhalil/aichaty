@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { adminApi } from "@/hooks/useAdmin";
 import { MetricCard } from "@/components/admin/MetricCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, FolderOpen, MessageSquare, Zap, DollarSign, AlertTriangle, Activity, Ban, Link2 } from "lucide-react";
+import { Users, FolderOpen, MessageSquare, Zap, DollarSign, AlertTriangle, Activity, Ban, Link2, Crown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,12 +12,15 @@ const PIE_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--mute
 export default function AdminDashboard() {
   const [period, setPeriod] = useState("7d");
   const [metrics, setMetrics] = useState<any>(null);
+  const [planStats, setPlanStats] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    adminApi("get_metrics", { period })
-      .then(setMetrics)
+    Promise.all([
+      adminApi("get_metrics", { period }),
+      adminApi("get_plan_stats"),
+    ]).then(([m, p]) => { setMetrics(m); setPlanStats(p.planStats || {}); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [period]);
@@ -68,6 +71,9 @@ export default function AdminDashboard() {
         <MetricCard label="Failed" value={metrics.failedRequests} icon={<AlertTriangle className="h-5 w-5" />} />
         <MetricCard label="Errors" value={metrics.totalErrors} icon={<AlertTriangle className="h-5 w-5" />} />
         <MetricCard label="Share Links" value={metrics.activeShareLinks} icon={<Link2 className="h-5 w-5" />} />
+        <MetricCard label="Free Users" value={planStats.free || 0} icon={<Users className="h-5 w-5" />} />
+        <MetricCard label="Pro Users" value={planStats.pro || 0} icon={<Crown className="h-5 w-5" />} />
+        <MetricCard label="Enterprise" value={planStats.enterprise || 0} icon={<Crown className="h-5 w-5" />} />
       </div>
 
       {/* Charts Row */}

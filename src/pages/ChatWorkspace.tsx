@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUsage } from "@/hooks/useUsage";
 import { usePreferences } from "@/hooks/usePreferences";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { PromptComposer } from "@/components/PromptComposer";
 import { ModelResponseCard } from "@/components/ModelResponseCard";
@@ -15,6 +16,7 @@ import { SuperFiestaView } from "@/components/SuperFiestaView";
 import { MultiChatColumns } from "@/components/MultiChatColumns";
 import { ExploreSection } from "@/components/ExploreSection";
 import { SavePromptButton } from "@/components/SavePromptButton";
+import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { AI_CONFIG } from "@/lib/aiConfig";
 import { pickBestModel } from "@/lib/autoRouter";
 import { toast } from "sonner";
@@ -33,6 +35,7 @@ export default function ChatWorkspace() {
   const navigate = useNavigate();
   const { isAtCap, isNearCap, refresh: refreshUsage } = useUsage();
   const { costMode, defaultLayout } = usePreferences();
+  const { plan, features, canAccess, isModelAllowed } = useSubscription();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -55,7 +58,9 @@ export default function ChatWorkspace() {
   const [imageMimeType, setImageMimeType] = useState<string | null>(null);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
   const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
-
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState("");
+  const [upgradeRequiredPlan, setUpgradeRequiredPlan] = useState<"pro" | "enterprise">("pro");
   useEffect(() => { setLayout(defaultLayout); }, [defaultLayout]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -270,7 +275,15 @@ export default function ChatWorkspace() {
       <div className="flex-1 overflow-y-auto">
         {!hasMessages ? (
           <div className="flex flex-col items-center justify-center min-h-full px-4 py-16">
-            <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
+            <ChatModeSwitcher mode={chatMode} onModeChange={(mode) => {
+              if (mode === "multichat" && !canAccess("multi_chat")) {
+                setUpgradeFeature("Multi-Chat Mode");
+                setUpgradeRequiredPlan("pro");
+                setShowUpgrade(true);
+                return;
+              }
+              setChatMode(mode);
+            }} />
             <div className="w-full mt-10">
               <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} showGreeting={isSuperFiesta} onImageSelected={(b64, mime) => { setImageBase64(b64); setImageMimeType(mime); }} onImageRemoved={() => { setImageBase64(null); setImageMimeType(null); }} hasImage={!!imageBase64} />
             </div>
@@ -370,6 +383,7 @@ export default function ChatWorkspace() {
 
       <PromptEnhancerModal open={showEnhancer} onClose={() => setShowEnhancer(false)} originalPrompt={enhanceOriginal} enhancedPrompt={enhancedPrompt} loading={enhancing} onKeepOriginal={() => setShowEnhancer(false)} onUseEnhanced={(p) => { setShowEnhancer(false); handleSend(p); }} />
       {projectId && <FileContextModal open={showFileModal} onClose={() => setShowFileModal(false)} projectId={projectId} projectFiles={projectFiles} selectedFileIds={selectedFileIds} onToggleFile={toggleFileSelection} onFilesUploaded={async () => { const { data } = await supabase.from("project_files").select("*").eq("project_id", projectId); if (data) setProjectFiles(data as ProjectFile[]); }} />}
+      <UpgradePrompt open={showUpgrade} onClose={() => setShowUpgrade(false)} feature={upgradeFeature} requiredPlan={upgradeRequiredPlan} />
     </div>
   );
 }
