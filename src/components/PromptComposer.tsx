@@ -41,7 +41,9 @@ export function PromptComposer({
   onImageSelected, onImageRemoved, hasImage = false,
 }: PromptComposerProps) {
   const [prompt, setPrompt] = useState("");
-  const allowedModels = enabledModels || AI_CONFIG.allModels;
+  const { allModelIds, modelShortLabels: dbShortLabels } = useModels();
+  const allowedModels = enabledModels || allModelIds;
+  const displayModels = allModelIds.length > 0 ? allModelIds : AI_CONFIG.allModels;
   const isSuperFiesta = chatMode === "superfiesta";
 
   const { isRecording, toggleRecording } = useVoiceInput((text) => {
