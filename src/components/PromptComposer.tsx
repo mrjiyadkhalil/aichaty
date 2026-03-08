@@ -1,20 +1,12 @@
-import { useState, useRef } from "react";
-import { Send, Sparkles, Paperclip, Settings2, X } from "lucide-react";
+import { useState } from "react";
+import { Send, Sparkles, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-
-const AVAILABLE_MODELS = [
-  { id: "google/gemini-3-flash-preview", label: "Gemini 3 Flash", short: "G3F" },
-  { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash", short: "G2.5F" },
-  { id: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro", short: "G2.5P" },
-  { id: "openai/gpt-5", label: "GPT-5", short: "GPT5" },
-  { id: "openai/gpt-5-mini", label: "GPT-5 Mini", short: "GPT5m" },
-  { id: "openai/gpt-5-nano", label: "GPT-5 Nano", short: "GPT5n" },
-];
+import { AI_CONFIG } from "@/lib/aiConfig";
 
 interface SelectedFile {
   id: string;
@@ -34,6 +26,7 @@ interface PromptComposerProps {
   hasProjectInstruction: boolean;
   disabled: boolean;
   enhancing: boolean;
+  enabledModels?: string[];
 }
 
 export function PromptComposer({
@@ -49,13 +42,20 @@ export function PromptComposer({
   hasProjectInstruction,
   disabled,
   enhancing,
+  enabledModels,
 }: PromptComposerProps) {
   const [prompt, setPrompt] = useState("");
+
+  const allowedModels = enabledModels || AI_CONFIG.allModels;
 
   const handleSend = () => {
     if (!prompt.trim()) return;
     if (selectedModels.length === 0) {
       toast.warning("Select at least one model before sending");
+      return;
+    }
+    if (prompt.length > AI_CONFIG.limits.maxPromptLength) {
+      toast.warning(`Prompt too long (max ${AI_CONFIG.limits.maxPromptLength} chars)`);
       return;
     }
     onSend(prompt.trim());
@@ -75,16 +75,17 @@ export function PromptComposer({
         {/* Model chips */}
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-xs text-muted-foreground mr-1">Models:</span>
-          {AVAILABLE_MODELS.map((model) => {
-            const isSelected = selectedModels.includes(model.id);
+          {AI_CONFIG.allModels.map((modelId) => {
+            const isSelected = selectedModels.includes(modelId);
+            const isEnabled = allowedModels.includes(modelId);
             return (
               <Badge
-                key={model.id}
+                key={modelId}
                 variant={isSelected ? "default" : "outline"}
-                className="cursor-pointer text-xs transition-all hover:scale-105 select-none"
-                onClick={() => onToggleModel(model.id)}
+                className={`cursor-pointer text-xs transition-all select-none ${!isEnabled ? "opacity-40 cursor-not-allowed" : "hover:scale-105"}`}
+                onClick={() => isEnabled && onToggleModel(modelId)}
               >
-                {model.short}
+                {AI_CONFIG.modelShortLabels[modelId] || modelId}
                 {isSelected && <X className="h-3 w-3 ml-1" />}
               </Badge>
             );
@@ -151,15 +152,18 @@ export function PromptComposer({
                 Attach File Context
               </Button>
             </div>
-            <Button
-              size="sm"
-              className="h-8 gap-1.5"
-              onClick={handleSend}
-              disabled={!prompt.trim() || disabled}
-            >
-              <Send className="h-3.5 w-3.5" />
-              Send to Models
-            </Button>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{prompt.length}/{AI_CONFIG.limits.maxPromptLength}</span>
+              <Button
+                size="sm"
+                className="h-8 gap-1.5"
+                onClick={handleSend}
+                disabled={!prompt.trim() || disabled}
+              >
+                <Send className="h-3.5 w-3.5" />
+                Send to Models
+              </Button>
+            </div>
           </div>
         </div>
       </div>

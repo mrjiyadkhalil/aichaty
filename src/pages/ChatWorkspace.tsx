@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useUsage } from "@/hooks/useUsage";
+import { usePreferences } from "@/hooks/usePreferences";
 import { supabase } from "@/integrations/supabase/client";
 import { PromptComposer } from "@/components/PromptComposer";
 import { ModelResponseCard } from "@/components/ModelResponseCard";
@@ -9,6 +11,7 @@ import { SynthesisPanel } from "@/components/SynthesisPanel";
 import { PromptEnhancerModal } from "@/components/PromptEnhancerModal";
 import { FileContextModal } from "@/components/FileContextModal";
 import { EmptyState } from "@/components/EmptyState";
+import { AI_CONFIG } from "@/lib/aiConfig";
 import { toast } from "sonner";
 import { MessageSquare } from "lucide-react";
 
@@ -45,6 +48,8 @@ export default function ChatWorkspace() {
   const { id: chatId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isAtCap, isNearCap, refresh: refreshUsage } = useUsage();
+  const { costMode, defaultLayout } = usePreferences();
 
   const [projectId, setProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState("");
@@ -66,6 +71,12 @@ export default function ChatWorkspace() {
   // File modal
   const [showFileModal, setShowFileModal] = useState(false);
 
+  // Apply preferences
+  useEffect(() => { setLayout(defaultLayout); }, [defaultLayout]);
+
+  // Get enabled models based on cost mode
+  const enabledModels = AI_CONFIG.costModes[costMode]?.enabledModels || AI_CONFIG.costModes.balanced.enabledModels;
+
   // Load chat data
   useEffect(() => {
     if (!chatId || !user) return;
@@ -78,13 +89,12 @@ export default function ChatWorkspace() {
       if (project) {
         setProjectName(project.name);
         setProjectInstruction(project.custom_instruction || "");
-        if (project.preferred_models?.length) setSelectedModels(project.preferred_models);
+        if (project.preferred_models?.length) setSelectedModels(project.preferred_models.filter((m: string) => enabledModels.includes(m)));
       }
 
       const { data: files } = await supabase.from("project_files").select("*").eq("project_id", chat.project_id);
       if (files) setProjectFiles(files as ProjectFile[]);
 
-      // Load messages
       const { data: msgs } = await supabase.from("messages").select("*").eq("chat_id", chatId).order("created_at", { ascending: true });
       if (!msgs) return;
 
@@ -112,6 +122,10 @@ export default function ChatWorkspace() {
   }, [chatId, user, navigate]);
 
   const toggleModel = (modelId: string) => {
+    if (!enabledModels.includes(modelId)) {
+      toast.warning("This model is not available in your current cost mode");
+      return;
+    }
     setSelectedModels((prev) => prev.includes(modelId) ? prev.filter((m) => m !== modelId) : [...prev, modelId]);
   };
 
@@ -128,7 +142,7 @@ export default function ChatWorkspace() {
 
     try {
       const { data, error } = await supabase.functions.invoke("enhance-prompt", {
-        body: { prompt, projectInstruction: useInstruction ? projectInstruction : undefined },
+        body: { prompt, projectInstruction: useInstruction ? projectInstruction : undefined, projectId, chatId },
       });
       if (error) throw error;
       setEnhancedPrompt(data?.enhanced || prompt);
@@ -144,9 +158,18 @@ export default function ChatWorkspace() {
       toast.error("Select at least one model");
       return;
     }
+
+    // Spend control checks
+    if (isAtCap) {
+      toast.error("Monthly usage limit reached. Check Settings for details.");
+      return;
+    }
+    if (isNearCap) {
+      toast.warning("Approaching usage limit");
+    }
+
     setSending(true);
 
-    // Build file context
     let fileContext = "";
     if (selectedFileIds.length > 0) {
       const selectedFiles = projectFiles.filter((f) => selectedFileIds.includes(f.id));
@@ -159,7 +182,6 @@ export default function ChatWorkspace() {
       prompt,
     ].filter(Boolean).join("\n\n");
 
-    // Save message
     const { data: msg, error: msgErr } = await supabase
       .from("messages")
       .insert({ chat_id: chatId, user_id: user.id, content: prompt })
@@ -167,7 +189,6 @@ export default function ChatWorkspace() {
       .single();
     if (msgErr || !msg) { toast.error("Failed to save message"); setSending(false); return; }
 
-    // Create placeholder responses
     const placeholders = selectedModels.map((model) => ({
       message_id: msg.id, user_id: user.id, model, status: "loading" as const,
       content: null, error_message: null, included_in_synthesis: true,
@@ -185,12 +206,13 @@ export default function ChatWorkspace() {
     };
     setMessages((prev) => [...prev, newMsg]);
 
-    // Call models in parallel
+    const modeConfig = AI_CONFIG.costModes[costMode] || AI_CONFIG.costModes.balanced;
+
     const calls = selectedModels.map(async (model) => {
       const start = Date.now();
       try {
         const resp = await supabase.functions.invoke("multi-model-chat", {
-          body: { prompt: fullPrompt, model, projectId },
+          body: { prompt: fullPrompt, model, projectId, chatId, messageId: msg.id, max_tokens: modeConfig.maxOutputTokens },
         });
         const latency = Date.now() - start;
         const responseId = newMsg.responses.find((r) => r.model === model)?.id;
@@ -203,6 +225,7 @@ export default function ChatWorkspace() {
           } : m));
         } else {
           const aiContent = resp.data?.content || "No response";
+          if (resp.data?.warning) toast.warning(resp.data.warning);
           await supabase.from("model_responses").update({ status: "success", content: aiContent, latency_ms: latency }).eq("id", responseId);
           setMessages((prev) => prev.map((m) => m.id === msg.id ? {
             ...m, responses: m.responses.map((r) => r.model === model ? { ...r, status: "success", content: aiContent, latency_ms: latency } : r),
@@ -222,8 +245,8 @@ export default function ChatWorkspace() {
 
     await Promise.all(calls);
     setSending(false);
+    refreshUsage();
 
-    // Update chat title with first message
     if (messages.length === 0) {
       const title = prompt.slice(0, 50) + (prompt.length > 50 ? "..." : "");
       await supabase.from("chats").update({ title }).eq("id", chatId);
@@ -231,6 +254,7 @@ export default function ChatWorkspace() {
   };
 
   const handleRetry = async (messageId: string, model: string) => {
+    if (isAtCap) { toast.error("Monthly usage limit reached"); return; }
     const msg = messages.find((m) => m.id === messageId);
     if (!msg || !user) return;
     const resp = msg.responses.find((r) => r.model === model);
@@ -243,7 +267,7 @@ export default function ChatWorkspace() {
     const start = Date.now();
     try {
       const result = await supabase.functions.invoke("multi-model-chat", {
-        body: { prompt: msg.content, model, projectId },
+        body: { prompt: msg.content, model, projectId, chatId, messageId, request_type: "retry" },
       });
       const latency = Date.now() - start;
       if (result.error) throw result.error;
@@ -259,6 +283,7 @@ export default function ChatWorkspace() {
         ...m, responses: m.responses.map((r) => r.model === model ? { ...r, status: "error", error_message: e.message, latency_ms: latency } : r),
       } : m));
     }
+    refreshUsage();
   };
 
   const toggleInclude = async (responseId: string, messageId: string) => {
@@ -290,8 +315,14 @@ export default function ChatWorkspace() {
             {messages.map((msg) => (
               <div key={msg.id} className="space-y-3">
                 <div className="bg-primary/5 rounded-lg p-3 border border-primary/10">
-                  <p className="text-sm font-medium text-primary">You</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-primary">You</p>
+                    <span className="text-xs text-muted-foreground">{new Date(msg.created_at).toLocaleTimeString()}</span>
+                  </div>
                   <p className="text-sm mt-1">{msg.content}</p>
+                  {msg.enhanced_content && (
+                    <p className="text-xs text-muted-foreground mt-1 italic">Enhanced: {msg.enhanced_content.slice(0, 100)}...</p>
+                  )}
                 </div>
                 <ResponseGrid layout={layout}>
                   {msg.responses.map((resp, i) => (
@@ -341,6 +372,7 @@ export default function ChatWorkspace() {
         hasProjectInstruction={!!projectInstruction}
         disabled={sending}
         enhancing={enhancing}
+        enabledModels={enabledModels}
       />
 
       <PromptEnhancerModal
