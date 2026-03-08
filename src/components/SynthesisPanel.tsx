@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import ReactMarkdown from "react-markdown";
 
 interface SynthesisPanelProps {
   messageId: string;
@@ -49,33 +50,21 @@ export function SynthesisPanel({ messageId, prompt, responses, existingSynthesis
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleExport = () => {
-    if (!content) return;
-    const blob = new Blob([content], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "synthesis.md"; a.click();
-    URL.revokeObjectURL(url);
-  };
-
   return (
-    <div className="glass-card overflow-hidden glow-border-strong animate-fade-in">
-      <div className="py-3 px-4 flex items-center justify-between border-b border-primary/20 bg-primary/5">
-        <h3 className="text-sm font-semibold font-['Space_Grotesk'] flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <span className="text-primary">Best Final Answer</span>
+    <div className="bg-card border border-border rounded-xl overflow-hidden animate-fade-in relative" style={{ borderImage: "linear-gradient(135deg, hsl(217 91% 60% / 0.4), hsl(142 71% 45% / 0.4), hsl(262 83% 58% / 0.4)) 1" }}>
+      <div className="py-2.5 px-4 flex items-center justify-between border-b border-border">
+        <h3 className="text-[13px] font-semibold flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-muted-foreground" />
+          Best Final Answer
         </h3>
         <div className="flex items-center gap-1">
           {content && (
             <>
-              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground" onClick={handleCopy}>
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground transition-colors duration-150" onClick={handleCopy}>
                 {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />} Copy
               </Button>
-              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground" onClick={handleExport}>
-                Export
-              </Button>
-              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground" onClick={handleSynthesize} disabled={synthesizing}>
-                <RefreshCw className="h-3 w-3" /> Regenerate
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground transition-colors duration-150" onClick={handleSynthesize} disabled={synthesizing}>
+                <RefreshCw className="h-3 w-3" /> Redo
               </Button>
             </>
           )}
@@ -83,15 +72,17 @@ export function SynthesisPanel({ messageId, prompt, responses, existingSynthesis
       </div>
       <div className="p-4">
         {content ? (
-          <div className="prose-dark text-sm leading-relaxed whitespace-pre-wrap">{content}</div>
+          <div className="prose-dark">
+            <ReactMarkdown>{content}</ReactMarkdown>
+          </div>
         ) : (
           <div className="text-center py-6">
-            <Button onClick={handleSynthesize} disabled={synthesizing || includedResponses.length === 0} className="gap-2 shadow-glow hover:shadow-glow-lg transition-shadow">
+            <Button onClick={handleSynthesize} disabled={synthesizing || includedResponses.length === 0} variant="outline" className="gap-2 border-border hover:bg-muted transition-colors duration-150">
               {synthesizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               Synthesize Best Answer
             </Button>
             {includedResponses.length === 0 && (
-              <p className="text-xs text-muted-foreground mt-3">Toggle "Include in Final Answer" on model cards first</p>
+              <p className="text-xs text-muted-foreground mt-3">Toggle "Include" on model cards first</p>
             )}
           </div>
         )}

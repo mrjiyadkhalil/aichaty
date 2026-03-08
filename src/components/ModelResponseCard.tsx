@@ -30,7 +30,17 @@ const MODEL_LABELS: Record<string, string> = {
   "openai/gpt-5-nano": "GPT-5 Nano",
 };
 
-const colorVars = ["--model-1", "--model-2", "--model-3", "--model-4", "--model-5"];
+function getProviderClass(model: string): string {
+  if (model.startsWith("google/")) return "provider-border-google";
+  if (model.startsWith("openai/")) return "provider-border-openai";
+  return "";
+}
+
+function getProviderLabel(model: string): string {
+  if (model.startsWith("google/")) return "Google";
+  if (model.startsWith("openai/")) return "OpenAI";
+  return "";
+}
 
 export function ModelResponseCard({
   model, content, status, errorMessage, includedInSynthesis,
@@ -39,7 +49,6 @@ export function ModelResponseCard({
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
-  const colorVar = colorVars[colorIndex % colorVars.length];
 
   const handleCopy = async () => {
     if (!content) return;
@@ -68,53 +77,32 @@ export function ModelResponseCard({
   };
 
   return (
-    <div
-      className="glass-card overflow-hidden transition-all duration-300 hover:shadow-glow animate-fade-in"
-      style={{ borderTopColor: `hsl(var(${colorVar}))`, borderTopWidth: "2px" }}
-    >
-      <div className="py-3 px-4 flex items-center justify-between border-b border-border/30">
-        <div className="flex items-center gap-2 text-sm font-semibold font-['Space_Grotesk']">
-          <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: `hsl(var(${colorVar}))` }} />
-          {MODEL_LABELS[model] || model}
+    <div className={`bg-card border border-border rounded-xl overflow-hidden transition-all duration-150 hover:border-border/80 animate-fade-in ${getProviderClass(model)}`}>
+      {/* Header */}
+      <div className="py-2.5 px-4 flex items-center justify-between border-b border-border">
+        <div className="flex items-center gap-2">
+          <span className="text-[13px] font-semibold text-foreground">
+            {MODEL_LABELS[model] || model}
+          </span>
+          <span className="text-[11px] text-muted-foreground font-medium">
+            {getProviderLabel(model)}
+          </span>
           {latencyMs != null && status === "success" && (
-            <span className="text-xs font-normal text-muted-foreground flex items-center gap-0.5">
+            <span className="text-[11px] text-muted-foreground/70 flex items-center gap-0.5 bg-muted/50 px-1.5 py-0.5 rounded">
               <Clock className="h-3 w-3" />
               {(latencyMs / 1000).toFixed(1)}s
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          {status === "success" && (
-            <>
-              {responseId && <ResponseRating responseId={responseId} />}
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={handleCopy} title="Copy">
-                {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
-              </Button>
-              <Button variant="ghost" size="icon" className={`h-7 w-7 ${bookmarked ? "text-primary" : "text-muted-foreground hover:text-foreground"}`} onClick={handleBookmark} title="Bookmark">
-                {bookmarked ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
-              </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onToggleInclude} title="Include in Final Answer">
-                {includedInSynthesis ? (
-                  <ToggleRight className="h-4 w-4 text-primary" />
-                ) : (
-                  <ToggleLeft className="h-4 w-4 text-muted-foreground" />
-                )}
-              </Button>
-            </>
-          )}
-          {status === "error" && onRetry && (
-            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground" onClick={onRetry}>
-              <RefreshCw className="h-3 w-3" /> Retry
-            </Button>
-          )}
-        </div>
       </div>
+
+      {/* Content */}
       <div className="p-4">
         {status === "loading" && (
           <div className="space-y-2.5">
-            <Skeleton className="h-4 w-full bg-muted/50" />
-            <Skeleton className="h-4 w-4/5 bg-muted/50" />
-            <Skeleton className="h-4 w-3/5 bg-muted/50" />
+            <Skeleton className="h-4 w-full bg-muted/40" />
+            <Skeleton className="h-4 w-4/5 bg-muted/40" />
+            <Skeleton className="h-4 w-3/5 bg-muted/40" />
           </div>
         )}
         {status === "error" && (
@@ -124,10 +112,41 @@ export function ModelResponseCard({
           </div>
         )}
         {status === "success" && content && (
-          <div className="prose-dark text-sm leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+          <div className="prose-dark">
             <ReactMarkdown>{content}</ReactMarkdown>
           </div>
         )}
+      </div>
+
+      {/* Footer actions */}
+      <div className="px-4 pb-3 flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          {status === "success" && responseId && <ResponseRating responseId={responseId} />}
+        </div>
+        <div className="flex items-center gap-0.5">
+          {status === "success" && (
+            <>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground transition-colors duration-150" onClick={handleCopy} title="Copy">
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              </Button>
+              <Button variant="ghost" size="icon" className={`h-7 w-7 transition-colors duration-150 ${bookmarked ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`} onClick={handleBookmark} title="Bookmark">
+                {bookmarked ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 transition-colors duration-150" onClick={onToggleInclude} title="Include in synthesis">
+                {includedInSynthesis ? (
+                  <ToggleRight className="h-4 w-4 text-foreground" />
+                ) : (
+                  <ToggleLeft className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Button>
+            </>
+          )}
+          {status === "error" && onRetry && (
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground transition-colors duration-150" onClick={onRetry}>
+              <RefreshCw className="h-3 w-3" /> Retry
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

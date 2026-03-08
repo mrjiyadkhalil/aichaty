@@ -1,5 +1,3 @@
-import { LayoutGrid, List } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ExportMenu } from "@/components/ExportMenu";
 
@@ -13,10 +11,9 @@ interface TopBarProps {
 
 export function TopBar({ title, layout, onToggleLayout, exportMessages, projectName }: TopBarProps) {
   return (
-    <header className="h-14 border-b border-border/30 flex items-center gap-3 px-4 bg-card/30 backdrop-blur-xl shrink-0">
-      <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-      <h2 className="font-semibold text-sm truncate font-['Space_Grotesk'] flex-1 text-foreground/90">{title}</h2>
-
+    <header className="h-12 border-b border-border flex items-center gap-3 px-3 bg-background shrink-0">
+      <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors duration-150" />
+      <h2 className="font-medium text-sm truncate flex-1 text-foreground/80">{title}</h2>
       <div className="flex items-center gap-1">
         {exportMessages && projectName && (
           <ExportMenu messages={exportMessages} projectName={projectName} />
