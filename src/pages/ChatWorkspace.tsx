@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUsage } from "@/hooks/useUsage";
@@ -18,8 +18,7 @@ import { SavePromptButton } from "@/components/SavePromptButton";
 import { AI_CONFIG } from "@/lib/aiConfig";
 import { pickBestModel } from "@/lib/autoRouter";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
-import { Zap } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 interface ProjectFile { id: string; file_name: string; file_path: string; extracted_text: string | null; file_size: number | null; mime_type: string | null; }
@@ -34,6 +33,7 @@ export default function ChatWorkspace() {
   const navigate = useNavigate();
   const { isAtCap, isNearCap, refresh: refreshUsage } = useUsage();
   const { costMode, defaultLayout } = usePreferences();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [projectId, setProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState("");
@@ -53,8 +53,11 @@ export default function ChatWorkspace() {
   const [chatMode, setChatMode] = useState<ChatMode>("superfiesta");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [imageMimeType, setImageMimeType] = useState<string | null>(null);
+  const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
+  const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
 
   useEffect(() => { setLayout(defaultLayout); }, [defaultLayout]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const enabledModels = AI_CONFIG.costModes[costMode]?.enabledModels || AI_CONFIG.costModes.balanced.enabledModels;
 
@@ -74,9 +77,7 @@ export default function ChatWorkspace() {
         }
         const { data: files } = await supabase.from("project_files").select("*").eq("project_id", chatProjectId);
         if (files) setProjectFiles(files as ProjectFile[]);
-      } else {
-        setProjectName(""); setProjectInstruction(""); setProjectFiles([]);
-      }
+      } else { setProjectName(""); setProjectInstruction(""); setProjectFiles([]); }
       const { data: msgs } = await supabase.from("messages").select("*").eq("chat_id", chatId).order("created_at", { ascending: true });
       if (!msgs) return;
       const loaded: MessageWithResponses[] = [];
@@ -96,7 +97,7 @@ export default function ChatWorkspace() {
   }, [chatId, user, navigate]);
 
   const toggleModel = (modelId: string) => {
-    if (!enabledModels.includes(modelId)) { toast.warning("This model is not available in your current cost mode"); return; }
+    if (!enabledModels.includes(modelId)) { toast.warning("Model not available in current cost mode"); return; }
     setSelectedModels((prev) => prev.includes(modelId) ? prev.filter((m) => m !== modelId) : [...prev, modelId]);
   };
 
@@ -122,37 +123,27 @@ export default function ChatWorkspace() {
       const resp = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-        body: JSON.stringify({
-          prompt: fullPrompt, model, projectId, chatId: activeChatId, messageId: msgId,
-          max_tokens: modeConfig.maxOutputTokens, request_type: requestType, stream: true,
-          ...(imageBase64 ? { image_base64: imageBase64, image_mime_type: imageMimeType } : {}),
-        }),
+        body: JSON.stringify({ prompt: fullPrompt, model, projectId, chatId: activeChatId, messageId: msgId, max_tokens: modeConfig.maxOutputTokens, request_type: requestType, stream: true, ...(imageBase64 ? { image_base64: imageBase64, image_mime_type: imageMimeType } : {}) }),
       });
-
       if (!resp.ok || !resp.body) {
         const errText = await resp.text();
         let errorMsg = "AI model error";
         try { errorMsg = JSON.parse(errText).error || errorMsg; } catch {}
         throw new Error(errorMsg);
       }
-
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let fullContent = "";
       let textBuffer = "";
-
-      // Mark as streaming (use "success" status with partial content)
       setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, responses: m.responses.map((r) => r.id === responseId ? { ...r, status: "success", content: "" } : r) } : m));
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
+        let idx: number;
+        while ((idx = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, idx);
+          textBuffer = textBuffer.slice(idx + 1);
           if (line.endsWith("\r")) line = line.slice(0, -1);
           if (!line.startsWith("data: ")) continue;
           const jsonStr = line.slice(6).trim();
@@ -168,10 +159,9 @@ export default function ChatWorkspace() {
           } catch {}
         }
       }
-
       const latency = Date.now() - start;
       await supabase.from("model_responses").update({ status: "success", content: fullContent, latency_ms: latency }).eq("id", responseId);
-      setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, responses: m.responses.map((r) => r.id === responseId ? { ...r, status: "success", content: fullContent, latency_ms: latency } : r) } : m));
+      setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, responses: m.responses.map((r) => r.id === responseId ? { ...r, content: fullContent, latency_ms: latency } : r) } : m));
     } catch (e: any) {
       const latency = Date.now() - start;
       await supabase.from("model_responses").update({ status: "error", error_message: e.message, latency_ms: latency }).eq("id", responseId);
@@ -189,17 +179,15 @@ export default function ChatWorkspace() {
       activeChatId = newChat.id;
       navigate(`/chat/${activeChatId}`, { replace: true });
     }
-    if (isAtCap) { toast.error("Monthly usage limit reached. Check Settings for details."); return; }
+    if (isAtCap) { toast.error("Monthly usage limit reached."); return; }
     if (isNearCap) { toast.warning("Approaching usage limit"); }
-
     const modelsToUse = chatMode === "superfiesta" ? [pickBestModel(prompt, enabledModels)] : selectedModels;
     if (modelsToUse.length === 0) { toast.error("Select at least one model"); return; }
-
     setSending(true);
     let fileContext = "";
     if (selectedFileIds.length > 0) {
       const selectedFiles = projectFiles.filter((f) => selectedFileIds.includes(f.id));
-      fileContext = selectedFiles.map((f) => `[File: ${f.file_name}]\n${f.extracted_text || "(no text extracted)"}`).join("\n\n");
+      fileContext = selectedFiles.map((f) => `[File: ${f.file_name}]\n${f.extracted_text || "(no text)"}`).join("\n\n");
     }
     const fullPrompt = [useInstruction && projectInstruction ? `[Project Instruction]: ${projectInstruction}` : "", fileContext ? `[File Context]:\n${fileContext}` : "", prompt].filter(Boolean).join("\n\n");
     const { data: msg, error: msgErr } = await supabase.from("messages").insert({ chat_id: activeChatId, user_id: user.id, content: prompt }).select().single();
@@ -214,8 +202,6 @@ export default function ChatWorkspace() {
     setMessages((prev) => [...prev, newMsg]);
     const modeConfig = AI_CONFIG.costModes[costMode] || AI_CONFIG.costModes.balanced;
     const requestType = chatMode === "superfiesta" ? "auto_route" : "model_compare";
-
-    // Use streaming for all requests
     const calls = modelsToUse.map(async (model) => {
       const responseId = newMsg.responses.find((r) => r.model === model)?.id;
       if (!responseId) return;
@@ -247,78 +233,85 @@ export default function ChatWorkspace() {
     if (resp) { await supabase.from("model_responses").update({ included_in_synthesis: !resp.included_in_synthesis }).eq("id", responseId); }
   };
 
+  const handleCopyMsg = async (content: string, id: string) => {
+    await navigator.clipboard.writeText(content);
+    setCopiedMsg(id);
+    setTimeout(() => setCopiedMsg(null), 2000);
+  };
+
   const selectedFilesForComposer = projectFiles.filter((f) => selectedFileIds.includes(f.id)).map((f) => ({ id: f.id, name: f.file_name }));
   const hasMessages = messages.length > 0;
   const isSuperFiesta = chatMode === "superfiesta";
 
   return (
-    <div className="flex flex-col h-full relative">
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-primary/[0.04] rounded-full blur-[120px]" />
-      </div>
-
-      {!isSuperFiesta && (
+    <div className="flex flex-col h-full">
+      {/* Multi-chat model bar */}
+      {!isSuperFiesta && hasMessages && (
         <div className="relative z-20 shrink-0">
           <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto relative z-10">
+      <div className="flex-1 overflow-y-auto">
         {!hasMessages ? (
-          <div className="flex flex-col items-center justify-center min-h-full px-4 py-8">
+          <div className="flex flex-col items-center justify-center min-h-full px-4 py-16">
             <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
-            <motion.div key="empty-prompt" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="w-full max-w-3xl mt-8">
+            <div className="w-full mt-10">
               <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} showGreeting={isSuperFiesta} onImageSelected={(b64, mime) => { setImageBase64(b64); setImageMimeType(mime); }} onImageRemoved={() => { setImageBase64(null); setImageMimeType(null); }} hasImage={!!imageBase64} />
-            </motion.div>
-            <div className="w-full max-w-4xl mt-12">
+            </div>
+            <div className="w-full max-w-2xl mt-16">
               <ExploreSection />
             </div>
           </div>
         ) : (
-          <div className="max-w-6xl mx-auto p-4 space-y-6">
-            <div className="flex justify-center">
+          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+            <div className="flex justify-center mb-2">
               <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
             </div>
             {messages.map((msg) => (
               <div key={msg.id} className="space-y-4 animate-fade-in">
-                <div className="glass-card p-4 border-l-2 border-l-primary/40">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-primary font-['Space_Grotesk']">You</p>
-                    <div className="flex items-center gap-2">
-                      <SavePromptButton promptContent={msg.content} />
-                      <span className="text-xs text-muted-foreground">{new Date(msg.created_at).toLocaleTimeString()}</span>
+                {/* User message — right aligned, dark bubble */}
+                <div className="flex justify-end" onMouseEnter={() => setHoveredMsg(msg.id)} onMouseLeave={() => setHoveredMsg(null)}>
+                  <div className="relative max-w-[85%]">
+                    <div className="bg-card border border-border rounded-2xl rounded-br-md px-4 py-3">
+                      <p className="text-sm leading-relaxed">{msg.content}</p>
                     </div>
+                    {hoveredMsg === msg.id && (
+                      <div className="absolute -bottom-7 right-0 flex items-center gap-1 animate-fade-in">
+                        <SavePromptButton promptContent={msg.content} />
+                        <button onClick={() => handleCopyMsg(msg.content, msg.id)} className="text-muted-foreground hover:text-foreground p-1 rounded transition-colors duration-150">
+                          {copiedMsg === msg.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                        </button>
+                        <span className="text-[10px] text-muted-foreground/40">{new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm mt-1.5">{msg.content}</p>
-                  {msg.enhanced_content && (
-                    <p className="text-xs text-muted-foreground mt-1.5 italic">Enhanced: {msg.enhanced_content.slice(0, 100)}...</p>
-                  )}
                 </div>
 
+                {/* AI responses */}
                 {isSuperFiesta ? (
-                  <div className="max-w-3xl">
+                  <div className="max-w-full">
                     {msg.responses.map((resp) => (
-                      <div key={resp.id} className="glass-card p-4">
+                      <div key={resp.id}>
                         {resp.status === "loading" && (
-                          <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                            <div className="h-4 w-4 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
-                            Thinking...
+                          <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
+                            <div className="h-4 w-4 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" />
+                            <span className="text-[13px]">Thinking...</span>
                           </div>
                         )}
                         {resp.status === "error" && (
-                          <div className="text-destructive text-sm">
+                          <div className="text-destructive text-sm py-2">
                             <p>Error: {resp.error_message || "Something went wrong"}</p>
-                            <button onClick={() => handleRetry(msg.id, resp.model)} className="text-xs text-primary hover:underline mt-1">Retry</button>
+                            <button onClick={() => handleRetry(msg.id, resp.model)} className="text-xs text-muted-foreground hover:text-foreground mt-1 transition-colors duration-150">Retry</button>
                           </div>
                         )}
                         {resp.status === "success" && (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Zap className="h-3 w-3 text-primary/60" />
+                          <div className="py-1">
+                            <div className="text-[11px] text-muted-foreground/50 mb-1.5 flex items-center gap-1.5">
                               <span>{AI_CONFIG.modelLabels[resp.model] || resp.model}</span>
                               {resp.latency_ms && <span>· {(resp.latency_ms / 1000).toFixed(1)}s</span>}
                             </div>
-                            <div className="prose-dark text-sm leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                            <div className="prose-dark">
                               <ReactMarkdown>{resp.content || ""}</ReactMarkdown>
                             </div>
                           </div>
@@ -340,29 +333,23 @@ export default function ChatWorkspace() {
                 )}
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
         )}
       </div>
 
       {hasMessages && (
         <PromptComposer
-          onSend={handleSend}
-          onEnhance={handleEnhance}
+          onSend={handleSend} onEnhance={handleEnhance}
           onAttachFiles={projectId ? () => setShowFileModal(true) : undefined}
-          selectedModels={selectedModels}
-          onToggleModel={toggleModel}
+          selectedModels={selectedModels} onToggleModel={toggleModel}
           selectedFiles={selectedFilesForComposer}
           onRemoveFile={(fid) => setSelectedFileIds((prev) => prev.filter((id) => id !== fid))}
-          useProjectInstruction={useInstruction}
-          onToggleInstruction={setUseInstruction}
+          useProjectInstruction={useInstruction} onToggleInstruction={setUseInstruction}
           hasProjectInstruction={!!projectInstruction}
-          disabled={sending}
-          enhancing={enhancing}
-          enabledModels={enabledModels}
-          chatMode={chatMode}
+          disabled={sending} enhancing={enhancing} enabledModels={enabledModels} chatMode={chatMode}
           onImageSelected={(b64, mime) => { setImageBase64(b64); setImageMimeType(mime); }}
-          onImageRemoved={() => { setImageBase64(null); setImageMimeType(null); }}
-          hasImage={!!imageBase64}
+          onImageRemoved={() => { setImageBase64(null); setImageMimeType(null); }} hasImage={!!imageBase64}
         />
       )}
 

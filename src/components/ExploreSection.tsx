@@ -4,40 +4,35 @@ const EXPLORE_CARDS = [
   {
     icon: Bot,
     title: "AI Code Reviewer",
-    description: "Get instant code reviews from multiple AI models and compare their suggestions side by side.",
-    gradient: "from-primary/20 to-primary/5",
+    description: "Get instant code reviews from multiple AI models and compare their suggestions.",
   },
   {
     icon: BrainCircuit,
     title: "Research Assistant",
-    description: "Ask complex research questions and synthesize the best answer from multiple AI perspectives.",
-    gradient: "from-model-2/20 to-model-2/5",
+    description: "Ask complex research questions and synthesize the best answer from multiple perspectives.",
   },
 ];
 
 export function ExploreSection() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold font-['Space_Grotesk'] text-muted-foreground">
+        <h3 className="text-[11px] uppercase tracking-wider text-muted-foreground/50 font-medium">
           Explore
         </h3>
-        <button className="text-xs text-muted-foreground/60 hover:text-primary flex items-center gap-1 transition-colors">
-          See more <ArrowRight className="h-3 w-3" />
-        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {EXPLORE_CARDS.map((card) => (
           <div
             key={card.title}
-            className="glass-card p-5 flex items-start gap-4 cursor-pointer group transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow-sm"
+            className="bg-card border border-border rounded-xl p-4 flex items-start gap-3 cursor-pointer group transition-all duration-150 hover:bg-muted/30"
           >
-            <div className={`h-12 w-12 rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
-              <card.icon className="h-5 w-5 text-primary" />
+            <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+              <card.icon className="h-4 w-4 text-muted-foreground" />
             </div>
             <div className="space-y-1 min-w-0">
-              <h4 className="text-sm font-semibold font-['Space_Grotesk'] group-hover:text-primary transition-colors">
+              <h4 className="text-[13px] font-medium group-hover:text-foreground transition-colors duration-150">
                 {card.title}
               </h4>
               <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">

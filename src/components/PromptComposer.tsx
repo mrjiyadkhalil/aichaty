@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Send, Sparkles, Paperclip, X, Mic, MicOff, Zap } from "lucide-react";
+import { Send, Sparkles, Paperclip, X, Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -50,8 +49,8 @@ export function PromptComposer({
 
   const handleSend = () => {
     if (!prompt.trim()) return;
-    if (!isSuperFiesta && selectedModels.length === 0) { toast.warning("Select at least one model before sending"); return; }
-    if (prompt.length > AI_CONFIG.limits.maxPromptLength) { toast.warning(`Prompt too long (max ${AI_CONFIG.limits.maxPromptLength} chars)`); return; }
+    if (!isSuperFiesta && selectedModels.length === 0) { toast.warning("Select at least one model"); return; }
+    if (prompt.length > AI_CONFIG.limits.maxPromptLength) { toast.warning(`Prompt too long`); return; }
     onSend(prompt.trim());
     setPrompt("");
   };
@@ -61,76 +60,85 @@ export function PromptComposer({
   };
 
   return (
-    <div className="sticky bottom-0 z-30 border-t border-border/30 bg-card/30 backdrop-blur-xl p-4 space-y-3">
-      <div className="max-w-5xl mx-auto space-y-3">
+    <div className="sticky bottom-0 z-30 bg-background px-4 pb-4 pt-2">
+      <div className="max-w-3xl mx-auto space-y-2">
+        {/* Model chips for multi-chat */}
         {!isSuperFiesta && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-muted-foreground mr-1">Models:</span>
+          <div className="flex items-center gap-1.5 flex-wrap px-1">
             {AI_CONFIG.allModels.map((modelId) => {
               const isSelected = selectedModels.includes(modelId);
               const isEnabled = allowedModels.includes(modelId);
               return (
-                <Badge key={modelId} variant={isSelected ? "default" : "outline"} className={`cursor-pointer text-xs transition-all select-none ${isSelected ? "bg-primary text-primary-foreground shadow-glow-sm" : "border-border/50 text-muted-foreground hover:border-primary/50 hover:text-foreground"} ${!isEnabled ? "opacity-30 cursor-not-allowed" : "hover:scale-105"}`} onClick={() => isEnabled && onToggleModel(modelId)}>
+                <button
+                  key={modelId}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all duration-150",
+                    isSelected
+                      ? "bg-secondary border-border text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
+                    !isEnabled && "opacity-30 cursor-not-allowed"
+                  )}
+                  onClick={() => isEnabled && onToggleModel(modelId)}
+                >
                   {AI_CONFIG.modelShortLabels[modelId] || modelId}
-                  {isSelected && <X className="h-3 w-3 ml-1" />}
-                </Badge>
+                </button>
               );
             })}
           </div>
         )}
 
-        {isSuperFiesta && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
-            <Zap className="h-3.5 w-3.5 text-primary/60" />
-            <span>Auto-routing — best model selected automatically</span>
+        {/* File chips + instruction toggle */}
+        {(selectedFiles.length > 0 || (hasProjectInstruction && onToggleInstruction)) && (
+          <div className="flex items-center gap-2 flex-wrap px-1">
+            {selectedFiles.map((f) => (
+              <span key={f.id} className="inline-flex items-center gap-1 text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                {f.name}
+                <X className="h-3 w-3 cursor-pointer hover:text-foreground" onClick={() => onRemoveFile?.(f.id)} />
+              </span>
+            ))}
+            {hasProjectInstruction && onToggleInstruction && (
+              <div className="flex items-center gap-1.5 ml-auto">
+                <Switch id="use-instruction" checked={useProjectInstruction} onCheckedChange={onToggleInstruction} className="h-4 w-7" />
+                <Label htmlFor="use-instruction" className="text-[11px] text-muted-foreground cursor-pointer">Instructions</Label>
+              </div>
+            )}
           </div>
         )}
 
-        <div className="flex items-center gap-3 flex-wrap">
-          {selectedFiles.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs text-muted-foreground">Files:</span>
-              {selectedFiles.map((f) => (
-                <Badge key={f.id} variant="secondary" className="text-xs gap-1 bg-secondary/50">
-                  {f.name}
-                  <X className="h-3 w-3 cursor-pointer hover:text-foreground" onClick={() => onRemoveFile?.(f.id)} />
-                </Badge>
-              ))}
-            </div>
-          )}
-          {hasProjectInstruction && onToggleInstruction && (
-            <div className="flex items-center gap-2 ml-auto">
-              <Switch id="use-instruction" checked={useProjectInstruction} onCheckedChange={onToggleInstruction} />
-              <Label htmlFor="use-instruction" className="text-xs text-muted-foreground cursor-pointer">Use Project Instruction</Label>
-            </div>
-          )}
-        </div>
-
-        <div className="relative">
-          <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={handleKeyDown} placeholder={isSuperFiesta ? "Ask anything..." : "Ask anything... Compare responses across models."} className="min-h-[90px] pr-4 pb-14 resize-none bg-background/50 border-border/30 focus:border-primary/50 focus:shadow-glow-sm transition-shadow" disabled={disabled} />
+        {/* Input */}
+        <div className="relative bg-card border border-border rounded-2xl transition-all duration-200 focus-within:border-muted-foreground/30">
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={isSuperFiesta ? "Message Fiesta AI..." : "Compare across models..."}
+            rows={1}
+            className="w-full bg-transparent border-none outline-none resize-none text-sm placeholder:text-muted-foreground/50 px-4 pt-3.5 pb-12 min-h-[52px] max-h-[180px]"
+            disabled={disabled}
+            style={{ fieldSizing: "content" } as any}
+          />
           <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-primary" onClick={() => onEnhance(prompt)} disabled={!prompt.trim() || enhancing || disabled}>
-                <Sparkles className="h-3.5 w-3.5" /> Enhance
-              </Button>
+            <div className="flex items-center gap-0.5">
+              <button onClick={() => onEnhance(prompt)} disabled={!prompt.trim() || enhancing || disabled} className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150 disabled:opacity-30">
+                <Sparkles className="h-4 w-4" />
+              </button>
               {onAttachFiles && (
-                <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-primary" onClick={onAttachFiles} disabled={disabled}>
-                  <Paperclip className="h-3.5 w-3.5" /> Attach
-                </Button>
+                <button onClick={onAttachFiles} disabled={disabled} className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150">
+                  <Paperclip className="h-4 w-4" />
+                </button>
               )}
               {onImageSelected && onImageRemoved && (
                 <ImageUploadButton onImageSelected={onImageSelected} onImageRemoved={onImageRemoved} hasImage={hasImage} disabled={disabled} />
               )}
-              <Button variant="ghost" size="sm" className={cn("h-8 gap-1.5 text-xs transition-all", isRecording ? "text-destructive hover:text-destructive animate-pulse" : "text-muted-foreground hover:text-primary")} onClick={toggleRecording} disabled={disabled}>
-                {isRecording ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                {isRecording ? "Stop" : "Voice"}
-              </Button>
+              <button onClick={toggleRecording} disabled={disabled} className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-colors duration-150", isRecording ? "text-destructive bg-destructive/10" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
+                {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </button>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{prompt.length}/{AI_CONFIG.limits.maxPromptLength}</span>
-              <Button size="sm" className="h-8 gap-1.5 shadow-glow-sm hover:shadow-glow transition-shadow" onClick={handleSend} disabled={!prompt.trim() || disabled}>
-                <Send className="h-3.5 w-3.5" /> Send
-              </Button>
+              <span className="text-[11px] text-muted-foreground/40">{prompt.length}/{AI_CONFIG.limits.maxPromptLength}</span>
+              <button onClick={handleSend} disabled={!prompt.trim() || disabled} className="h-8 w-8 rounded-lg bg-foreground flex items-center justify-center text-background transition-all duration-150 disabled:opacity-20">
+                <Send className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </div>

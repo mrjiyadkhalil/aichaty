@@ -8,27 +8,27 @@ interface ChatModeSwitcherProps {
 
 export function ChatModeSwitcher({ mode, onModeChange }: ChatModeSwitcherProps) {
   return (
-    <div className="inline-flex items-center rounded-full p-1 bg-card/80 backdrop-blur-xl border border-border/40 shadow-glow-sm">
+    <div className="inline-flex items-center rounded-full p-0.5 bg-muted/50 border border-border">
       <button
         onClick={() => onModeChange("superfiesta")}
-        className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+        className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 ${
           mode === "superfiesta"
-            ? "bg-primary text-primary-foreground shadow-glow"
+            ? "bg-card text-foreground shadow-sm"
             : "text-muted-foreground hover:text-foreground"
         }`}
       >
-        <Zap className="h-4 w-4" />
+        <Zap className="h-3.5 w-3.5" />
         SuperFiesta
       </button>
       <button
         onClick={() => onModeChange("multichat")}
-        className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+        className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 ${
           mode === "multichat"
-            ? "bg-primary text-primary-foreground shadow-glow"
+            ? "bg-card text-foreground shadow-sm"
             : "text-muted-foreground hover:text-foreground"
         }`}
       >
-        <LayoutGrid className="h-4 w-4" />
+        <LayoutGrid className="h-3.5 w-3.5" />
         Multi-Chat
       </button>
     </div>
