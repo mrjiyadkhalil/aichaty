@@ -10,14 +10,19 @@ import { ResponseGrid } from "@/components/ResponseGrid";
 import { SynthesisPanel } from "@/components/SynthesisPanel";
 import { PromptEnhancerModal } from "@/components/PromptEnhancerModal";
 import { FileContextModal } from "@/components/FileContextModal";
-import { EmptyState } from "@/components/EmptyState";
+import { ChatModeSwitcher } from "@/components/ChatModeSwitcher";
+import { SuperFiestaView } from "@/components/SuperFiestaView";
+import { MultiChatColumns } from "@/components/MultiChatColumns";
+import { ExploreSection } from "@/components/ExploreSection";
 import { AI_CONFIG } from "@/lib/aiConfig";
 import { toast } from "sonner";
-import { MessageSquare } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ProjectFile { id: string; file_name: string; file_path: string; extracted_text: string | null; file_size: number | null; mime_type: string | null; }
 interface ModelResponse { id: string; model: string; content: string | null; status: string; error_message: string | null; included_in_synthesis: boolean; latency_ms: number | null; }
 interface MessageWithResponses { id: string; content: string; enhanced_content: string | null; final_content: string | null; created_at: string; responses: ModelResponse[]; synthesis: string | null; }
+
+export type ChatMode = "superfiesta" | "multichat";
 
 export default function ChatWorkspace() {
   const { id: chatId } = useParams<{ id: string }>();
@@ -41,6 +46,7 @@ export default function ChatWorkspace() {
   const [enhancedPrompt, setEnhancedPrompt] = useState<string | null>(null);
   const [enhancing, setEnhancing] = useState(false);
   const [showFileModal, setShowFileModal] = useState(false);
+  const [chatMode, setChatMode] = useState<ChatMode>("superfiesta");
 
   useEffect(() => { setLayout(defaultLayout); }, [defaultLayout]);
 
@@ -188,13 +194,88 @@ export default function ChatWorkspace() {
 
   const selectedFilesForComposer = projectFiles.filter((f) => selectedFileIds.includes(f.id)).map((f) => ({ id: f.id, name: f.file_name }));
 
+  const hasMessages = messages.length > 0;
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto">
-        {messages.length === 0 ? (
-          <EmptyState icon={<MessageSquare className="h-8 w-8 text-primary" />} title="Start the conversation" description="Send a prompt to compare AI model responses side by side" />
+    <div className="flex flex-col h-full relative">
+      {/* Radial glow background */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-primary/[0.04] rounded-full blur-[120px]" />
+      </div>
+
+      <div className="flex-1 overflow-y-auto relative z-10">
+        {!hasMessages ? (
+          /* Empty state — show mode switcher + prompt + explore */
+          <div className="flex flex-col items-center justify-center min-h-full px-4 py-8">
+            {/* Mode Switcher */}
+            <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
+
+            <AnimatePresence mode="wait">
+              {chatMode === "superfiesta" ? (
+                <motion.div
+                  key="superfiesta"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.25 }}
+                  className="w-full max-w-3xl mt-8"
+                >
+                  <SuperFiestaView
+                    onSend={handleSend}
+                    onEnhance={handleEnhance}
+                    onAttachFiles={() => setShowFileModal(true)}
+                    disabled={sending}
+                    enhancing={enhancing}
+                    selectedModels={selectedModels}
+                    enabledModels={enabledModels}
+                    onToggleModel={toggleModel}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="multichat"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.25 }}
+                  className="w-full mt-8"
+                >
+                  <MultiChatColumns
+                    selectedModels={selectedModels}
+                    enabledModels={enabledModels}
+                    onToggleModel={toggleModel}
+                    onSend={handleSend}
+                    onEnhance={handleEnhance}
+                    onAttachFiles={() => setShowFileModal(true)}
+                    disabled={sending}
+                    enhancing={enhancing}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Explore section */}
+            <div className="w-full max-w-4xl mt-12">
+              <ExploreSection />
+            </div>
+          </div>
         ) : (
+          /* Has messages — show conversation */
           <div className="max-w-6xl mx-auto p-4 space-y-6">
+            {/* Mode switcher stays at top */}
+            <div className="flex justify-center">
+              <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
+            </div>
+
+            {chatMode === "multichat" && (
+              <MultiChatColumns
+                selectedModels={selectedModels}
+                enabledModels={enabledModels}
+                onToggleModel={toggleModel}
+                compact
+              />
+            )}
+
             {messages.map((msg) => (
               <div key={msg.id} className="space-y-4 animate-fade-in">
                 {/* User message */}
@@ -221,7 +302,26 @@ export default function ChatWorkspace() {
           </div>
         )}
       </div>
-      <PromptComposer onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={() => setShowFileModal(true)} selectedModels={selectedModels} onToggleModel={toggleModel} selectedFiles={selectedFilesForComposer} onRemoveFile={(fid) => setSelectedFileIds((prev) => prev.filter((id) => id !== fid))} useProjectInstruction={useInstruction} onToggleInstruction={setUseInstruction} hasProjectInstruction={!!projectInstruction} disabled={sending} enhancing={enhancing} enabledModels={enabledModels} />
+
+      {/* Bottom prompt composer for when messages exist */}
+      {hasMessages && (
+        <PromptComposer
+          onSend={handleSend}
+          onEnhance={handleEnhance}
+          onAttachFiles={() => setShowFileModal(true)}
+          selectedModels={selectedModels}
+          onToggleModel={toggleModel}
+          selectedFiles={selectedFilesForComposer}
+          onRemoveFile={(fid) => setSelectedFileIds((prev) => prev.filter((id) => id !== fid))}
+          useProjectInstruction={useInstruction}
+          onToggleInstruction={setUseInstruction}
+          hasProjectInstruction={!!projectInstruction}
+          disabled={sending}
+          enhancing={enhancing}
+          enabledModels={enabledModels}
+        />
+      )}
+
       <PromptEnhancerModal open={showEnhancer} onClose={() => setShowEnhancer(false)} originalPrompt={enhanceOriginal} enhancedPrompt={enhancedPrompt} loading={enhancing} onKeepOriginal={() => setShowEnhancer(false)} onUseEnhanced={(p) => { setShowEnhancer(false); handleSend(p); }} />
       {projectId && <FileContextModal open={showFileModal} onClose={() => setShowFileModal(false)} projectId={projectId} projectFiles={projectFiles} selectedFileIds={selectedFileIds} onToggleFile={toggleFileSelection} onFilesUploaded={async () => { const { data } = await supabase.from("project_files").select("*").eq("project_id", projectId); if (data) setProjectFiles(data as ProjectFile[]); }} />}
     </div>
