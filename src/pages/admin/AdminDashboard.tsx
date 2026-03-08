@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { adminApi } from "@/hooks/useAdmin";
 import { MetricCard } from "@/components/admin/MetricCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, FolderOpen, MessageSquare, Zap, DollarSign, AlertTriangle, Activity, Ban, Link2 } from "lucide-react";
+import { Users, FolderOpen, MessageSquare, Zap, DollarSign, AlertTriangle, Activity, Ban, Link2, Crown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
