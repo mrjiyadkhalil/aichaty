@@ -35,6 +35,7 @@ export default function ChatWorkspace() {
   const navigate = useNavigate();
   const { isAtCap, isNearCap, refresh: refreshUsage } = useUsage();
   const { costMode, defaultLayout } = usePreferences();
+  const { plan, features, canAccess, isModelAllowed } = useSubscription();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [projectId, setProjectId] = useState<string | null>(null);
