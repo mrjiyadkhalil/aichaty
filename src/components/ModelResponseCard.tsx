@@ -98,9 +98,9 @@ export function ModelResponseCard({
   };
 
   return (
-    <div className={`bg-card border border-border rounded-xl overflow-hidden transition-all duration-150 hover:border-border/80 animate-fade-in ${getProviderClass(model)}`}>
-      {/* Header */}
-      <div className="py-2.5 px-4 flex items-center justify-between border-b border-border">
+    <div className={`bg-card border border-border rounded-xl overflow-hidden transition-all duration-150 hover:border-border/80 animate-fade-in flex flex-col h-full ${getProviderClass(model)}`}>
+      {/* Header - Fixed at top */}
+      <div className="py-2.5 px-4 flex items-center justify-between border-b border-border shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-[13px] font-semibold text-foreground">
             {MODEL_LABELS[model] || model}
@@ -117,8 +117,8 @@ export function ModelResponseCard({
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-4">
+      {/* Content - Scrollable */}
+      <div className="p-4 flex-1 overflow-y-auto min-h-0">
         {status === "loading" && (
           <div className="space-y-2.5">
             <Skeleton className="h-4 w-full bg-muted/40" />
@@ -139,8 +139,8 @@ export function ModelResponseCard({
         )}
       </div>
 
-      {/* Footer actions */}
-      <div className="px-4 pb-3 flex items-center justify-between">
+      {/* Footer actions - Fixed at bottom */}
+      <div className="px-4 pb-3 flex items-center justify-between shrink-0 border-t border-border/30 pt-3">
         <div className="flex items-center gap-1">
           {status === "success" && responseId && <ResponseRating responseId={responseId} />}
         </div>

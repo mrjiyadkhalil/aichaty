@@ -51,8 +51,8 @@ export function SynthesisPanel({ messageId, prompt, responses, existingSynthesis
   };
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden animate-fade-in relative" style={{ borderImage: "linear-gradient(135deg, hsl(217 91% 60% / 0.4), hsl(142 71% 45% / 0.4), hsl(262 83% 58% / 0.4)) 1" }}>
-      <div className="py-2.5 px-4 flex items-center justify-between border-b border-border">
+    <div className="bg-card rounded-xl overflow-hidden animate-fade-in relative border-2 border-transparent bg-gradient-to-br from-primary/20 via-accent/20 to-primary/20 bg-clip-padding shadow-lg shadow-primary/10">
+      <div className="py-2.5 px-4 flex items-center justify-between border-b border-border/50 bg-card/95 backdrop-blur-sm">
         <h3 className="text-[13px] font-semibold flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-muted-foreground" />
           Best Final Answer
