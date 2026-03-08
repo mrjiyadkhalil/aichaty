@@ -60,11 +60,11 @@ export function PromptComposer({
   };
 
   return (
-    <div className="sticky bottom-0 z-30 bg-background px-4 pb-4 pt-2">
+    <div className="sticky bottom-0 z-30 bg-background px-2 sm:px-4 pb-3 sm:pb-4 pt-2">
       <div className="max-w-3xl mx-auto space-y-2">
-        {/* Model chips for multi-chat */}
+        {/* Model chips for multi-chat - horizontal scroll on mobile */}
         {!isSuperFiesta && (
-          <div className="flex items-center gap-1.5 flex-wrap px-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 px-1 scrollbar-hide">
             {AI_CONFIG.allModels.map((modelId) => {
               const isSelected = selectedModels.includes(modelId);
               const isEnabled = allowedModels.includes(modelId);
@@ -72,7 +72,7 @@ export function PromptComposer({
                 <button
                   key={modelId}
                   className={cn(
-                    "px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all duration-150",
+                    "px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all duration-150 whitespace-nowrap shrink-0 min-h-[32px]",
                     isSelected
                       ? "bg-secondary border-border text-foreground"
                       : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -113,30 +113,30 @@ export function PromptComposer({
             onKeyDown={handleKeyDown}
             placeholder={isSuperFiesta ? "Message Fiesta AI..." : "Compare across models..."}
             rows={1}
-            className="w-full bg-transparent border-none outline-none resize-none text-sm placeholder:text-muted-foreground/50 px-4 pt-3.5 pb-12 min-h-[52px] max-h-[180px]"
+            className="w-full bg-transparent border-none outline-none resize-none text-sm placeholder:text-muted-foreground/50 px-3 sm:px-4 pt-3 sm:pt-3.5 pb-12 min-h-[52px] max-h-[180px]"
             disabled={disabled}
             style={{ fieldSizing: "content" } as any}
           />
-          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+          <div className="absolute bottom-2 left-1.5 sm:left-2 right-1.5 sm:right-2 flex items-center justify-between">
             <div className="flex items-center gap-0.5">
-              <button onClick={() => onEnhance(prompt)} disabled={!prompt.trim() || enhancing || disabled} className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150 disabled:opacity-30">
+              <button onClick={() => onEnhance(prompt)} disabled={!prompt.trim() || enhancing || disabled} className="h-9 w-9 min-h-[36px] min-w-[36px] rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150 disabled:opacity-30">
                 <Sparkles className="h-4 w-4" />
               </button>
               {onAttachFiles && (
-                <button onClick={onAttachFiles} disabled={disabled} className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150">
+                <button onClick={onAttachFiles} disabled={disabled} className="h-9 w-9 min-h-[36px] min-w-[36px] rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150">
                   <Paperclip className="h-4 w-4" />
                 </button>
               )}
               {onImageSelected && onImageRemoved && (
                 <ImageUploadButton onImageSelected={onImageSelected} onImageRemoved={onImageRemoved} hasImage={hasImage} disabled={disabled} />
               )}
-              <button onClick={toggleRecording} disabled={disabled} className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-colors duration-150", isRecording ? "text-destructive bg-destructive/10" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
+              <button onClick={toggleRecording} disabled={disabled} className={cn("h-9 w-9 min-h-[36px] min-w-[36px] rounded-lg flex items-center justify-center transition-colors duration-150", isRecording ? "text-destructive bg-destructive/10" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
                 {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </button>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-muted-foreground/40">{prompt.length}/{AI_CONFIG.limits.maxPromptLength}</span>
-              <button onClick={handleSend} disabled={!prompt.trim() || disabled} className="h-8 w-8 rounded-lg bg-foreground flex items-center justify-center text-background transition-all duration-150 disabled:opacity-20">
+              <span className="text-[11px] text-muted-foreground/40 hidden sm:inline">{prompt.length}/{AI_CONFIG.limits.maxPromptLength}</span>
+              <button onClick={handleSend} disabled={!prompt.trim() || disabled} className="h-9 w-9 min-h-[36px] min-w-[36px] rounded-lg bg-foreground flex items-center justify-center text-background transition-all duration-150 disabled:opacity-20">
                 <Send className="h-4 w-4" />
               </button>
             </div>

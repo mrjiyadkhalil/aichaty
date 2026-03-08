@@ -62,9 +62,9 @@ export default function Pricing() {
     <div className="min-h-screen bg-background">
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 h-14">
-          <Button variant="ghost" size="sm" onClick={() => navigate(user ? "/chat" : "/")} className="gap-1.5">
-            <ArrowLeft className="h-4 w-4" /> Back
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 h-14">
+          <Button variant="ghost" size="sm" onClick={() => navigate(user ? "/chat" : "/")} className="gap-1.5 min-h-[44px]">
+            <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Back</span>
           </Button>
           <div className="flex items-center gap-2.5">
             <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center">
@@ -72,17 +72,17 @@ export default function Pricing() {
             </div>
             <span className="font-bold text-lg font-['Space_Grotesk']">Fiesta AI</span>
           </div>
-          <div className="w-20" />
+          <div className="w-16 sm:w-20" />
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-16 space-y-12">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-16 space-y-8 sm:space-y-12">
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-4">
-          <h1 className="text-4xl lg:text-5xl font-bold font-['Space_Grotesk']">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-3 sm:space-y-4">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold font-['Space_Grotesk']">
             Choose Your <span className="text-primary">Plan</span>
           </h1>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+          <p className="text-sm sm:text-lg text-muted-foreground max-w-xl mx-auto">
             Start free, upgrade when you need more power.
           </p>
           <div className="flex items-center justify-center gap-3">
@@ -94,7 +94,7 @@ export default function Pricing() {
         </motion.div>
 
         {/* Plan Cards */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {sortedPlans.map((p, i) => {
             const meta = PLAN_META[p.plan_name];
             const Icon = meta.icon;
@@ -109,7 +109,7 @@ export default function Pricing() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className={`relative glass-card p-6 space-y-5 ${isPro ? "ring-2 ring-primary glow-border" : ""}`}
+                className={`relative glass-card p-5 sm:p-6 space-y-4 sm:space-y-5 ${isPro ? "ring-2 ring-primary glow-border" : ""}`}
               >
                 {isPro && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -119,17 +119,17 @@ export default function Pricing() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Icon className={`h-5 w-5 ${meta.color}`} />
-                    <h3 className="text-xl font-bold font-['Space_Grotesk']">{meta.label}</h3>
+                    <h3 className="text-lg sm:text-xl font-bold font-['Space_Grotesk']">{meta.label}</h3>
                   </div>
                   <p className="text-sm text-muted-foreground">{meta.description}</p>
                 </div>
 
                 <div className="space-y-1">
                   {p.plan_name === "free" ? (
-                    <p className="text-3xl font-bold font-['Space_Grotesk']">$0</p>
+                    <p className="text-2xl sm:text-3xl font-bold font-['Space_Grotesk']">$0</p>
                   ) : (
                     <>
-                      <p className="text-3xl font-bold font-['Space_Grotesk']">
+                      <p className="text-2xl sm:text-3xl font-bold font-['Space_Grotesk']">
                         ${perMonth}<span className="text-base font-normal text-muted-foreground">/mo</span>
                       </p>
                       {yearly && (
@@ -140,7 +140,7 @@ export default function Pricing() {
                 </div>
 
                 <Button
-                  className={`w-full ${isPro ? "shadow-glow-sm" : ""}`}
+                  className={`w-full min-h-[44px] ${isPro ? "shadow-glow-sm" : ""}`}
                   variant={isCurrent ? "outline" : isPro ? "default" : "secondary"}
                   disabled={isCurrent}
                   onClick={() => {
@@ -155,12 +155,14 @@ export default function Pricing() {
           })}
         </div>
 
-        {/* Comparison Table */}
+        {/* Comparison - Table on desktop, Cards on mobile */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card overflow-hidden">
-          <div className="p-6 border-b border-border/30">
+          <div className="p-4 sm:p-6 border-b border-border/30">
             <h2 className="text-lg font-bold font-['Space_Grotesk']">Feature Comparison</h2>
           </div>
-          <div className="overflow-x-auto">
+          
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/30">
@@ -183,6 +185,23 @@ export default function Pricing() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile: card-based comparison */}
+          <div className="md:hidden p-4 space-y-3">
+            {FEATURE_ROWS.map((row) => (
+              <div key={row.key} className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">{row.label}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {sortedPlans.map((p) => (
+                    <div key={p.plan_name} className="text-center p-2 rounded-lg bg-muted/30">
+                      <p className="text-[10px] text-muted-foreground/60 mb-0.5 capitalize">{p.plan_name}</p>
+                      {getCellValue(p.features, row.key, row.type)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </motion.div>
       </div>
