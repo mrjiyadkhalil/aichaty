@@ -77,7 +77,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar projects={projects} recentChats={recentChats} projectChats={projectChats} selectedProjectId={selectedProjectId} />
+        <AppSidebar projects={projects} recentChats={recentChats} projectChats={projectChats} selectedProjectId={selectedProjectId} onProjectsChanged={loadData} />
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex items-center">
             <TopBar title={getTitle()} />
