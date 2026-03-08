@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AI_CONFIG } from "@/lib/aiConfig";
+import { useModels } from "@/hooks/useModels";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { ImageUploadButton } from "@/components/ImageUploadButton";
 import { cn } from "@/lib/utils";
