@@ -23,6 +23,7 @@ export default function Settings() {
   const { setTheme } = useTheme();
 
   const [displayName, setDisplayName] = useState("");
+  const [customSystemPrompt, setCustomSystemPrompt] = useState("");
   const [saving, setSaving] = useState(false);
   const [localCostMode, setLocalCostMode] = useState<CostMode>(costMode);
   const [localLayout, setLocalLayout] = useState(defaultLayout);
