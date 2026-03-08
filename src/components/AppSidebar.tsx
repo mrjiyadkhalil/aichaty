@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { FolderOpen, MessageSquare, LogOut, ChevronDown, Settings, Plus, Shield, Bookmark, BookOpen, Trash2, Pencil } from "lucide-react";
+import { FolderOpen, MessageSquare, LogOut, ChevronDown, Settings, Plus, Shield, Bookmark, BookOpen, Trash2, Pencil, Crown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdmin";
 import { useNavigate, useLocation } from "react-router-dom";
