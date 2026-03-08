@@ -188,10 +188,6 @@ export default function ChatWorkspace() {
     await Promise.all(calls);
     setSending(false);
     refreshUsage();
-    if (messages.length === 0) {
-      const title = prompt.slice(0, 50) + (prompt.length > 50 ? "..." : "");
-      await supabase.from("chats").update({ title }).eq("id", chatId);
-    }
   };
 
   const handleRetry = async (messageId: string, model: string) => {
