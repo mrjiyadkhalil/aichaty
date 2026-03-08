@@ -39,7 +39,7 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
   return (
     <Sidebar collapsible="icon" className="border-r border-border/50">
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate("/dashboard")}>
+        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate("/chat")}>
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-glow-sm">
             <Zap className="h-5 w-5 text-primary-foreground" />
           </div>
