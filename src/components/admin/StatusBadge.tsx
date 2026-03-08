@@ -7,6 +7,7 @@ interface StatusBadgeProps {
 const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   active: { label: "Active", variant: "default" },
   suspended: { label: "Suspended", variant: "destructive" },
+  banned: { label: "Banned", variant: "destructive" },
   admin: { label: "Admin", variant: "secondary" },
   user: { label: "User", variant: "outline" },
   error: { label: "Error", variant: "destructive" },
