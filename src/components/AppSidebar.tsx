@@ -90,32 +90,6 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Recent Chats */}
-        {recentChats.length > 0 && !collapsed && (
-          <SidebarGroup>
-            <Collapsible defaultOpen>
-              <CollapsibleTrigger className="flex items-center justify-between w-full px-2">
-                <SidebarGroupLabel className="cursor-pointer text-muted-foreground/70">Recent Chats</SidebarGroupLabel>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {recentChats.map((chat) => (
-                      <SidebarMenuItem key={chat.id}>
-                        <SidebarMenuButton onClick={() => navigate(`/chat/${chat.id}`)} isActive={location.pathname === `/chat/${chat.id}`}>
-                          <MessageSquare className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{chat.title || "New Chat"}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </CollapsibleContent>
-            </Collapsible>
-          </SidebarGroup>
-        )}
-
         {/* Projects */}
         <SidebarGroup>
           <Collapsible defaultOpen>
@@ -142,6 +116,32 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+
+        {/* Recent Chats */}
+        {recentChats.length > 0 && !collapsed && (
+          <SidebarGroup>
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="flex items-center justify-between w-full px-2">
+                <SidebarGroupLabel className="cursor-pointer text-muted-foreground/70">Recent Chats</SidebarGroupLabel>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {recentChats.map((chat) => (
+                      <SidebarMenuItem key={chat.id}>
+                        <SidebarMenuButton onClick={() => navigate(`/chat/${chat.id}`)} isActive={location.pathname === `/chat/${chat.id}`}>
+                          <MessageSquare className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{chat.title || "New Chat"}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </Collapsible>
+          </SidebarGroup>
+        )}
 
         {/* Project Chats (when a project is selected) */}
         {selectedProjectId && projectChats.length > 0 && !collapsed && (
