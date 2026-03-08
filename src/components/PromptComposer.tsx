@@ -60,7 +60,7 @@ export function PromptComposer({
   };
 
   return (
-    <div className="sticky bottom-0 z-30 bg-background px-2 sm:px-4 pb-3 sm:pb-4 pt-2">
+    <div className="z-30 bg-background px-2 sm:px-4 pb-3 sm:pb-4 pt-2">
       <div className="max-w-3xl mx-auto space-y-2">
         {/* Model chips for multi-chat - horizontal scroll on mobile */}
         {!isSuperFiesta && (
