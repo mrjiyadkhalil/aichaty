@@ -17,8 +17,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     setLoading(true);
-    adminApi("get_metrics", { period })
-      .then(setMetrics)
+    Promise.all([
+      adminApi("get_metrics", { period }),
+      adminApi("get_plan_stats"),
+    ]).then(([m, p]) => { setMetrics(m); setPlanStats(p.planStats || {}); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [period]);
