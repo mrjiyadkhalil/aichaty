@@ -103,6 +103,7 @@ function AppWithShortcuts() {
         <Route path="/project/:id" element={<ProtectedRoute><AppLayout><ProjectDetail /></AppLayout></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>} />
         <Route path="/bookmarks" element={<ProtectedRoute><AppLayout><Bookmarks /></AppLayout></ProtectedRoute>} />
+        <Route path="/prompts" element={<ProtectedRoute><AppLayout><Prompts /></AppLayout></ProtectedRoute>} />
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />

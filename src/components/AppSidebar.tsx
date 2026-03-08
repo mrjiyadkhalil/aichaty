@@ -65,6 +65,12 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
+                <SidebarMenuButton onClick={() => navigate("/prompts")} isActive={location.pathname === "/prompts"} tooltip="Prompt Library">
+                  <BookOpen className="h-4 w-4 shrink-0" />
+                  {!collapsed && <span>Prompts</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
                 <SidebarMenuButton onClick={() => navigate("/settings")} isActive={location.pathname === "/settings"} tooltip="Settings">
                   <Settings className="h-4 w-4 shrink-0" />
                   {!collapsed && <span>Settings</span>}
