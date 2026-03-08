@@ -287,7 +287,7 @@ export default function ChatWorkspace() {
               setChatMode(mode);
             }} />
             {!isSuperFiesta && (
-              <div className="w-full max-w-5xl mt-6">
+              <div className="w-full max-w-5xl mt-6 relative z-40 overflow-visible">
                 <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />
               </div>
             )}
