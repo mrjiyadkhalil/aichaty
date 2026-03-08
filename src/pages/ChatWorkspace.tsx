@@ -274,7 +274,7 @@ export default function ChatWorkspace() {
 
       <div className="flex-1 overflow-y-auto">
         {!hasMessages ? (
-          <div className="flex flex-col items-center justify-center min-h-full px-4 py-16">
+          <div className="flex flex-col items-center justify-center min-h-full px-3 sm:px-4 py-8 sm:py-16">
             <ChatModeSwitcher mode={chatMode} onModeChange={(mode) => {
               if (mode === "multichat" && !canAccess("multi_chat")) {
                 setUpgradeFeature("Multi-Chat Mode");
