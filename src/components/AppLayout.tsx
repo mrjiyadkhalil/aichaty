@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TopBar } from "@/components/TopBar";
+import { ChatTagManager } from "@/components/ChatTagManager";
 
 interface Project { id: string; name: string; }
 interface Chat { id: string; title: string | null; project_id: string | null; }
