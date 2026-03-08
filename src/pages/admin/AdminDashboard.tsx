@@ -12,6 +12,7 @@ const PIE_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--mute
 export default function AdminDashboard() {
   const [period, setPeriod] = useState("7d");
   const [metrics, setMetrics] = useState<any>(null);
+  const [planStats, setPlanStats] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
