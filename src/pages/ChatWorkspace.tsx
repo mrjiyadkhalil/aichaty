@@ -242,17 +242,9 @@ export default function ChatWorkspace() {
         {!hasMessages ? (
           <div className="flex flex-col items-center justify-center min-h-full px-4 py-8">
             <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
-            <AnimatePresence mode="wait">
-              {isSuperFiesta ? (
-                <motion.div key="superfiesta" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }} className="w-full max-w-3xl mt-8">
-                  <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} />
-                </motion.div>
-              ) : (
-                <motion.div key="multichat" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }} className="w-full mt-8">
-                  <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <motion.div key="empty-prompt" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="w-full max-w-3xl mt-8">
+              <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} />
+            </motion.div>
             <div className="w-full max-w-4xl mt-12">
               <ExploreSection />
             </div>
