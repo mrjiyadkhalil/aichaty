@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUsage } from "@/hooks/useUsage";
 import { usePreferences } from "@/hooks/usePreferences";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,21 +11,24 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { Save, User, BarChart3, Settings2 } from "lucide-react";
+import { Save, User, BarChart3, Settings2, Sun, Moon, Monitor, RotateCcw } from "lucide-react";
 import { AI_CONFIG, CostMode } from "@/lib/aiConfig";
 
 export default function Settings() {
   const { user, signOut } = useAuth();
   const { totalCost, requestCount, isNearCap, isAtCap } = useUsage();
-  const { costMode, defaultLayout, savePreferences } = usePreferences();
+  const { costMode, defaultLayout, theme: prefTheme, onboardingCompleted, savePreferences } = usePreferences();
+  const { setTheme } = useTheme();
 
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
   const [localCostMode, setLocalCostMode] = useState<CostMode>(costMode);
   const [localLayout, setLocalLayout] = useState(defaultLayout);
+  const [localTheme, setLocalTheme] = useState<"light" | "dark" | "system">(prefTheme);
 
   useEffect(() => { setLocalCostMode(costMode); }, [costMode]);
   useEffect(() => { setLocalLayout(defaultLayout); }, [defaultLayout]);
+  useEffect(() => { setLocalTheme(prefTheme); }, [prefTheme]);
 
   useEffect(() => {
     if (!user) return;
@@ -42,11 +46,26 @@ export default function Settings() {
     setSaving(false);
   };
 
-  const handleSavePreferences = () => { savePreferences({ costMode: localCostMode, defaultLayout: localLayout }); };
+  const handleSavePreferences = () => {
+    setTheme(localTheme);
+    savePreferences({ costMode: localCostMode, defaultLayout: localLayout, theme: localTheme });
+  };
+
+  const handleRestartTour = async () => {
+    await savePreferences({ onboardingCompleted: false });
+    toast.success("Onboarding tour will show on next page load");
+    setTimeout(() => window.location.reload(), 500);
+  };
 
   const usagePercent = Math.min((totalCost / AI_CONFIG.limits.hardCapUsd) * 100, 100);
   const statusLabel = isAtCap ? "Limit Reached" : isNearCap ? "Near Limit" : "Normal";
   const statusColor = isAtCap ? "destructive" : isNearCap ? "secondary" : "default";
+
+  const themeOptions = [
+    { value: "light" as const, label: "Light", icon: Sun },
+    { value: "dark" as const, label: "Dark", icon: Moon },
+    { value: "system" as const, label: "System", icon: Monitor },
+  ];
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6 animate-fade-in">
@@ -87,6 +106,29 @@ export default function Settings() {
       {/* Preferences */}
       <div className="glass-card p-6 space-y-5">
         <h2 className="text-base font-semibold flex items-center gap-2 font-['Space_Grotesk']"><Settings2 className="h-4 w-4 text-primary" /> Preferences</h2>
+
+        {/* Theme */}
+        <div className="space-y-3">
+          <Label>Theme</Label>
+          <div className="flex gap-2">
+            {themeOptions.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                onClick={() => setLocalTheme(value)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm transition-all ${
+                  localTheme === value
+                    ? "border-primary bg-primary/10 text-primary shadow-glow-sm"
+                    : "border-border/50 text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Cost Mode */}
         <div className="space-y-3">
           <Label>Cost Mode</Label>
           <RadioGroup value={localCostMode} onValueChange={(v) => setLocalCostMode(v as CostMode)} className="flex gap-4">
@@ -103,6 +145,8 @@ export default function Settings() {
             {localCostMode === "premium" && "All models enabled including expensive ones. Higher token limits."}
           </p>
         </div>
+
+        {/* Layout */}
         <div className="space-y-2">
           <Label>Default Layout</Label>
           <div className="flex gap-4">
@@ -114,7 +158,24 @@ export default function Settings() {
             </label>
           </div>
         </div>
+
         <Button onClick={handleSavePreferences} className="gap-1.5 shadow-glow-sm"><Save className="h-3.5 w-3.5" /> Save Preferences</Button>
+      </div>
+
+      {/* Onboarding */}
+      <div className="glass-card p-6 space-y-3">
+        <h2 className="text-base font-semibold flex items-center gap-2 font-['Space_Grotesk']"><RotateCcw className="h-4 w-4 text-primary" /> Onboarding</h2>
+        <p className="text-sm text-muted-foreground">Re-run the onboarding tour to learn about features.</p>
+        <Button variant="outline" onClick={handleRestartTour} className="gap-1.5 border-border/50 hover:bg-secondary">
+          <RotateCcw className="h-3.5 w-3.5" /> Restart Tour
+        </Button>
+      </div>
+
+      {/* Keyboard Shortcuts hint */}
+      <div className="glass-card p-6">
+        <p className="text-sm text-muted-foreground">
+          Press <kbd className="px-1.5 py-0.5 text-xs font-mono rounded bg-muted/50 border border-border/50">Ctrl+/</kbd> anytime to view keyboard shortcuts.
+        </p>
       </div>
 
       {/* Logout */}

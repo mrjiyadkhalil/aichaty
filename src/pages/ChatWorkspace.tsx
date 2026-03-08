@@ -301,7 +301,7 @@ export default function ChatWorkspace() {
                   <>
                     <ResponseGrid layout={layout}>
                       {msg.responses.map((resp, i) => (
-                        <ModelResponseCard key={resp.id} model={resp.model} content={resp.content} status={resp.status as "loading" | "success" | "error"} errorMessage={resp.error_message} includedInSynthesis={resp.included_in_synthesis} onToggleInclude={() => toggleInclude(resp.id, msg.id)} onRetry={() => handleRetry(msg.id, resp.model)} latencyMs={resp.latency_ms} colorIndex={i} />
+                        <ModelResponseCard key={resp.id} model={resp.model} content={resp.content} status={resp.status as "loading" | "success" | "error"} errorMessage={resp.error_message} includedInSynthesis={resp.included_in_synthesis} onToggleInclude={() => toggleInclude(resp.id, msg.id)} onRetry={() => handleRetry(msg.id, resp.model)} latencyMs={resp.latency_ms} colorIndex={i} responseId={resp.id} />
                       ))}
                     </ResponseGrid>
                     {msg.responses.some((r) => r.status === "success") && (

@@ -9,13 +9,18 @@ import { useAdminCheck } from "@/hooks/useAdmin";
 import { ImpersonationProvider } from "@/hooks/useImpersonation";
 import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
 import { MaintenanceGate } from "@/components/MaintenanceGate";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { OnboardingTour } from "@/components/OnboardingTour";
+import { KeyboardShortcutsModal } from "@/components/KeyboardShortcutsModal";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import ProjectDetail from "./pages/ProjectDetail";
 import ChatWorkspace from "./pages/ChatWorkspace";
 import Settings from "./pages/Settings";
+import Bookmarks from "./pages/Bookmarks";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -82,46 +87,61 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <AdminLayout>{children}</AdminLayout>;
 }
 
+function AppWithShortcuts() {
+  const { showHelp, setShowHelp } = useKeyboardShortcuts();
+
+  return (
+    <>
+      <OnboardingTour />
+      <KeyboardShortcutsModal open={showHelp} onClose={() => setShowHelp(false)} />
+      <Routes>
+        <Route path="/" element={<LandingRoute />} />
+        <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
+        <Route path="/chat/:id" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
+        <Route path="/project/:id" element={<ProtectedRoute><AppLayout><ProjectDetail /></AppLayout></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>} />
+        <Route path="/bookmarks" element={<ProtectedRoute><AppLayout><Bookmarks /></AppLayout></ProtectedRoute>} />
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+        <Route path="/admin/users/:id" element={<AdminRoute><AdminUserDetail /></AdminRoute>} />
+        <Route path="/admin/roles" element={<AdminRoute><AdminRoles /></AdminRoute>} />
+        <Route path="/admin/usage" element={<AdminRoute><AdminUsage /></AdminRoute>} />
+        <Route path="/admin/models" element={<AdminRoute><AdminModels /></AdminRoute>} />
+        <Route path="/admin/models/add" element={<AdminRoute><AdminModelAdd /></AdminRoute>} />
+        <Route path="/admin/revenue" element={<AdminRoute><AdminRevenue /></AdminRoute>} />
+        <Route path="/admin/broadcast" element={<AdminRoute><AdminBroadcast /></AdminRoute>} />
+        <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+        <Route path="/admin/errors" element={<AdminRoute><AdminErrors /></AdminRoute>} />
+        <Route path="/admin/audit" element={<AdminRoute><AdminAudit /></AdminRoute>} />
+        <Route path="/admin/feature-flags" element={<AdminRoute><AdminFeatureFlags /></AdminRoute>} />
+        <Route path="/admin/templates" element={<AdminRoute><AdminTemplates /></AdminRoute>} />
+        <Route path="/admin/share-links" element={<AdminRoute><AdminShareLinks /></AdminRoute>} />
+        <Route path="/admin/announcements" element={<AdminRoute><AdminAnnouncements /></AdminRoute>} />
+        <Route path="/admin/health" element={<AdminRoute><AdminSystemHealth /></AdminRoute>} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <ImpersonationProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <ImpersonationBanner />
-          <BrowserRouter>
-            <MaintenanceGate>
-              <Routes>
-                <Route path="/" element={<LandingRoute />} />
-                <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
-                <Route path="/chat" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
-                <Route path="/chat/:id" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
-                <Route path="/project/:id" element={<ProtectedRoute><AppLayout><ProjectDetail /></AppLayout></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>} />
-                {/* Admin Routes */}
-                <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-                <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-                <Route path="/admin/users/:id" element={<AdminRoute><AdminUserDetail /></AdminRoute>} />
-                <Route path="/admin/roles" element={<AdminRoute><AdminRoles /></AdminRoute>} />
-                <Route path="/admin/usage" element={<AdminRoute><AdminUsage /></AdminRoute>} />
-                <Route path="/admin/models" element={<AdminRoute><AdminModels /></AdminRoute>} />
-                <Route path="/admin/models/add" element={<AdminRoute><AdminModelAdd /></AdminRoute>} />
-                <Route path="/admin/revenue" element={<AdminRoute><AdminRevenue /></AdminRoute>} />
-                <Route path="/admin/broadcast" element={<AdminRoute><AdminBroadcast /></AdminRoute>} />
-                <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
-                <Route path="/admin/errors" element={<AdminRoute><AdminErrors /></AdminRoute>} />
-                <Route path="/admin/audit" element={<AdminRoute><AdminAudit /></AdminRoute>} />
-                <Route path="/admin/feature-flags" element={<AdminRoute><AdminFeatureFlags /></AdminRoute>} />
-                <Route path="/admin/templates" element={<AdminRoute><AdminTemplates /></AdminRoute>} />
-                <Route path="/admin/share-links" element={<AdminRoute><AdminShareLinks /></AdminRoute>} />
-                <Route path="/admin/announcements" element={<AdminRoute><AdminAnnouncements /></AdminRoute>} />
-                <Route path="/admin/health" element={<AdminRoute><AdminSystemHealth /></AdminRoute>} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </MaintenanceGate>
-          </BrowserRouter>
-        </TooltipProvider>
+        <ThemeProvider defaultTheme="dark">
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <ImpersonationBanner />
+            <BrowserRouter>
+              <MaintenanceGate>
+                <AppWithShortcuts />
+              </MaintenanceGate>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ThemeProvider>
       </ImpersonationProvider>
     </AuthProvider>
   </QueryClientProvider>

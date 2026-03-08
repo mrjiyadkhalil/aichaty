@@ -8,6 +8,8 @@ interface Preferences {
   costMode: CostMode;
   defaultModels: string[] | null;
   defaultLayout: "grid" | "stacked";
+  theme: "light" | "dark" | "system";
+  onboardingCompleted: boolean;
 }
 
 interface UsePreferencesReturn extends Preferences {
@@ -21,6 +23,8 @@ export function usePreferences(): UsePreferencesReturn {
     costMode: "balanced",
     defaultModels: null,
     defaultLayout: "grid",
+    theme: "dark",
+    onboardingCompleted: false,
   });
   const [loading, setLoading] = useState(true);
 
@@ -37,6 +41,8 @@ export function usePreferences(): UsePreferencesReturn {
             costMode: (data.cost_mode as CostMode) || "balanced",
             defaultModels: data.default_models,
             defaultLayout: (data.default_layout as "grid" | "stacked") || "grid",
+            theme: ((data as any).theme as "light" | "dark" | "system") || "dark",
+            onboardingCompleted: (data as any).onboarding_completed ?? false,
           });
         }
         setLoading(false);
@@ -48,11 +54,13 @@ export function usePreferences(): UsePreferencesReturn {
     const newPrefs = { ...prefs, ...updates };
     setPrefs(newPrefs);
 
-    const row = {
+    const row: any = {
       user_id: user.id,
       cost_mode: newPrefs.costMode,
       default_models: newPrefs.defaultModels,
       default_layout: newPrefs.defaultLayout,
+      theme: newPrefs.theme,
+      onboarding_completed: newPrefs.onboardingCompleted,
     };
 
     const { error } = await supabase
