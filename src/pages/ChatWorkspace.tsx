@@ -58,7 +58,7 @@ export default function ChatWorkspace() {
     if (!chatId || !user) return;
     const load = async () => {
       const { data: chat } = await supabase.from("chats").select("project_id, title").eq("id", chatId).single();
-      if (!chat) { navigate("/dashboard"); return; }
+      if (!chat) { navigate("/chat", { replace: true }); return; }
       
       const chatProjectId = chat.project_id;
       setProjectId(chatProjectId);
@@ -119,7 +119,18 @@ export default function ChatWorkspace() {
   };
 
   const handleSend = async (prompt: string) => {
-    if (!user || !chatId) return;
+    if (!user) return;
+    
+    // If no chatId, create a new chat first and redirect
+    let activeChatId = chatId;
+    if (!activeChatId) {
+      const title = prompt.slice(0, 50) + (prompt.length > 50 ? "..." : "");
+      const { data: newChat, error: chatErr } = await supabase.from("chats").insert({ user_id: user.id, title }).select().single();
+      if (chatErr || !newChat) { toast.error("Failed to create chat"); return; }
+      activeChatId = newChat.id;
+      navigate(`/chat/${activeChatId}`, { replace: true });
+    }
+    
     if (isAtCap) { toast.error("Monthly usage limit reached. Check Settings for details."); return; }
     if (isNearCap) { toast.warning("Approaching usage limit"); }
 
@@ -137,7 +148,7 @@ export default function ChatWorkspace() {
       fileContext = selectedFiles.map((f) => `[File: ${f.file_name}]\n${f.extracted_text || "(no text extracted)"}`).join("\n\n");
     }
     const fullPrompt = [useInstruction && projectInstruction ? `[Project Instruction]: ${projectInstruction}` : "", fileContext ? `[File Context]:\n${fileContext}` : "", prompt].filter(Boolean).join("\n\n");
-    const { data: msg, error: msgErr } = await supabase.from("messages").insert({ chat_id: chatId, user_id: user.id, content: prompt }).select().single();
+    const { data: msg, error: msgErr } = await supabase.from("messages").insert({ chat_id: activeChatId, user_id: user.id, content: prompt }).select().single();
     if (msgErr || !msg) { toast.error("Failed to save message"); setSending(false); return; }
     const placeholders = modelsToUse.map((model) => ({ message_id: msg.id, user_id: user.id, model, status: "loading" as const, content: null, error_message: null, included_in_synthesis: true }));
     const { data: responseRows } = await supabase.from("model_responses").insert(placeholders).select();
@@ -152,7 +163,7 @@ export default function ChatWorkspace() {
     const calls = modelsToUse.map(async (model) => {
       const start = Date.now();
       try {
-        const resp = await supabase.functions.invoke("multi-model-chat", { body: { prompt: fullPrompt, model, projectId, chatId, messageId: msg.id, max_tokens: modeConfig.maxOutputTokens, request_type: requestType } });
+        const resp = await supabase.functions.invoke("multi-model-chat", { body: { prompt: fullPrompt, model, projectId, chatId: activeChatId, messageId: msg.id, max_tokens: modeConfig.maxOutputTokens, request_type: requestType } });
         const latency = Date.now() - start;
         const responseId = newMsg.responses.find((r) => r.model === model)?.id;
         if (!responseId) return;
@@ -177,10 +188,6 @@ export default function ChatWorkspace() {
     await Promise.all(calls);
     setSending(false);
     refreshUsage();
-    if (messages.length === 0) {
-      const title = prompt.slice(0, 50) + (prompt.length > 50 ? "..." : "");
-      await supabase.from("chats").update({ title }).eq("id", chatId);
-    }
   };
 
   const handleRetry = async (messageId: string, model: string) => {

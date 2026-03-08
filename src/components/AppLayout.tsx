@@ -57,7 +57,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   }, [selectedProjectId, location.pathname]);
 
   const getTitle = () => {
-    if (location.pathname === "/dashboard") return "Dashboard";
+    if (location.pathname === "/chat") return "New Chat";
     if (location.pathname === "/settings") return "Settings";
     if (currentProjectId) {
       const p = projects.find((pr) => pr.id === currentProjectId);
@@ -70,7 +70,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     return "Fiesta AI";
   };
 
-  const isChatPage = !!currentChatId;
+  const isChatPage = !!currentChatId || location.pathname === "/chat";
 
   return (
     <SidebarProvider>

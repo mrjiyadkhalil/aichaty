@@ -1,4 +1,4 @@
-import { FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Settings, LayoutDashboard, Plus, Shield } from "lucide-react";
+import { FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Settings, Plus, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdmin";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -29,17 +29,14 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleNewChat = async () => {
-    if (!user) return;
-    const { data, error } = await supabase.from("chats").insert({ user_id: user.id, title: "New Chat" }).select().single();
-    if (error) { toast.error("Failed to create chat"); return; }
-    if (data) navigate(`/chat/${data.id}`);
+  const handleNewChat = () => {
+    navigate("/chat");
   };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border/50">
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate("/dashboard")}>
+        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate("/chat")}>
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-glow-sm">
             <Zap className="h-5 w-5 text-primary-foreground" />
           </div>
@@ -67,9 +64,9 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => navigate("/dashboard")} isActive={location.pathname === "/dashboard"} tooltip="Dashboard">
-                  <LayoutDashboard className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span>Dashboard</span>}
+                <SidebarMenuButton onClick={() => navigate("/settings")} isActive={location.pathname === "/settings"} tooltip="Settings">
+                  <Settings className="h-4 w-4 shrink-0" />
+                  {!collapsed && <span>Settings</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
