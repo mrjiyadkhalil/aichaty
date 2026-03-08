@@ -1,10 +1,12 @@
-import { useState, useMemo } from "react";
-import { FolderOpen, MessageSquare, LogOut, ChevronDown, Settings, Plus, Shield, Bookmark, BookOpen, Trash2, Pencil, Crown } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { FolderOpen, MessageSquare, LogOut, ChevronDown, Settings, Plus, Shield, Bookmark, BookOpen, Trash2, Crown, ArrowUpCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdmin";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { PlanBadge } from "@/components/PlanBadge";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter, SidebarHeader, useSidebar,
@@ -49,13 +51,21 @@ function groupChatsByDate(chats: Chat[]): { label: string; chats: Chat[] }[] {
 export function AppSidebar({ projects, recentChats, projectChats, selectedProjectId }: AppSidebarProps) {
   const { signOut, user } = useAuth();
   const { isAdmin } = useAdminCheck();
+  const { plan } = useSubscription();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
   const location = useLocation();
   const [hoveredChat, setHoveredChat] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
 
   const chatGroups = useMemo(() => groupChatsByDate(recentChats), [recentChats]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("display_name").eq("user_id", user.id).single()
+      .then(({ data }) => { if (data?.display_name) setDisplayName(data.display_name); });
+  }, [user]);
 
   const handleDeleteChat = async (chatId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -63,6 +73,9 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
     toast.success("Chat deleted");
     if (location.pathname === `/chat/${chatId}`) navigate("/chat");
   };
+
+  // Determine upgrade CTA
+  const nextPlan = plan === "free" ? "Pro" : plan === "pro" ? "Enterprise" : null;
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
@@ -82,6 +95,39 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
       </SidebarHeader>
 
       <SidebarContent className="px-2">
+        {/* Projects - above chat history */}
+        {projects.length > 0 && (
+          <SidebarGroup>
+            <Collapsible defaultOpen={!!selectedProjectId}>
+              <CollapsibleTrigger className="flex items-center justify-between w-full px-2">
+                <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-medium cursor-pointer">
+                  Projects
+                </SidebarGroupLabel>
+                {!collapsed && <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/40" />}
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {projects.map((project) => (
+                      <SidebarMenuItem key={project.id}>
+                        <SidebarMenuButton
+                          onClick={() => navigate(`/project/${project.id}`)}
+                          isActive={selectedProjectId === project.id}
+                          tooltip={project.name}
+                          className="h-9 rounded-lg text-[13px] transition-colors duration-150"
+                        >
+                          <FolderOpen className="h-4 w-4 shrink-0" />
+                          {!collapsed && <span className="truncate">{project.name}</span>}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </Collapsible>
+          </SidebarGroup>
+        )}
+
         {/* Chat History grouped by date */}
         {!collapsed && chatGroups.map((group) => (
           <SidebarGroup key={group.label}>
@@ -130,39 +176,6 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
             </SidebarMenuItem>
           </SidebarMenu>
         ))}
-
-        {/* Projects */}
-        {projects.length > 0 && (
-          <SidebarGroup>
-            <Collapsible defaultOpen={!!selectedProjectId}>
-              <CollapsibleTrigger className="flex items-center justify-between w-full px-2">
-                <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-medium cursor-pointer">
-                  Projects
-                </SidebarGroupLabel>
-                {!collapsed && <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/40" />}
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {projects.map((project) => (
-                      <SidebarMenuItem key={project.id}>
-                        <SidebarMenuButton
-                          onClick={() => navigate(`/project/${project.id}`)}
-                          isActive={selectedProjectId === project.id}
-                          tooltip={project.name}
-                          className="h-9 rounded-lg text-[13px] transition-colors duration-150"
-                        >
-                          <FolderOpen className="h-4 w-4 shrink-0" />
-                          {!collapsed && <span className="truncate">{project.name}</span>}
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </CollapsibleContent>
-            </Collapsible>
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
       <SidebarFooter className="p-2 border-t border-border space-y-0.5">
@@ -179,12 +192,15 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
               {!collapsed && <span>Bookmarks</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => navigate("/pricing")} isActive={location.pathname === "/pricing"} tooltip="Pricing" className="h-9 rounded-lg text-[13px] transition-colors duration-150">
-              <Crown className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>Pricing</span>}
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {/* Upgrade CTA - only for non-enterprise users */}
+          {nextPlan && (
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => navigate("/pricing")} tooltip={`Upgrade to ${nextPlan}`} className="h-9 rounded-lg text-[13px] transition-colors duration-150 text-primary hover:text-primary">
+                <ArrowUpCircle className="h-4 w-4 shrink-0" />
+                {!collapsed && <span>Upgrade to {nextPlan}</span>}
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           {isAdmin && (
             <SidebarMenuItem>
               <SidebarMenuButton onClick={() => navigate("/admin")} isActive={location.pathname.startsWith("/admin")} tooltip="Admin" className="h-9 rounded-lg text-[13px] transition-colors duration-150">
@@ -199,9 +215,12 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
           {!collapsed ? (
             <div className="flex items-center gap-2 px-2 py-1.5">
               <div className="h-7 w-7 rounded-full bg-secondary flex items-center justify-center text-xs font-medium text-foreground shrink-0">
-                {user?.email?.[0]?.toUpperCase() || "U"}
+                {(displayName || user?.email)?.[0]?.toUpperCase() || "U"}
               </div>
-              <span className="text-xs text-muted-foreground truncate flex-1">{user?.email}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-foreground truncate">{displayName || user?.email || "User"}</p>
+                <PlanBadge plan={plan} />
+              </div>
               <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => navigate("/settings")}>
                 <Settings className="h-3.5 w-3.5" />
               </Button>
