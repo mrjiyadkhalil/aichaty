@@ -44,7 +44,7 @@ export default function Settings() {
   const handleSaveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({ display_name: displayName }).eq("user_id", user.id);
+    const { error } = await supabase.from("profiles").update({ display_name: displayName, custom_system_prompt: customSystemPrompt } as any).eq("user_id", user.id);
     if (error) toast.error(error.message);
     else toast.success("Profile saved");
     setSaving(false);
