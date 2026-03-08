@@ -9,7 +9,6 @@ import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
 import ProjectDetail from "./pages/ProjectDetail";
 import ChatWorkspace from "./pages/ChatWorkspace";
 import Settings from "./pages/Settings";
