@@ -8,15 +8,15 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
   const recognitionRef = useRef<any>(null);
 
   const translateToEnglish = useCallback(async (text: string): Promise<string> => {
-    // Quick check — if it looks like English already, skip translation
-    const simpleEnglishTest = /^[a-zA-Z0-9\s.,!?'"()\-:;@#$%&*]+$/;
-    if (simpleEnglishTest.test(text)) return text;
+    // Quick check — if it's ASCII-only, likely English already
+    const isAscii = /^[\x00-\x7F\s]+$/.test(text);
+    if (isAscii) return text;
 
     setIsTranslating(true);
     try {
       const { data, error } = await supabase.functions.invoke("multi-model-chat", {
         body: {
-          prompt: `Translate the following text to English. Return ONLY the translated text, nothing else. If it's already in English, return it as-is.\n\nText: ${text}`,
+          prompt: `Translate the following text to English. Return ONLY the English translation, nothing else. Do not add quotes or explanations.\n\nText: ${text}`,
           model: "google/gemini-2.5-flash-lite",
           request_type: "voice_translate",
         },
@@ -40,16 +40,19 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = false;
-    // No lang set — auto-detect any language
-    recognition.lang = "";
+    // Don't set recognition.lang — let the browser auto-detect any language
 
     recognition.onresult = async (event: any) => {
-      const results = Array.from(event.results as SpeechRecognitionResultList);
-      const transcript = results
-        .map((r: any) => r[0].transcript)
-        .join(" ")
-        .trim();
+      // Only process new results
+      const newResults: string[] = [];
+      for (let i = 0; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          newResults.push(event.results[i][0].transcript);
+        }
+      }
+      const transcript = newResults.join(" ").trim();
       if (!transcript) return;
+
       const translated = await translateToEnglish(transcript);
       onTranscript(translated);
     };
