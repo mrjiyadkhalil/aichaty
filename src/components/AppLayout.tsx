@@ -81,6 +81,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar projects={projects} recentChats={recentChats} projectChats={projectChats} selectedProjectId={selectedProjectId} onProjectsChanged={loadData} />
         <div className="flex-1 flex flex-col min-w-0">
+          {/* Model bar portal target — rendered above TopBar */}
+          <div id="model-bar-slot" className="shrink-0" />
           <div className="flex items-center">
             <TopBar title={getTitle()} />
             {currentChatId && (
