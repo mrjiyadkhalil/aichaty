@@ -12,7 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const NAV_ITEMS = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
   { label: "Users", path: "/admin/users", icon: Users },
-  { label: "Roles", path: "/admin/roles", icon: UserCog },
+  
   { label: "Usage & Cost", path: "/admin/usage", icon: BarChart3 },
   { label: "Revenue", path: "/admin/revenue", icon: DollarSign },
   { label: "Models", path: "/admin/models", icon: Cpu },

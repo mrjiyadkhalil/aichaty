@@ -18,6 +18,7 @@ import { ExploreSection } from "@/components/ExploreSection";
 import { SavePromptButton } from "@/components/SavePromptButton";
 import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { AI_CONFIG } from "@/lib/aiConfig";
+import { useModels } from "@/hooks/useModels";
 import { pickBestModel } from "@/lib/autoRouter";
 import { toast } from "sonner";
 import { Copy, Check } from "lucide-react";
@@ -64,7 +65,8 @@ export default function ChatWorkspace() {
   useEffect(() => { setLayout(defaultLayout); }, [defaultLayout]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const enabledModels = AI_CONFIG.costModes[costMode]?.enabledModels || AI_CONFIG.costModes.balanced.enabledModels;
+  const { allModelIds, modelLabels } = useModels();
+  const enabledModels = allModelIds.length > 0 ? allModelIds : (AI_CONFIG.costModes[costMode]?.enabledModels || AI_CONFIG.costModes.balanced.enabledModels);
 
   // Reset state when navigating to /chat (no chatId)
   useEffect(() => {
@@ -336,7 +338,7 @@ export default function ChatWorkspace() {
                         {resp.status === "success" && (
                           <div className="py-1">
                             <div className="text-[11px] text-muted-foreground/50 mb-1.5 flex items-center gap-1.5">
-                              <span>{AI_CONFIG.modelLabels[resp.model] || resp.model}</span>
+                              <span>{modelLabels[resp.model] || resp.model}</span>
                               {resp.latency_ms && <span>· {(resp.latency_ms / 1000).toFixed(1)}s</span>}
                             </div>
                             <div className="prose-dark">

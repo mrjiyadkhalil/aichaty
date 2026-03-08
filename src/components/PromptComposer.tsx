@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AI_CONFIG } from "@/lib/aiConfig";
+import { useModels } from "@/hooks/useModels";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { ImageUploadButton } from "@/components/ImageUploadButton";
 import { cn } from "@/lib/utils";
@@ -40,7 +41,9 @@ export function PromptComposer({
   onImageSelected, onImageRemoved, hasImage = false,
 }: PromptComposerProps) {
   const [prompt, setPrompt] = useState("");
-  const allowedModels = enabledModels || AI_CONFIG.allModels;
+  const { allModelIds, modelShortLabels: dbShortLabels } = useModels();
+  const allowedModels = enabledModels || allModelIds;
+  const displayModels = allModelIds.length > 0 ? allModelIds : AI_CONFIG.allModels;
   const isSuperFiesta = chatMode === "superfiesta";
 
   const { isRecording, toggleRecording } = useVoiceInput((text) => {
@@ -65,7 +68,7 @@ export function PromptComposer({
         {/* Model chips for multi-chat - horizontal scroll on mobile */}
         {!isSuperFiesta && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 px-1 scrollbar-hide">
-            {AI_CONFIG.allModels.map((modelId) => {
+            {displayModels.map((modelId) => {
               const isSelected = selectedModels.includes(modelId);
               const isEnabled = allowedModels.includes(modelId);
               return (
@@ -80,7 +83,7 @@ export function PromptComposer({
                   )}
                   onClick={() => isEnabled && onToggleModel(modelId)}
                 >
-                  {AI_CONFIG.modelShortLabels[modelId] || modelId}
+                  {dbShortLabels[modelId] || AI_CONFIG.modelShortLabels[modelId] || modelId}
                 </button>
               );
             })}

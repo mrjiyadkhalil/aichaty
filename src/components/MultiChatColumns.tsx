@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Send, Plus, Sparkles, ExternalLink, Minimize2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { AI_CONFIG } from "@/lib/aiConfig";
+import { useModels } from "@/hooks/useModels";
 import { motion, AnimatePresence } from "framer-motion";
 
 const MODEL_ICONS: Record<string, { label: string; color: string; icon: string }> = {
@@ -35,7 +36,8 @@ export function MultiChatColumns({
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   const displayModels = enabledModels.slice(0, 4);
-  const allModels = AI_CONFIG.allModels;
+  const { allModelIds } = useModels();
+  const allModels = allModelIds.length > 0 ? allModelIds : AI_CONFIG.allModels;
 
   const handleSend = () => {
     if (!prompt.trim() || disabled || !onSend) return;
