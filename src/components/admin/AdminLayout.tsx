@@ -54,8 +54,8 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="p-3 border-t border-border/30">
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground" onClick={() => navigate("/dashboard")}>
+        <div className="sticky bottom-0 p-3 border-t border-border/30 bg-card/50 backdrop-blur-xl">
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground" onClick={() => navigate("/chat")}>
             <ArrowLeft className="h-4 w-4" /> Back to App
           </Button>
         </div>
