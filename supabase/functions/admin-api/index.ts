@@ -86,6 +86,10 @@ Deno.serve(async (req) => {
       case "get_api_keys": return await getApiKeys(sb);
       case "update_api_key": return await updateApiKey(sb, userId, body);
       case "init_default_api_keys": return await initDefaultApiKeys(sb, userId);
+      case "update_user_plan": return await updateUserPlan(sb, userId, body);
+      case "get_plan_stats": return await getPlanStats(sb);
+      case "revoke_user_sessions": return await revokeUserSessions(sb, userId, body);
+      case "get_user_sessions": return await getUserSessions(sb, body);
       default: return json({ error: `Unknown action: ${action}` }, 400);
     }
   } catch (e: any) {
