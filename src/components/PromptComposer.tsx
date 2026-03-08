@@ -68,7 +68,7 @@ export function PromptComposer({
         {/* Model chips for multi-chat - horizontal scroll on mobile */}
         {!isSuperFiesta && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 px-1 scrollbar-hide">
-            {AI_CONFIG.allModels.map((modelId) => {
+            {displayModels.map((modelId) => {
               const isSelected = selectedModels.includes(modelId);
               const isEnabled = allowedModels.includes(modelId);
               return (
