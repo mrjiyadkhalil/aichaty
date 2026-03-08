@@ -8,10 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AI_CONFIG } from "@/lib/aiConfig";
 
-interface SelectedFile {
-  id: string;
-  name: string;
-}
+interface SelectedFile { id: string; name: string; }
 
 interface PromptComposerProps {
   onSend: (prompt: string) => void;
@@ -30,47 +27,27 @@ interface PromptComposerProps {
 }
 
 export function PromptComposer({
-  onSend,
-  onEnhance,
-  onAttachFiles,
-  selectedModels,
-  onToggleModel,
-  selectedFiles,
-  onRemoveFile,
-  useProjectInstruction,
-  onToggleInstruction,
-  hasProjectInstruction,
-  disabled,
-  enhancing,
-  enabledModels,
+  onSend, onEnhance, onAttachFiles, selectedModels, onToggleModel,
+  selectedFiles, onRemoveFile, useProjectInstruction, onToggleInstruction,
+  hasProjectInstruction, disabled, enhancing, enabledModels,
 }: PromptComposerProps) {
   const [prompt, setPrompt] = useState("");
-
   const allowedModels = enabledModels || AI_CONFIG.allModels;
 
   const handleSend = () => {
     if (!prompt.trim()) return;
-    if (selectedModels.length === 0) {
-      toast.warning("Select at least one model before sending");
-      return;
-    }
-    if (prompt.length > AI_CONFIG.limits.maxPromptLength) {
-      toast.warning(`Prompt too long (max ${AI_CONFIG.limits.maxPromptLength} chars)`);
-      return;
-    }
+    if (selectedModels.length === 0) { toast.warning("Select at least one model before sending"); return; }
+    if (prompt.length > AI_CONFIG.limits.maxPromptLength) { toast.warning(`Prompt too long (max ${AI_CONFIG.limits.maxPromptLength} chars)`); return; }
     onSend(prompt.trim());
     setPrompt("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
   return (
-    <div className="border-t border-border bg-card/80 backdrop-blur-sm p-4 space-y-3">
+    <div className="border-t border-border/30 bg-card/30 backdrop-blur-xl p-4 space-y-3">
       <div className="max-w-5xl mx-auto space-y-3">
         {/* Model chips */}
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -82,7 +59,9 @@ export function PromptComposer({
               <Badge
                 key={modelId}
                 variant={isSelected ? "default" : "outline"}
-                className={`cursor-pointer text-xs transition-all select-none ${!isEnabled ? "opacity-40 cursor-not-allowed" : "hover:scale-105"}`}
+                className={`cursor-pointer text-xs transition-all select-none ${
+                  isSelected ? "bg-primary text-primary-foreground shadow-glow-sm" : "border-border/50 text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                } ${!isEnabled ? "opacity-30 cursor-not-allowed" : "hover:scale-105"}`}
                 onClick={() => isEnabled && onToggleModel(modelId)}
               >
                 {AI_CONFIG.modelShortLabels[modelId] || modelId}
@@ -98,23 +77,17 @@ export function PromptComposer({
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-xs text-muted-foreground">Files:</span>
               {selectedFiles.map((f) => (
-                <Badge key={f.id} variant="secondary" className="text-xs gap-1">
+                <Badge key={f.id} variant="secondary" className="text-xs gap-1 bg-secondary/50">
                   {f.name}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => onRemoveFile(f.id)} />
+                  <X className="h-3 w-3 cursor-pointer hover:text-foreground" onClick={() => onRemoveFile(f.id)} />
                 </Badge>
               ))}
             </div>
           )}
           {hasProjectInstruction && (
             <div className="flex items-center gap-2 ml-auto">
-              <Switch
-                id="use-instruction"
-                checked={useProjectInstruction}
-                onCheckedChange={onToggleInstruction}
-              />
-              <Label htmlFor="use-instruction" className="text-xs text-muted-foreground cursor-pointer">
-                Use Project Instruction
-              </Label>
+              <Switch id="use-instruction" checked={useProjectInstruction} onCheckedChange={onToggleInstruction} />
+              <Label htmlFor="use-instruction" className="text-xs text-muted-foreground cursor-pointer">Use Project Instruction</Label>
             </div>
           )}
         </div>
@@ -126,42 +99,22 @@ export function PromptComposer({
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask anything... Compare responses across models."
-            className="min-h-[90px] pr-4 pb-14 resize-none bg-background/80 border-border/50 focus:border-primary/50"
+            className="min-h-[90px] pr-4 pb-14 resize-none bg-background/50 border-border/30 focus:border-primary/50 focus:shadow-glow-sm transition-shadow"
             disabled={disabled}
           />
           <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
             <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-primary"
-                onClick={() => onEnhance(prompt)}
-                disabled={!prompt.trim() || enhancing || disabled}
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Enhance Prompt
+              <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-primary" onClick={() => onEnhance(prompt)} disabled={!prompt.trim() || enhancing || disabled}>
+                <Sparkles className="h-3.5 w-3.5" /> Enhance
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-primary"
-                onClick={onAttachFiles}
-                disabled={disabled}
-              >
-                <Paperclip className="h-3.5 w-3.5" />
-                Attach File Context
+              <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-primary" onClick={onAttachFiles} disabled={disabled}>
+                <Paperclip className="h-3.5 w-3.5" /> Attach
               </Button>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">{prompt.length}/{AI_CONFIG.limits.maxPromptLength}</span>
-              <Button
-                size="sm"
-                className="h-8 gap-1.5"
-                onClick={handleSend}
-                disabled={!prompt.trim() || disabled}
-              >
-                <Send className="h-3.5 w-3.5" />
-                Send to Models
+              <Button size="sm" className="h-8 gap-1.5 shadow-glow-sm hover:shadow-glow transition-shadow" onClick={handleSend} disabled={!prompt.trim() || disabled}>
+                <Send className="h-3.5 w-3.5" /> Send to Models
               </Button>
             </div>
           </div>

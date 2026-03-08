@@ -1,4 +1,4 @@
-import { Plus, FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Home, Settings, LayoutDashboard, Shield } from "lucide-react";
+import { FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Settings, LayoutDashboard, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdmin";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -27,10 +27,10 @@ export function AppSidebar({ projects, chats, selectedProjectId }: AppSidebarPro
   const location = useLocation();
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="border-r border-border/50">
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/dashboard")}>
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate("/dashboard")}>
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-glow-sm">
             <Zap className="h-5 w-5 text-primary-foreground" />
           </div>
           {!collapsed && <span className="font-bold text-lg tracking-tight font-['Space_Grotesk']">Fiesta AI</span>}
@@ -38,7 +38,6 @@ export function AppSidebar({ projects, chats, selectedProjectId }: AppSidebarPro
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Nav */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -66,18 +65,13 @@ export function AppSidebar({ projects, chats, selectedProjectId }: AppSidebarPro
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Projects */}
         <SidebarGroup>
-          <SidebarGroupLabel>Projects</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-muted-foreground/70">Projects</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {projects.map((project) => (
                 <SidebarMenuItem key={project.id}>
-                  <SidebarMenuButton
-                    onClick={() => navigate(`/project/${project.id}`)}
-                    isActive={selectedProjectId === project.id}
-                    tooltip={project.name}
-                  >
+                  <SidebarMenuButton onClick={() => navigate(`/project/${project.id}`)} isActive={selectedProjectId === project.id} tooltip={project.name}>
                     <FolderOpen className="h-4 w-4 shrink-0" />
                     {!collapsed && <span className="truncate">{project.name}</span>}
                   </SidebarMenuButton>
@@ -90,12 +84,11 @@ export function AppSidebar({ projects, chats, selectedProjectId }: AppSidebarPro
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Chats for selected project */}
         {selectedProjectId && chats.length > 0 && !collapsed && (
           <SidebarGroup>
             <Collapsible defaultOpen>
               <CollapsibleTrigger className="flex items-center justify-between w-full px-2">
-                <SidebarGroupLabel className="cursor-pointer">Chats</SidebarGroupLabel>
+                <SidebarGroupLabel className="cursor-pointer text-muted-foreground/70">Chats</SidebarGroupLabel>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </CollapsibleTrigger>
               <CollapsibleContent>
@@ -103,10 +96,7 @@ export function AppSidebar({ projects, chats, selectedProjectId }: AppSidebarPro
                   <SidebarMenu>
                     {chats.map((chat) => (
                       <SidebarMenuItem key={chat.id}>
-                        <SidebarMenuButton
-                          onClick={() => navigate(`/chat/${chat.id}`)}
-                          isActive={location.pathname === `/chat/${chat.id}`}
-                        >
+                        <SidebarMenuButton onClick={() => navigate(`/chat/${chat.id}`)} isActive={location.pathname === `/chat/${chat.id}`}>
                           <MessageSquare className="h-4 w-4 shrink-0" />
                           <span className="truncate">{chat.title || "New Chat"}</span>
                         </SidebarMenuButton>
@@ -120,15 +110,15 @@ export function AppSidebar({ projects, chats, selectedProjectId }: AppSidebarPro
         )}
       </SidebarContent>
 
-      <SidebarFooter className="p-3">
+      <SidebarFooter className="p-3 border-t border-border/30">
         {!collapsed && (
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground truncate max-w-[140px]">{user?.email}</span>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
           </div>
         )}
         {collapsed && (
-          <Button variant="ghost" size="icon" className="h-7 w-7 mx-auto" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7 mx-auto text-muted-foreground hover:text-foreground" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
         )}
       </SidebarFooter>
     </Sidebar>

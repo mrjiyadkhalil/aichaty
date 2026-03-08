@@ -20,8 +20,8 @@ export function AdminLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex bg-background">
-      <aside className="w-56 border-r border-border bg-card flex flex-col shrink-0">
-        <div className="p-4 border-b border-border">
+      <aside className="w-56 border-r border-border/30 bg-card/50 backdrop-blur-xl flex flex-col shrink-0">
+        <div className="p-4 border-b border-border/30">
           <h2 className="font-bold text-sm font-['Space_Grotesk'] text-foreground">Admin Panel</h2>
         </div>
         <nav className="flex-1 p-2 space-y-0.5">
@@ -32,8 +32,8 @@ export function AdminLayout({ children }: { children: ReactNode }) {
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors",
-                  active ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all",
+                  active ? "bg-primary/10 text-primary font-medium shadow-glow-sm" : "text-muted-foreground hover:bg-surface-hover hover:text-foreground"
                 )}
               >
                 <item.icon className="h-4 w-4 shrink-0" />
@@ -42,15 +42,13 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="p-3 border-t border-border">
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-2" onClick={() => navigate("/dashboard")}>
+        <div className="p-3 border-t border-border/30">
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground" onClick={() => navigate("/dashboard")}>
             <ArrowLeft className="h-4 w-4" /> Back to App
           </Button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
+      <main className="flex-1 overflow-auto">{children}</main>
     </div>
   );
 }
