@@ -187,32 +187,35 @@ export function MultiChatColumns({
               <div
                 key={provider}
                 className={cn(
-                  "flex-1 min-w-[200px]",
+                  "flex-[1_1_380px] min-w-[90%] md:min-w-[380px]",
                   idx < providerKeys.length - 1 && "border-r border-border/20"
                 )}
               >
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <span className="text-lg shrink-0" style={{ color: `hsl(${meta.color})` }}>
-                    {meta.icon}
-                  </span>
-                  <button
-                    ref={el => { triggerRefs.current[provider] = el; }}
-                    onClick={() => toggleDropdown(provider)}
-                    className="flex items-center gap-1.5 min-w-0"
-                  >
-                    <span className="text-[13px] font-medium truncate text-foreground/90">{label}</span>
-                    <ChevronDown className={cn(
-                      "h-3.5 w-3.5 shrink-0 text-muted-foreground/50 transition-transform duration-200",
-                      isOpen && "rotate-180"
-                    )} />
-                  </button>
-                  <div className="flex-1" />
-                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground/30" />
-                  <Switch
-                    checked={isActive}
-                    onCheckedChange={() => handleToggleProvider(provider)}
-                    className="data-[state=checked]:bg-emerald-500 shrink-0"
-                  />
+                <div className="flex items-center justify-between h-[60px] px-2 md:px-3">
+                  <div className="flex flex-1 items-center space-x-2 min-w-0">
+                    <span className="text-lg shrink-0" style={{ color: `hsl(${meta.color})` }}>
+                      {meta.icon}
+                    </span>
+                    <button
+                      ref={el => { triggerRefs.current[provider] = el; }}
+                      onClick={() => toggleDropdown(provider)}
+                      className="flex items-center gap-1 min-w-0 border border-border/40 rounded-full px-2 py-1.5 hover:border-border transition-colors"
+                    >
+                      <span className="text-sm font-medium truncate text-foreground/90 max-w-[190px]">{label}</span>
+                      <ChevronDown className={cn(
+                        "h-4 w-4 shrink-0 text-muted-foreground/50 transition-transform duration-200",
+                        isOpen && "rotate-180"
+                      )} />
+                    </button>
+                  </div>
+                  <div className="flex items-center space-x-0.5">
+                    <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+                    <Switch
+                      checked={isActive}
+                      onCheckedChange={() => handleToggleProvider(provider)}
+                      className="data-[state=checked]:bg-emerald-500 shrink-0 scale-75"
+                    />
+                  </div>
                 </div>
               </div>
             );
