@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { MetricCard } from "@/components/admin/MetricCard";
+import { PlanBadge } from "@/components/PlanBadge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Shield, ShieldOff, Ban, CheckCircle, Zap, ZapOff, Clock, Eye, DollarSign, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Shield, ShieldOff, Ban, CheckCircle, Zap, ZapOff, Clock, Eye, DollarSign, Save, Loader2, Crown, Monitor, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { PlanName } from "@/hooks/useSubscription";
 
 export default function AdminUserDetail() {
   const { id } = useParams<{ id: string }>();
