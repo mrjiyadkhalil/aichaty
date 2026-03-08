@@ -61,6 +61,21 @@ export default function ChatWorkspace() {
 
   const enabledModels = AI_CONFIG.costModes[costMode]?.enabledModels || AI_CONFIG.costModes.balanced.enabledModels;
 
+  // Reset state when navigating to /chat (no chatId)
+  useEffect(() => {
+    if (!chatId) {
+      setMessages([]);
+      setProjectId(null);
+      setProjectName("");
+      setProjectInstruction("");
+      setProjectFiles([]);
+      setImageBase64(null);
+      setImageMimeType(null);
+      setEnhancedPrompt(null);
+      setSelectedModels(["google/gemini-3-flash-preview"]);
+    }
+  }, [chatId]);
+
   useEffect(() => {
     if (!chatId || !user) return;
     const load = async () => {
