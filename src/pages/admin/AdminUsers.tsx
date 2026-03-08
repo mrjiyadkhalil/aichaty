@@ -119,6 +119,7 @@ export default function AdminUsers() {
                   return (
                     <TableRow key={u.user_id} className="cursor-pointer hover:bg-muted/50">
                       <TableCell className="font-medium" onClick={() => navigate(`/admin/users/${u.user_id}`)}>{u.display_name || "—"}</TableCell>
+                      <TableCell onClick={() => navigate(`/admin/users/${u.user_id}`)}><PlanBadge plan={u.plan || "free"} /></TableCell>
                       <TableCell onClick={() => navigate(`/admin/users/${u.user_id}`)}>
                         <div className="flex gap-1">
                           {u.roles?.map((r: string) => <StatusBadge key={r} status={r} />)}
