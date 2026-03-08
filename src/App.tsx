@@ -69,9 +69,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<LandingRoute />} />
             <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
-            <Route path="/project/:id" element={<ProtectedRoute><AppLayout><ProjectDetail /></AppLayout></ProtectedRoute>} />
+            <Route path="/chat" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
             <Route path="/chat/:id" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
+            <Route path="/project/:id" element={<ProtectedRoute><AppLayout><ProjectDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>} />
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

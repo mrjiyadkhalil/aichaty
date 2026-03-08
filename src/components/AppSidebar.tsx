@@ -67,9 +67,9 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => navigate("/dashboard")} isActive={location.pathname === "/dashboard"} tooltip="Dashboard">
-                  <LayoutDashboard className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span>Dashboard</span>}
+                <SidebarMenuButton onClick={() => navigate("/settings")} isActive={location.pathname === "/settings"} tooltip="Settings">
+                  <Settings className="h-4 w-4 shrink-0" />
+                  {!collapsed && <span>Settings</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
