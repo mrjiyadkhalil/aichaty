@@ -37,7 +37,8 @@ export function MultiChatColumns({
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   const displayModels = enabledModels.slice(0, 4);
-  const allModels = AI_CONFIG.allModels;
+  const { allModelIds } = useModels();
+  const allModels = allModelIds.length > 0 ? allModelIds : AI_CONFIG.allModels;
 
   const handleSend = () => {
     if (!prompt.trim() || disabled || !onSend) return;

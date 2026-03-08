@@ -83,7 +83,7 @@ export function PromptComposer({
                   )}
                   onClick={() => isEnabled && onToggleModel(modelId)}
                 >
-                  {AI_CONFIG.modelShortLabels[modelId] || modelId}
+                  {dbShortLabels[modelId] || AI_CONFIG.modelShortLabels[modelId] || modelId}
                 </button>
               );
             })}

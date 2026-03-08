@@ -338,7 +338,7 @@ export default function ChatWorkspace() {
                         {resp.status === "success" && (
                           <div className="py-1">
                             <div className="text-[11px] text-muted-foreground/50 mb-1.5 flex items-center gap-1.5">
-                              <span>{AI_CONFIG.modelLabels[resp.model] || resp.model}</span>
+                              <span>{modelLabels[resp.model] || resp.model}</span>
                               {resp.latency_ms && <span>· {(resp.latency_ms / 1000).toFixed(1)}s</span>}
                             </div>
                             <div className="prose-dark">
