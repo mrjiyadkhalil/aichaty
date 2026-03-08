@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Send, Plus, Mic, MicOff, Sparkles, Zap } from "lucide-react";
-import { useVoiceInput } from "@/hooks/useVoiceInput";
-import { cn } from "@/lib/utils";
+import { Send, Plus, Sparkles, Zap } from "lucide-react";
 
 interface SuperFiestaViewProps {
   onSend: (prompt: string) => void;
