@@ -13,6 +13,13 @@ const COST_PER_1K: Record<string, { input: number; output: number }> = {
   "openai/gpt-5": { input: 0.005, output: 0.015 },
   "openai/gpt-5-mini": { input: 0.0004, output: 0.0016 },
   "openai/gpt-5-nano": { input: 0.0001, output: 0.0004 },
+  "anthropic/claude-4-sonnet": { input: 0.003, output: 0.015 },
+  "anthropic/claude-4-haiku": { input: 0.0008, output: 0.004 },
+  "deepseek/deepseek-v3": { input: 0.00027, output: 0.0011 },
+  "deepseek/deepseek-r1": { input: 0.00055, output: 0.0022 },
+  "mistral/mistral-large": { input: 0.002, output: 0.006 },
+  "mistral/codestral": { input: 0.0003, output: 0.0009 },
+  "kimi/moonshot-v1": { input: 0.001, output: 0.002 },
 };
 
 const HARD_CAP = 10.0;
