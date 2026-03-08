@@ -94,8 +94,8 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
     onProjectsChanged?.();
   };
 
-  // Determine upgrade CTA
-  const nextPlan = plan === "free" ? "Pro" : plan === "pro" ? "Enterprise" : null;
+  // Determine upgrade CTA - only show after plan is loaded
+  const nextPlan = planLoading ? null : (plan === "free" ? "Pro" : plan === "pro" ? "Enterprise" : null);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
