@@ -94,6 +94,13 @@ export const AI_CONFIG = {
     "openai/gpt-5": "GPT-5",
     "openai/gpt-5-mini": "GPT-5 Mini",
     "openai/gpt-5-nano": "GPT-5 Nano",
+    "anthropic/claude-4-sonnet": "Claude 4 Sonnet",
+    "anthropic/claude-4-haiku": "Claude 4 Haiku",
+    "deepseek/deepseek-v3": "DeepSeek V3",
+    "deepseek/deepseek-r1": "DeepSeek R1",
+    "mistral/mistral-large": "Mistral Large",
+    "mistral/codestral": "Codestral",
+    "kimi/moonshot-v1": "Moonshot V1",
   } as Record<string, string>,
 
   modelShortLabels: {
