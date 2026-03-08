@@ -47,9 +47,11 @@ serve(async (req) => {
     const sb = getServiceClient();
     const reqType = request_type || "model_compare";
 
-    // Check if user is banned/suspended
+    // Check if user is banned/suspended + get custom caps
+    let userSoftCap = SOFT_CAP;
+    let userHardCap = HARD_CAP;
     if (userId) {
-      const { data: profile } = await sb.from("profiles").select("status, suspended_until").eq("user_id", userId).single();
+      const { data: profile } = await sb.from("profiles").select("status, suspended_until, custom_soft_cap, custom_hard_cap").eq("user_id", userId).single();
       if (profile?.status === "banned") {
         return new Response(JSON.stringify({ error: "Your account has been banned", code: "BANNED" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -63,6 +65,8 @@ serve(async (req) => {
           });
         }
       }
+      if (profile?.custom_soft_cap != null) userSoftCap = Number(profile.custom_soft_cap);
+      if (profile?.custom_hard_cap != null) userHardCap = Number(profile.custom_hard_cap);
     }
 
     // Check if model is custom and route accordingly
