@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Send, Plus, Mic, MicOff, Sparkles, Zap } from "lucide-react";
-import { useVoiceInput } from "@/hooks/useVoiceInput";
-import { cn } from "@/lib/utils";
+import { Send, Plus, Sparkles, Zap } from "lucide-react";
 
 interface SuperFiestaViewProps {
   onSend: (prompt: string) => void;
@@ -15,10 +13,6 @@ export function SuperFiestaView({
   onSend, onEnhance, onAttachFiles, disabled, enhancing,
 }: SuperFiestaViewProps) {
   const [prompt, setPrompt] = useState("");
-
-  const { isRecording, toggleRecording } = useVoiceInput((text) => {
-    setPrompt((prev) => (prev ? prev + " " + text : text));
-  });
 
   const handleSend = () => {
     if (!prompt.trim() || disabled) return;
@@ -65,19 +59,6 @@ export function SuperFiestaView({
             style={{ fieldSizing: "content" } as any}
           />
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={toggleRecording}
-              disabled={disabled}
-              className={cn(
-                "h-9 w-9 rounded-xl flex items-center justify-center transition-colors",
-                isRecording
-                  ? "text-destructive bg-destructive/10 animate-pulse"
-                  : "text-muted-foreground hover:text-primary hover:bg-primary/10"
-              )}
-              title={isRecording ? "Stop recording" : "Voice input"}
-            >
-              {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-            </button>
             <button
               onClick={() => onEnhance(prompt)}
               disabled={!prompt.trim() || enhancing || disabled}

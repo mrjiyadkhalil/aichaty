@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send, Sparkles, Paperclip, X, Mic, MicOff, Zap } from "lucide-react";
+import { Send, Sparkles, Paperclip, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -7,8 +7,6 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AI_CONFIG } from "@/lib/aiConfig";
-import { useVoiceInput } from "@/hooks/useVoiceInput";
-import { cn } from "@/lib/utils";
 import type { ChatMode } from "@/pages/ChatWorkspace";
 
 interface SelectedFile { id: string; name: string; }
@@ -39,9 +37,6 @@ export function PromptComposer({
   const allowedModels = enabledModels || AI_CONFIG.allModels;
   const isSuperFiesta = chatMode === "superfiesta";
 
-  const { isRecording, toggleRecording } = useVoiceInput((text) => {
-    setPrompt((prev) => (prev ? prev + " " + text : text));
-  });
 
   const handleSend = () => {
     if (!prompt.trim()) return;
@@ -131,21 +126,6 @@ export function PromptComposer({
                   <Paperclip className="h-3.5 w-3.5" /> Attach
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-8 gap-1.5 text-xs transition-all",
-                  isRecording
-                    ? "text-destructive hover:text-destructive animate-pulse"
-                    : "text-muted-foreground hover:text-primary"
-                )}
-                onClick={toggleRecording}
-                disabled={disabled}
-              >
-                {isRecording ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                {isRecording ? "Stop" : "Voice"}
-              </Button>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">{prompt.length}/{AI_CONFIG.limits.maxPromptLength}</span>
