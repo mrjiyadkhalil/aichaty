@@ -155,7 +155,7 @@ serve(async (req) => {
       const { data: costData } = await sb.from("usage_events").select("estimated_cost")
         .eq("user_id", userId).gte("created_at", startOfMonth.toISOString());
       const monthlyCost = (costData || []).reduce((s, r) => s + (Number(r.estimated_cost) || 0), 0);
-      if (monthlyCost >= HARD_CAP) {
+      if (monthlyCost >= userHardCap) {
         return new Response(JSON.stringify({ error: "Monthly usage limit reached", code: "HARD_CAP" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
