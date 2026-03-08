@@ -58,7 +58,9 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
   const navigate = useNavigate();
   const location = useLocation();
   const [hoveredChat, setHoveredChat] = useState<string | null>(null);
+  const [hoveredProject, setHoveredProject] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [showNewProject, setShowNewProject] = useState(false);
 
   const chatGroups = useMemo(() => groupChatsByDate(recentChats), [recentChats]);
 
