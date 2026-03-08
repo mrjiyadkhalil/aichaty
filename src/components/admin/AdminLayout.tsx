@@ -1,9 +1,9 @@
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, BarChart3, Cpu, Settings2, AlertTriangle,
   ClipboardList, ArrowLeft, Flag, FileText, Link2, Megaphone, HeartPulse,
-  DollarSign, Radio, UserCog,
+  DollarSign, Radio, UserCog, ChevronRight, Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,66 @@ const NAV_ITEMS = [
   { label: "Audit Log", path: "/admin/audit", icon: ClipboardList },
   { label: "System Health", path: "/admin/health", icon: HeartPulse },
 ];
+
+function AdminBreadcrumb() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const crumbs = useMemo(() => {
+    const current = NAV_ITEMS.find(
+      (item) =>
+        location.pathname === item.path ||
+        (item.path !== "/admin" && location.pathname.startsWith(item.path))
+    );
+
+    // Check for detail pages like /admin/users/:id
+    const segments = location.pathname.split("/").filter(Boolean);
+    const isDetailPage = segments.length > 2 && current;
+
+    const result: { label: string; path?: string; icon?: React.ElementType }[] = [
+      { label: "Admin", path: "/admin", icon: Home },
+    ];
+
+    if (current && current.path !== "/admin") {
+      if (isDetailPage) {
+        result.push({ label: current.label, path: current.path, icon: current.icon });
+        result.push({ label: "Detail" });
+      } else {
+        result.push({ label: current.label, icon: current.icon });
+      }
+    }
+
+    return result;
+  }, [location.pathname]);
+
+  return (
+    <nav className="flex items-center gap-1 text-sm px-6 py-3 border-b border-border/30">
+      {crumbs.map((crumb, i) => {
+        const isLast = i === crumbs.length - 1;
+        const Icon = crumb.icon;
+        return (
+          <span key={i} className="flex items-center gap-1">
+            {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 mx-0.5" />}
+            {isLast ? (
+              <span className="flex items-center gap-1.5 text-foreground font-medium">
+                {Icon && <Icon className="h-3.5 w-3.5" />}
+                {crumb.label}
+              </span>
+            ) : (
+              <button
+                onClick={() => crumb.path && navigate(crumb.path)}
+                className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors duration-150"
+              >
+                {Icon && <Icon className="h-3.5 w-3.5" />}
+                {crumb.label}
+              </button>
+            )}
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
 
 export function AdminLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
@@ -60,7 +120,10 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           </Button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto flex flex-col">
+        <AdminBreadcrumb />
+        <div className="flex-1">{children}</div>
+      </main>
     </div>
   );
 }
