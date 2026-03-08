@@ -17,6 +17,13 @@ const ALL_MODELS = [
   "openai/gpt-5",
   "openai/gpt-5-mini",
   "openai/gpt-5-nano",
+  "anthropic/claude-4-sonnet",
+  "anthropic/claude-4-haiku",
+  "deepseek/deepseek-v3",
+  "deepseek/deepseek-r1",
+  "mistral/mistral-large",
+  "mistral/codestral",
+  "kimi/moonshot-v1",
 ];
 
 export const AI_CONFIG = {
