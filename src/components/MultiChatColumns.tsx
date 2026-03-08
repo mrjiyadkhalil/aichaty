@@ -216,11 +216,15 @@ export function MultiChatColumns({
                     </button>
                   </div>
                   <div className="flex items-center space-x-0.5">
-                    <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+                    <button className="inline-flex items-center justify-center cursor-pointer size-8 p-0 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors">
+                      <MessageSquareShare className="size-4" />
+                    </button>
                     <Switch
                       checked={isActive}
                       onCheckedChange={() => handleToggleProvider(provider)}
-                      className="data-[state=checked]:bg-emerald-500 shrink-0 scale-75"
+                      className="data-[state=checked]:bg-accent shrink-0 scale-75 transform"
+                    />
+                  </div>
                     />
                   </div>
                 </div>
