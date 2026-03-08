@@ -281,6 +281,8 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
           )}
         </div>
       </SidebarFooter>
+
+      <NewProjectDialog open={showNewProject} onClose={() => setShowNewProject(false)} onSubmit={handleCreateProject} />
     </Sidebar>
   );
 }
