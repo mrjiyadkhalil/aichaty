@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, BarChart3, Cpu, Settings2, AlertTriangle,
   ClipboardList, ArrowLeft, Flag, FileText, Link2, Megaphone, HeartPulse,
+  DollarSign, Radio, UserCog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,9 +11,11 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
   { label: "Users", path: "/admin/users", icon: Users },
+  { label: "Roles", path: "/admin/roles", icon: UserCog },
   { label: "Usage & Cost", path: "/admin/usage", icon: BarChart3 },
+  { label: "Revenue", path: "/admin/revenue", icon: DollarSign },
   { label: "Models", path: "/admin/models", icon: Cpu },
-  { label: "Revenue", path: "/admin/revenue", icon: BarChart3 },
+  { label: "Broadcast", path: "/admin/broadcast", icon: Radio },
   { label: "Settings", path: "/admin/settings", icon: Settings2 },
   { label: "Feature Flags", path: "/admin/feature-flags", icon: Flag },
   { label: "Templates", path: "/admin/templates", icon: FileText },
