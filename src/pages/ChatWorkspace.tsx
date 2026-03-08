@@ -276,7 +276,7 @@ export default function ChatWorkspace() {
         )
       }
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {!hasMessages ? (
           <div className="flex flex-col items-center justify-center min-h-full px-3 sm:px-4 py-8 sm:py-16">
             <ChatModeSwitcher mode={chatMode} onModeChange={(mode) => {
