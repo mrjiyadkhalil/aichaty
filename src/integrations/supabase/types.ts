@@ -276,6 +276,112 @@ export type Database = {
           },
         ]
       }
+      usage_events: {
+        Row: {
+          chat_id: string | null
+          created_at: string
+          error_code: string | null
+          estimated_cost: number | null
+          id: string
+          input_tokens: number | null
+          latency_ms: number | null
+          message_id: string | null
+          model: string
+          output_tokens: number | null
+          project_id: string | null
+          provider: string
+          request_type: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          chat_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          estimated_cost?: number | null
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          message_id?: string | null
+          model: string
+          output_tokens?: number | null
+          project_id?: string | null
+          provider: string
+          request_type: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          estimated_cost?: number | null
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          message_id?: string | null
+          model?: string
+          output_tokens?: number | null
+          project_id?: string | null
+          provider?: string
+          request_type?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_events_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_events_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_preferences: {
+        Row: {
+          cost_mode: string
+          created_at: string
+          default_layout: string
+          default_models: string[] | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cost_mode?: string
+          created_at?: string
+          default_layout?: string
+          default_models?: string[] | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cost_mode?: string
+          created_at?: string
+          default_layout?: string
+          default_models?: string[] | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

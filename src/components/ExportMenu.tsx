@@ -11,25 +11,35 @@ import { toast } from "sonner";
 
 interface Message {
   content: string;
-  responses: { model: string; content: string | null; status: string }[];
+  enhanced_content?: string | null;
+  created_at?: string;
+  responses: { model: string; content: string | null; status: string; latency_ms?: number | null }[];
   synthesis?: string | null;
 }
 
 interface ExportMenuProps {
   messages: Message[];
   projectName: string;
+  chatTitle?: string;
 }
 
-export function ExportMenu({ messages, projectName }: ExportMenuProps) {
+export function ExportMenu({ messages, projectName, chatTitle }: ExportMenuProps) {
   const [copied, setCopied] = useState(false);
 
   const generateMarkdown = () => {
-    let md = `# ${projectName} — Chat Export\n\n`;
+    let md = `# ${projectName}${chatTitle ? ` — ${chatTitle}` : ""}\n\n`;
+    md += `*Exported on ${new Date().toLocaleString()}*\n\n`;
+
     messages.forEach((msg, i) => {
-      md += `## Prompt ${i + 1}\n\n${msg.content}\n\n`;
+      const ts = msg.created_at ? new Date(msg.created_at).toLocaleString() : "";
+      md += `## Prompt ${i + 1}${ts ? ` (${ts})` : ""}\n\n${msg.content}\n\n`;
+      if (msg.enhanced_content) {
+        md += `> **Enhanced prompt:** ${msg.enhanced_content}\n\n`;
+      }
       msg.responses.forEach((r) => {
         if (r.status === "success" && r.content) {
-          md += `### ${r.model}\n\n${r.content}\n\n`;
+          const latency = r.latency_ms ? ` _(${(r.latency_ms / 1000).toFixed(1)}s)_` : "";
+          md += `### ${r.model}${latency}\n\n${r.content}\n\n`;
         }
       });
       if (msg.synthesis) {
@@ -53,7 +63,7 @@ export function ExportMenu({ messages, projectName }: ExportMenuProps) {
   };
 
   const handleExportTxt = () => {
-    const md = generateMarkdown().replace(/[#*_]/g, "");
+    const md = generateMarkdown().replace(/[#*_>]/g, "");
     const blob = new Blob([md], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
