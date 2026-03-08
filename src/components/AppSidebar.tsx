@@ -50,7 +50,7 @@ function groupChatsByDate(chats: Chat[]): { label: string; chats: Chat[] }[] {
   return groups.filter((g) => g.chats.length > 0);
 }
 
-export function AppSidebar({ projects, recentChats, projectChats, selectedProjectId }: AppSidebarProps) {
+export function AppSidebar({ projects, recentChats, projectChats, selectedProjectId, onProjectsChanged }: AppSidebarProps) {
   const { signOut, user } = useAuth();
   const { isAdmin } = useAdminCheck();
   const { plan } = useSubscription();
