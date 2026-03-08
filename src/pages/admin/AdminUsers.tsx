@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Search, Shield, ShieldOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { PlanBadge } from "@/components/PlanBadge";
 import { toast } from "sonner";
 
 export default function AdminUsers() {
