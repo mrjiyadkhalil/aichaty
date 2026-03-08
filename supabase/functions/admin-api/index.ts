@@ -909,3 +909,44 @@ async function initDefaultApiKeys(sb: any, adminId: string) {
   });
   return json({ success: true });
 }
+
+// ==================== PLAN MANAGEMENT ====================
+
+async function updateUserPlan(sb: any, adminId: string, body: any) {
+  const { target_user_id, plan } = body;
+  if (!target_user_id || !plan) throw new Error("target_user_id and plan required");
+  if (!["free", "pro", "enterprise"].includes(plan)) throw new Error("Invalid plan");
+  await sb.from("profiles").update({ plan }).eq("user_id", target_user_id);
+  await sb.from("admin_audit_logs").insert({
+    admin_user_id: adminId, action_type: "update_user_plan",
+    target_type: "user", target_id: target_user_id, details_json: { plan },
+  });
+  return json({ success: true });
+}
+
+async function getPlanStats(sb: any) {
+  const { data: profiles } = await sb.from("profiles").select("plan");
+  const counts: Record<string, number> = { free: 0, pro: 0, enterprise: 0 };
+  (profiles || []).forEach((p: any) => { counts[p.plan || "free"] = (counts[p.plan || "free"] || 0) + 1; });
+  return json({ planStats: counts });
+}
+
+// ==================== SESSION MANAGEMENT (ADMIN) ====================
+
+async function getUserSessions(sb: any, body: any) {
+  const { target_user_id } = body;
+  if (!target_user_id) throw new Error("target_user_id required");
+  const { data } = await sb.from("user_sessions").select("*").eq("user_id", target_user_id).order("last_active", { ascending: false });
+  return json({ sessions: data || [] });
+}
+
+async function revokeUserSessions(sb: any, adminId: string, body: any) {
+  const { target_user_id } = body;
+  if (!target_user_id) throw new Error("target_user_id required");
+  await sb.from("user_sessions").delete().eq("user_id", target_user_id);
+  await sb.from("admin_audit_logs").insert({
+    admin_user_id: adminId, action_type: "revoke_user_sessions",
+    target_type: "user", target_id: target_user_id,
+  });
+  return json({ success: true });
+}
