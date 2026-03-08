@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send, Sparkles, Paperclip, X, Mic, MicOff, Zap } from "lucide-react";
+import { Send, Sparkles, Paperclip, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
