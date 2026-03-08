@@ -1,6 +1,5 @@
-import { FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Settings, LayoutDashboard, Shield } from "lucide-react";
+import { FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Settings, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useAdminCheck } from "@/hooks/useAdmin";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +19,6 @@ interface AppSidebarProps {
 
 export function AppSidebar({ projects, chats, selectedProjectId }: AppSidebarProps) {
   const { signOut, user } = useAuth();
-  const { isAdmin } = useAdminCheck();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
@@ -53,14 +51,6 @@ export function AppSidebar({ projects, chats, selectedProjectId }: AppSidebarPro
                   {!collapsed && <span>Settings</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {isAdmin && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton onClick={() => navigate("/admin")} isActive={location.pathname.startsWith("/admin")} tooltip="Admin">
-                    <Shield className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span>Admin</span>}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
