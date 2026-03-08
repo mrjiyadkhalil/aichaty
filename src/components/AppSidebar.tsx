@@ -1,15 +1,14 @@
-import { FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Settings, Plus, Shield } from "lucide-react";
+import { FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Settings, Plus, Shield, Bookmark } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdmin";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter, SidebarHeader, useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { toast } from "sonner";
+import { ChatTagBadges } from "@/components/ChatTagManager";
 
 interface Project { id: string; name: string; }
 interface Chat { id: string; title: string | null; project_id: string | null; }
@@ -29,10 +28,6 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleNewChat = () => {
-    navigate("/chat");
-  };
-
   return (
     <Sidebar collapsible="icon" className="border-r border-border/50">
       <SidebarHeader className="p-4">
@@ -50,7 +45,7 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleNewChat} tooltip="New Chat" className="bg-primary/10 hover:bg-primary/20 text-primary font-medium">
+                <SidebarMenuButton onClick={() => navigate("/chat")} tooltip="New Chat" className="bg-primary/10 hover:bg-primary/20 text-primary font-medium">
                   <Plus className="h-4 w-4 shrink-0" />
                   {!collapsed && <span>New Chat</span>}
                 </SidebarMenuButton>
@@ -63,6 +58,12 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={() => navigate("/bookmarks")} isActive={location.pathname === "/bookmarks"} tooltip="Bookmarks">
+                  <Bookmark className="h-4 w-4 shrink-0" />
+                  {!collapsed && <span>Bookmarks</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={() => navigate("/settings")} isActive={location.pathname === "/settings"} tooltip="Settings">
                   <Settings className="h-4 w-4 shrink-0" />
@@ -124,6 +125,7 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
                         <SidebarMenuButton onClick={() => navigate(`/chat/${chat.id}`)} isActive={location.pathname === `/chat/${chat.id}`}>
                           <MessageSquare className="h-4 w-4 shrink-0" />
                           <span className="truncate">{chat.title || "New Chat"}</span>
+                          <ChatTagBadges chatId={chat.id} />
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     ))}
@@ -134,7 +136,7 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
           </SidebarGroup>
         )}
 
-        {/* Project Chats (when a project is selected) */}
+        {/* Project Chats */}
         {selectedProjectId && projectChats.length > 0 && !collapsed && (
           <SidebarGroup>
             <Collapsible defaultOpen>
@@ -150,6 +152,7 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
                         <SidebarMenuButton onClick={() => navigate(`/chat/${chat.id}`)} isActive={location.pathname === `/chat/${chat.id}`}>
                           <MessageSquare className="h-4 w-4 shrink-0" />
                           <span className="truncate">{chat.title || "New Chat"}</span>
+                          <ChatTagBadges chatId={chat.id} />
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     ))}

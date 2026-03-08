@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Copy, Check, ToggleLeft, ToggleRight, AlertCircle, RefreshCw, Clock } from "lucide-react";
+import { Copy, Check, ToggleLeft, ToggleRight, AlertCircle, RefreshCw, Clock, Bookmark, BookmarkCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ModelResponseCardProps {
   model: string;
@@ -15,6 +17,7 @@ interface ModelResponseCardProps {
   onRetry?: () => void;
   latencyMs?: number | null;
   colorIndex: number;
+  responseId?: string;
 }
 
 const MODEL_LABELS: Record<string, string> = {
@@ -30,9 +33,11 @@ const colorVars = ["--model-1", "--model-2", "--model-3", "--model-4", "--model-
 
 export function ModelResponseCard({
   model, content, status, errorMessage, includedInSynthesis,
-  onToggleInclude, onRetry, latencyMs, colorIndex,
+  onToggleInclude, onRetry, latencyMs, colorIndex, responseId,
 }: ModelResponseCardProps) {
+  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
   const colorVar = colorVars[colorIndex % colorVars.length];
 
   const handleCopy = async () => {
@@ -41,6 +46,24 @@ export function ModelResponseCard({
     setCopied(true);
     toast.success("Copied!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleBookmark = async () => {
+    if (!user || !responseId) return;
+    if (bookmarked) {
+      await supabase.from("bookmarks").delete().eq("user_id", user.id).eq("response_id", responseId);
+      setBookmarked(false);
+      toast.success("Bookmark removed");
+    } else {
+      const { error } = await supabase.from("bookmarks").insert({ user_id: user.id, response_id: responseId });
+      if (error) {
+        if (error.code === "23505") { setBookmarked(true); toast.info("Already bookmarked"); }
+        else toast.error("Failed to bookmark");
+      } else {
+        setBookmarked(true);
+        toast.success("Bookmarked!");
+      }
+    }
   };
 
   return (
@@ -64,6 +87,9 @@ export function ModelResponseCard({
             <>
               <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={handleCopy} title="Copy">
                 {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+              </Button>
+              <Button variant="ghost" size="icon" className={`h-7 w-7 ${bookmarked ? "text-primary" : "text-muted-foreground hover:text-foreground"}`} onClick={handleBookmark} title="Bookmark">
+                {bookmarked ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onToggleInclude} title="Include in Final Answer">
                 {includedInSynthesis ? (

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, FileText, Copy, Check } from "lucide-react";
+import { Download, FileText, Copy, Check, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -74,6 +74,18 @@ export function ExportMenu({ messages, projectName, chatTitle }: ExportMenuProps
     toast.success("Exported as text");
   };
 
+  const handleExportPdf = () => {
+    const md = generateMarkdown();
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${projectName} Export</title><style>body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a1a;line-height:1.6}h1{border-bottom:2px solid #e5e5e5;padding-bottom:8px}h2{color:#333;margin-top:32px}h3{color:#555}blockquote{border-left:3px solid #ddd;margin-left:0;padding-left:16px;color:#666}hr{border:none;border-top:1px solid #e5e5e5;margin:24px 0}pre{background:#f5f5f5;padding:12px;border-radius:6px;overflow-x:auto}code{background:#f5f5f5;padding:2px 4px;border-radius:3px;font-size:0.9em}@media print{body{margin:0;padding:20px}}</style></head><body>${md.replace(/^# (.+)$/gm, '<h1>$1</h1>').replace(/^## (.+)$/gm, '<h2>$1</h2>').replace(/^### (.+)$/gm, '<h3>$1</h3>').replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/_(.+?)_/g, '<em>$1</em>').replace(/^---$/gm, '<hr>').replace(/\n\n/g, '</p><p>').replace(/^/gm, '')}</body></html>`;
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+      setTimeout(() => { printWindow.print(); }, 300);
+    }
+    toast.success("PDF print dialog opened");
+  };
+
   const handleCopyAll = async () => {
     const md = generateMarkdown();
     await navigator.clipboard.writeText(md);
@@ -100,6 +112,10 @@ export function ExportMenu({ messages, projectName, chatTitle }: ExportMenuProps
         <DropdownMenuItem onClick={handleExportTxt}>
           <FileText className="h-4 w-4 mr-2" />
           Export as Text
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleExportPdf}>
+          <Printer className="h-4 w-4 mr-2" />
+          Export as PDF
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleCopyAll}>
           {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
