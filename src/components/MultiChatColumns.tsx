@@ -3,7 +3,14 @@ import { createPortal } from "react-dom";
 import { useModels } from "@/hooks/useModels";
 import { AI_CONFIG } from "@/lib/aiConfig";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Check, Lock, ExternalLink, Info } from "lucide-react";
+import { ChevronDown, Check, Lock, MessageSquareShare, Info } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const PROVIDER_META: Record<string, { label: string; icon: string; color: string }> = {
