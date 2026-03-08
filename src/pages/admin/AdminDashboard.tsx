@@ -71,6 +71,9 @@ export default function AdminDashboard() {
         <MetricCard label="Failed" value={metrics.failedRequests} icon={<AlertTriangle className="h-5 w-5" />} />
         <MetricCard label="Errors" value={metrics.totalErrors} icon={<AlertTriangle className="h-5 w-5" />} />
         <MetricCard label="Share Links" value={metrics.activeShareLinks} icon={<Link2 className="h-5 w-5" />} />
+        <MetricCard label="Free Users" value={planStats.free || 0} icon={<Users className="h-5 w-5" />} />
+        <MetricCard label="Pro Users" value={planStats.pro || 0} icon={<Crown className="h-5 w-5" />} />
+        <MetricCard label="Enterprise" value={planStats.enterprise || 0} icon={<Crown className="h-5 w-5" />} />
       </div>
 
       {/* Charts Row */}
