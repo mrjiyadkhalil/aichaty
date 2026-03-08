@@ -59,7 +59,7 @@ export default function ProjectDetail() {
   const handleDelete = async () => {
     if (!id || !confirm("Delete this project and all its chats?")) return;
     await supabase.from("projects").delete().eq("id", id);
-    toast.success("Project deleted"); navigate("/dashboard");
+    toast.success("Project deleted"); navigate("/chat");
   };
 
   const handleNewChat = async () => {
@@ -87,86 +87,111 @@ export default function ProjectDetail() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-['Space_Grotesk'] flex items-center gap-2">
-          <FolderOpen className="h-6 w-6 text-primary" /> Edit Project
-        </h1>
-        <Button variant="destructive" size="sm" onClick={handleDelete} className="gap-1.5"><Trash2 className="h-3.5 w-3.5" /> Delete Project</Button>
-      </div>
-
-      {/* Settings */}
-      <div className="glass-card p-6 space-y-4">
-        <div className="space-y-2">
-          <Label>Project Name</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-background/50 border-border/30 focus:border-primary/50" />
-        </div>
-        <div className="space-y-2">
-          <Label>Description</Label>
-          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's this project about?" className="bg-background/50 border-border/30 focus:border-primary/50" />
-        </div>
-        <div className="space-y-2">
-          <Label>Custom Instruction</Label>
-          <Textarea value={customInstruction} onChange={(e) => setCustomInstruction(e.target.value)} placeholder="Special instructions for AI models..." className="min-h-[100px] bg-background/50 border-border/30 focus:border-primary/50" />
-        </div>
-        <div className="space-y-2">
-          <Label>Preferred Models</Label>
-          <div className="flex flex-wrap gap-1.5">
-            {AVAILABLE_MODELS.map((m) => (
-              <Badge key={m.id} variant={preferredModels.includes(m.id) ? "default" : "outline"} className={`cursor-pointer select-none ${preferredModels.includes(m.id) ? "bg-primary text-primary-foreground shadow-glow-sm" : "border-border/50 text-muted-foreground hover:border-primary/50"}`} onClick={() => toggleModel(m.id)}>
-                {m.short}
-              </Badge>
-            ))}
-          </div>
-        </div>
-        <Button onClick={handleSave} disabled={saving} className="gap-1.5 shadow-glow-sm"><Save className="h-3.5 w-3.5" /> Save Project</Button>
-      </div>
-
-      {/* Files */}
-      <div className="glass-card overflow-hidden">
+    <div className="h-full flex animate-fade-in">
+      {/* Left side: Chats - takes more space */}
+      <div className="flex-1 flex flex-col min-w-0 border-r border-border/30">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/30">
-          <h2 className="text-base font-semibold font-['Space_Grotesk']">Files</h2>
-          <Button variant="outline" size="sm" className="gap-1.5 border-border/50" onClick={() => setShowFileModal(true)}><Upload className="h-3.5 w-3.5" /> Upload</Button>
+          <h2 className="text-lg font-semibold font-['Space_Grotesk'] flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" /> Chats
+          </h2>
+          <Button size="sm" className="gap-1.5 shadow-glow-sm" onClick={handleNewChat}>
+            <Plus className="h-3.5 w-3.5" /> New Chat
+          </Button>
         </div>
-        <div className="p-4">
-          {files.length > 0 ? (
-            <div className="space-y-1">
-              {files.map((f) => (
-                <div key={f.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-surface-hover transition-colors">
-                  <File className="h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate">{f.file_name}</p>
-                    <p className="text-xs text-muted-foreground">{f.file_size ? `${(f.file_size / 1024).toFixed(1)} KB` : ""}</p>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => handleDeleteFile(f.id, f.file_path)}><X className="h-3.5 w-3.5" /></Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">No files uploaded</p>
-          )}
-        </div>
-      </div>
-
-      {/* Chats */}
-      <div className="glass-card overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border/30">
-          <h2 className="text-base font-semibold font-['Space_Grotesk']">Chats</h2>
-          <Button variant="outline" size="sm" className="gap-1.5 border-border/50" onClick={handleNewChat}><Plus className="h-3.5 w-3.5" /> New Chat</Button>
-        </div>
-        <div className="p-4">
+        <div className="flex-1 overflow-y-auto p-4">
           {chats.length > 0 ? (
             <div className="space-y-1">
               {chats.map((c) => (
-                <button key={c.id} onClick={() => navigate(`/chat/${c.id}`)} className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-surface-hover transition-colors text-left">
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm truncate">{c.title || "New Chat"}</span>
+                <button key={c.id} onClick={() => navigate(`/chat/${c.id}`)} className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors text-left">
+                  <MessageSquare className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate">{c.title || "New Chat"}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(c.updated_at).toLocaleDateString()}</p>
+                  </div>
                 </button>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">No chats yet</p>
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <MessageSquare className="h-10 w-10 text-muted-foreground/30 mb-3" />
+              <p className="text-sm text-muted-foreground mb-3">No chats yet in this project</p>
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={handleNewChat}>
+                <Plus className="h-3.5 w-3.5" /> Start a Chat
+              </Button>
+            </div>
           )}
+        </div>
+      </div>
+
+      {/* Right side: Project Settings + Files */}
+      <div className="w-[420px] shrink-0 flex flex-col overflow-y-auto bg-card/30">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border/30">
+          <h1 className="text-lg font-semibold font-['Space_Grotesk'] flex items-center gap-2">
+            <FolderOpen className="h-5 w-5 text-primary" /> Project Settings
+          </h1>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={handleDelete} title="Delete Project">
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Project Settings */}
+        <div className="p-6 space-y-4 border-b border-border/30">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Project Name</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-background/50 border-border/30 focus:border-primary/50" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Description</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's this project about?" rows={2} className="bg-background/50 border-border/30 focus:border-primary/50 resize-none" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Custom Instruction</Label>
+            <Textarea value={customInstruction} onChange={(e) => setCustomInstruction(e.target.value)} placeholder="Special instructions for AI models..." rows={3} className="bg-background/50 border-border/30 focus:border-primary/50 resize-none" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Preferred Models</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {AVAILABLE_MODELS.map((m) => (
+                <Badge key={m.id} variant={preferredModels.includes(m.id) ? "default" : "outline"} className={`cursor-pointer select-none text-[11px] ${preferredModels.includes(m.id) ? "bg-primary text-primary-foreground shadow-glow-sm" : "border-border/50 text-muted-foreground hover:border-primary/50"}`} onClick={() => toggleModel(m.id)}>
+                  {m.short}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <Button onClick={handleSave} disabled={saving} size="sm" className="w-full gap-1.5 shadow-glow-sm">
+            <Save className="h-3.5 w-3.5" /> Save Project
+          </Button>
+        </div>
+
+        {/* Files */}
+        <div className="flex-1">
+          <div className="flex items-center justify-between px-6 py-3 border-b border-border/30">
+            <h2 className="text-sm font-semibold font-['Space_Grotesk']">Files</h2>
+            <Button variant="outline" size="sm" className="gap-1.5 border-border/50 h-7 text-xs" onClick={() => setShowFileModal(true)}>
+              <Upload className="h-3 w-3" /> Upload
+            </Button>
+          </div>
+          <div className="p-4">
+            {files.length > 0 ? (
+              <div className="space-y-1">
+                {files.map((f) => (
+                  <div key={f.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
+                    <File className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs truncate">{f.file_name}</p>
+                      <p className="text-[10px] text-muted-foreground">{f.file_size ? `${(f.file_size / 1024).toFixed(1)} KB` : ""}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteFile(f.id, f.file_path)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-6">No files uploaded</p>
+            )}
+          </div>
         </div>
       </div>
 
