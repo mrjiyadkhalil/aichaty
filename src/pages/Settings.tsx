@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { Save, User, BarChart3, Settings2, Sun, Moon, Monitor, RotateCcw } from "lucide-react";
+import { Save, User, BarChart3, Settings2, Sun, Moon, Monitor, RotateCcw, Brain, MessageSquare } from "lucide-react";
 import { AI_CONFIG, CostMode } from "@/lib/aiConfig";
+import { MemoryManager } from "@/components/MemoryManager";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Settings() {
   const { user, signOut } = useAuth();
@@ -21,6 +23,7 @@ export default function Settings() {
   const { setTheme } = useTheme();
 
   const [displayName, setDisplayName] = useState("");
+  const [customSystemPrompt, setCustomSystemPrompt] = useState("");
   const [saving, setSaving] = useState(false);
   const [localCostMode, setLocalCostMode] = useState<CostMode>(costMode);
   const [localLayout, setLocalLayout] = useState(defaultLayout);
@@ -32,15 +35,16 @@ export default function Settings() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("display_name").eq("user_id", user.id).single().then(({ data }) => {
+    supabase.from("profiles").select("display_name, custom_system_prompt").eq("user_id", user.id).single().then(({ data }) => {
       if (data?.display_name) setDisplayName(data.display_name);
+      if ((data as any)?.custom_system_prompt) setCustomSystemPrompt((data as any).custom_system_prompt);
     });
   }, [user]);
 
   const handleSaveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({ display_name: displayName }).eq("user_id", user.id);
+    const { error } = await supabase.from("profiles").update({ display_name: displayName, custom_system_prompt: customSystemPrompt } as any).eq("user_id", user.id);
     if (error) toast.error(error.message);
     else toast.success("Profile saved");
     setSaving(false);
@@ -82,7 +86,19 @@ export default function Settings() {
           <Label>Display Name</Label>
           <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="bg-background/50 border-border/30 focus:border-primary/50" />
         </div>
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2"><MessageSquare className="h-3.5 w-3.5 text-primary" /> Custom System Prompt</Label>
+          <Textarea value={customSystemPrompt} onChange={(e) => setCustomSystemPrompt(e.target.value)} placeholder="Set a custom AI personality or instructions that apply to all your chats..." rows={3} className="bg-background/50 border-border/30 focus:border-primary/50" />
+          <p className="text-xs text-muted-foreground">This prompt is prepended to every AI request you make.</p>
+        </div>
         <Button onClick={handleSaveProfile} disabled={saving} className="gap-1.5 shadow-glow-sm"><Save className="h-3.5 w-3.5" /> Save</Button>
+      </div>
+
+      {/* AI Memory */}
+      <div className="glass-card p-6 space-y-3">
+        <h2 className="text-base font-semibold flex items-center gap-2 font-['Space_Grotesk']"><Brain className="h-4 w-4 text-primary" /> AI Memory</h2>
+        <p className="text-sm text-muted-foreground">The AI learns key facts about you from conversations. Manage what it remembers.</p>
+        <MemoryManager />
       </div>
 
       {/* Usage */}

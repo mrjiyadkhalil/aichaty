@@ -21,6 +21,7 @@ import ProjectDetail from "./pages/ProjectDetail";
 import ChatWorkspace from "./pages/ChatWorkspace";
 import Settings from "./pages/Settings";
 import Bookmarks from "./pages/Bookmarks";
+import Prompts from "./pages/Prompts";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -102,6 +103,7 @@ function AppWithShortcuts() {
         <Route path="/project/:id" element={<ProtectedRoute><AppLayout><ProjectDetail /></AppLayout></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>} />
         <Route path="/bookmarks" element={<ProtectedRoute><AppLayout><Bookmarks /></AppLayout></ProtectedRoute>} />
+        <Route path="/prompts" element={<ProtectedRoute><AppLayout><Prompts /></AppLayout></ProtectedRoute>} />
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />

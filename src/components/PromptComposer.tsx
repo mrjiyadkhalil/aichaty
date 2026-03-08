@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AI_CONFIG } from "@/lib/aiConfig";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { ImageUploadButton } from "@/components/ImageUploadButton";
 import { cn } from "@/lib/utils";
 import type { ChatMode } from "@/pages/ChatWorkspace";
 
@@ -28,12 +29,16 @@ interface PromptComposerProps {
   enhancing: boolean;
   enabledModels?: string[];
   chatMode?: ChatMode;
+  onImageSelected?: (base64: string, mimeType: string) => void;
+  onImageRemoved?: () => void;
+  hasImage?: boolean;
 }
 
 export function PromptComposer({
   onSend, onEnhance, onAttachFiles, selectedModels, onToggleModel,
   selectedFiles = [], onRemoveFile, useProjectInstruction = false, onToggleInstruction,
   hasProjectInstruction = false, disabled, enhancing, enabledModels, chatMode = "superfiesta",
+  onImageSelected, onImageRemoved, hasImage = false,
 }: PromptComposerProps) {
   const [prompt, setPrompt] = useState("");
   const allowedModels = enabledModels || AI_CONFIG.allModels;
@@ -58,7 +63,6 @@ export function PromptComposer({
   return (
     <div className="sticky bottom-0 z-30 border-t border-border/30 bg-card/30 backdrop-blur-xl p-4 space-y-3">
       <div className="max-w-5xl mx-auto space-y-3">
-        {/* Model chips — only in Multi-Chat mode */}
         {!isSuperFiesta && (
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs text-muted-foreground mr-1">Models:</span>
@@ -66,14 +70,7 @@ export function PromptComposer({
               const isSelected = selectedModels.includes(modelId);
               const isEnabled = allowedModels.includes(modelId);
               return (
-                <Badge
-                  key={modelId}
-                  variant={isSelected ? "default" : "outline"}
-                  className={`cursor-pointer text-xs transition-all select-none ${
-                    isSelected ? "bg-primary text-primary-foreground shadow-glow-sm" : "border-border/50 text-muted-foreground hover:border-primary/50 hover:text-foreground"
-                  } ${!isEnabled ? "opacity-30 cursor-not-allowed" : "hover:scale-105"}`}
-                  onClick={() => isEnabled && onToggleModel(modelId)}
-                >
+                <Badge key={modelId} variant={isSelected ? "default" : "outline"} className={`cursor-pointer text-xs transition-all select-none ${isSelected ? "bg-primary text-primary-foreground shadow-glow-sm" : "border-border/50 text-muted-foreground hover:border-primary/50 hover:text-foreground"} ${!isEnabled ? "opacity-30 cursor-not-allowed" : "hover:scale-105"}`} onClick={() => isEnabled && onToggleModel(modelId)}>
                   {AI_CONFIG.modelShortLabels[modelId] || modelId}
                   {isSelected && <X className="h-3 w-3 ml-1" />}
                 </Badge>
@@ -82,7 +79,6 @@ export function PromptComposer({
           </div>
         )}
 
-        {/* Super Fiesta auto-routing indicator */}
         {isSuperFiesta && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
             <Zap className="h-3.5 w-3.5 text-primary/60" />
@@ -90,7 +86,6 @@ export function PromptComposer({
           </div>
         )}
 
-        {/* File chips + instruction toggle */}
         <div className="flex items-center gap-3 flex-wrap">
           {selectedFiles.length > 0 && (
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -111,16 +106,8 @@ export function PromptComposer({
           )}
         </div>
 
-        {/* Textarea + actions */}
         <div className="relative">
-          <Textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={isSuperFiesta ? "Ask anything..." : "Ask anything... Compare responses across models."}
-            className="min-h-[90px] pr-4 pb-14 resize-none bg-background/50 border-border/30 focus:border-primary/50 focus:shadow-glow-sm transition-shadow"
-            disabled={disabled}
-          />
+          <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={handleKeyDown} placeholder={isSuperFiesta ? "Ask anything..." : "Ask anything... Compare responses across models."} className="min-h-[90px] pr-4 pb-14 resize-none bg-background/50 border-border/30 focus:border-primary/50 focus:shadow-glow-sm transition-shadow" disabled={disabled} />
           <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-primary" onClick={() => onEnhance(prompt)} disabled={!prompt.trim() || enhancing || disabled}>
@@ -131,18 +118,10 @@ export function PromptComposer({
                   <Paperclip className="h-3.5 w-3.5" /> Attach
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-8 gap-1.5 text-xs transition-all",
-                  isRecording
-                    ? "text-destructive hover:text-destructive animate-pulse"
-                    : "text-muted-foreground hover:text-primary"
-                )}
-                onClick={toggleRecording}
-                disabled={disabled}
-              >
+              {onImageSelected && onImageRemoved && (
+                <ImageUploadButton onImageSelected={onImageSelected} onImageRemoved={onImageRemoved} hasImage={hasImage} disabled={disabled} />
+              )}
+              <Button variant="ghost" size="sm" className={cn("h-8 gap-1.5 text-xs transition-all", isRecording ? "text-destructive hover:text-destructive animate-pulse" : "text-muted-foreground hover:text-primary")} onClick={toggleRecording} disabled={disabled}>
                 {isRecording ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
                 {isRecording ? "Stop" : "Voice"}
               </Button>

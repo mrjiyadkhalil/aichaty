@@ -1,4 +1,4 @@
-import { FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Settings, Plus, Shield, Bookmark } from "lucide-react";
+import { FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Settings, Plus, Shield, Bookmark, BookOpen } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdmin";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -62,6 +62,12 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
                 <SidebarMenuButton onClick={() => navigate("/bookmarks")} isActive={location.pathname === "/bookmarks"} tooltip="Bookmarks">
                   <Bookmark className="h-4 w-4 shrink-0" />
                   {!collapsed && <span>Bookmarks</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={() => navigate("/prompts")} isActive={location.pathname === "/prompts"} tooltip="Prompt Library">
+                  <BookOpen className="h-4 w-4 shrink-0" />
+                  {!collapsed && <span>Prompts</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>

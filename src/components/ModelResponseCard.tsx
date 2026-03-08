@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { ResponseRating } from "@/components/ResponseRating";
 
 interface ModelResponseCardProps {
   model: string;
@@ -85,6 +86,7 @@ export function ModelResponseCard({
         <div className="flex items-center gap-1">
           {status === "success" && (
             <>
+              {responseId && <ResponseRating responseId={responseId} />}
               <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={handleCopy} title="Copy">
                 {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
               </Button>
