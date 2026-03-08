@@ -267,7 +267,7 @@ export default function ChatWorkspace() {
   const isSuperFiesta = chatMode === "superfiesta";
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full min-h-0">
       {/* Multi-chat model bar — portaled above TopBar */}
       {!isSuperFiesta && hasMessages && document.getElementById("model-bar-slot") &&
         createPortal(
@@ -276,7 +276,7 @@ export default function ChatWorkspace() {
         )
       }
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {!hasMessages ? (
           <div className="flex flex-col items-center justify-center min-h-full px-3 sm:px-4 py-8 sm:py-16">
             <ChatModeSwitcher mode={chatMode} onModeChange={(mode) => {
@@ -374,7 +374,7 @@ export default function ChatWorkspace() {
       </div>
 
       {hasMessages && (
-        <div className="shrink-0 sticky bottom-0 z-20 bg-background">
+        <div className="shrink-0 border-t border-border/30 bg-background">
           <PromptComposer
             onSend={handleSend} onEnhance={handleEnhance}
             onAttachFiles={projectId ? () => setShowFileModal(true) : undefined}
