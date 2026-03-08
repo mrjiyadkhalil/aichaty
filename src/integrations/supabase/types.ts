@@ -86,6 +86,38 @@ export type Database = {
         }
         Relationships: []
       }
+      bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          response_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          response_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          response_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_response_id_fkey"
+            columns: ["response_id"]
+            isOneToOne: false
+            referencedRelation: "model_responses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       broadcast_messages: {
         Row: {
           body: string
@@ -150,6 +182,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      chat_tag_assignments: {
+        Row: {
+          chat_id: string
+          created_at: string
+          id: string
+          tag_id: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          id?: string
+          tag_id: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          id?: string
+          tag_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_tag_assignments_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_tag_assignments_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "chat_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_tags: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       chats: {
         Row: {
@@ -816,6 +911,8 @@ export type Database = {
           default_layout: string
           default_models: string[] | null
           id: string
+          onboarding_completed: boolean
+          theme: string
           updated_at: string
           user_id: string
         }
@@ -825,6 +922,8 @@ export type Database = {
           default_layout?: string
           default_models?: string[] | null
           id?: string
+          onboarding_completed?: boolean
+          theme?: string
           updated_at?: string
           user_id: string
         }
@@ -834,6 +933,8 @@ export type Database = {
           default_layout?: string
           default_models?: string[] | null
           id?: string
+          onboarding_completed?: boolean
+          theme?: string
           updated_at?: string
           user_id?: string
         }
