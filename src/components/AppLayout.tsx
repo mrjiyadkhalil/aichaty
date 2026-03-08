@@ -70,7 +70,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     return "Fiesta AI";
   };
 
-  const isChatPage = !!currentChatId;
+  const isChatPage = !!currentChatId || location.pathname === "/chat";
 
   return (
     <SidebarProvider>
