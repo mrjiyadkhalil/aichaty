@@ -65,7 +65,8 @@ export default function ChatWorkspace() {
   useEffect(() => { setLayout(defaultLayout); }, [defaultLayout]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const enabledModels = AI_CONFIG.costModes[costMode]?.enabledModels || AI_CONFIG.costModes.balanced.enabledModels;
+  const { allModelIds, modelLabels } = useModels();
+  const enabledModels = allModelIds.length > 0 ? allModelIds : (AI_CONFIG.costModes[costMode]?.enabledModels || AI_CONFIG.costModes.balanced.enabledModels);
 
   // Reset state when navigating to /chat (no chatId)
   useEffect(() => {
