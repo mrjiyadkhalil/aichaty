@@ -54,6 +54,9 @@ export type Database = {
           chat_id: string
           content: string
           created_at: string
+          enhanced_content: string | null
+          file_context_ids: string[] | null
+          final_content: string | null
           id: string
           user_id: string
         }
@@ -61,6 +64,9 @@ export type Database = {
           chat_id: string
           content: string
           created_at?: string
+          enhanced_content?: string | null
+          file_context_ids?: string[] | null
+          final_content?: string | null
           id?: string
           user_id: string
         }
@@ -68,6 +74,9 @@ export type Database = {
           chat_id?: string
           content?: string
           created_at?: string
+          enhanced_content?: string | null
+          file_context_ids?: string[] | null
+          final_content?: string | null
           id?: string
           user_id?: string
         }
@@ -88,6 +97,7 @@ export type Database = {
           error_message: string | null
           id: string
           included_in_synthesis: boolean | null
+          latency_ms: number | null
           message_id: string
           model: string
           status: string
@@ -99,6 +109,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           included_in_synthesis?: boolean | null
+          latency_ms?: number | null
           message_id: string
           model: string
           status?: string
@@ -110,6 +121,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           included_in_synthesis?: boolean | null
+          latency_ms?: number | null
           message_id?: string
           model?: string
           status?: string

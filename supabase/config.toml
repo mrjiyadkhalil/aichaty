@@ -2,3 +2,12 @@ project_id = "urzkmuvfjigiktbzvnjy"
 
 [functions.multi-model-chat]
 verify_jwt = false
+
+[functions.enhance-prompt]
+verify_jwt = false
+
+[functions.synthesize]
+verify_jwt = false
+
+[functions.extract-file-text]
+verify_jwt = false
