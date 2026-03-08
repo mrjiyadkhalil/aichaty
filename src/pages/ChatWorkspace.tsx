@@ -15,7 +15,7 @@ import { FileContextModal } from "@/components/FileContextModal";
 import { ChatModeSwitcher } from "@/components/ChatModeSwitcher";
 import { SuperFiestaView } from "@/components/SuperFiestaView";
 import { MultiChatColumns } from "@/components/MultiChatColumns";
-import { ExploreSection } from "@/components/ExploreSection";
+
 import { SavePromptButton } from "@/components/SavePromptButton";
 import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { AI_CONFIG } from "@/lib/aiConfig";
@@ -296,9 +296,6 @@ export default function ChatWorkspace() {
             }
             <div className="w-full mt-10">
               <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} showGreeting={isSuperFiesta} onImageSelected={(b64, mime) => { setImageBase64(b64); setImageMimeType(mime); }} onImageRemoved={() => { setImageBase64(null); setImageMimeType(null); }} hasImage={!!imageBase64} />
-            </div>
-            <div className="w-full max-w-2xl mt-16">
-              <ExploreSection />
             </div>
           </div>
         ) : (
