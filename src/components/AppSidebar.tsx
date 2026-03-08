@@ -29,11 +29,8 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleNewChat = async () => {
-    if (!user) return;
-    const { data, error } = await supabase.from("chats").insert({ user_id: user.id, title: "New Chat" }).select().single();
-    if (error) { toast.error("Failed to create chat"); return; }
-    if (data) navigate(`/chat/${data.id}`);
+  const handleNewChat = () => {
+    navigate("/chat");
   };
 
   return (
