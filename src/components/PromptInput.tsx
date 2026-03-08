@@ -1,9 +1,7 @@
 import { useState } from "react";
-import { Send, Sparkles, Mic, MicOff } from "lucide-react";
+import { Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useVoiceInput } from "@/hooks/useVoiceInput";
-import { cn } from "@/lib/utils";
 
 interface PromptInputProps {
   onSend: (prompt: string) => void;
