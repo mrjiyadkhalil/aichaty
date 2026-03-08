@@ -58,7 +58,7 @@ export default function ChatWorkspace() {
     if (!chatId || !user) return;
     const load = async () => {
       const { data: chat } = await supabase.from("chats").select("project_id, title").eq("id", chatId).single();
-      if (!chat) { navigate("/dashboard"); return; }
+      if (!chat) { navigate("/chat", { replace: true }); return; }
       
       const chatProjectId = chat.project_id;
       setProjectId(chatProjectId);
