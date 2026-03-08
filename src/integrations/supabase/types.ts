@@ -233,38 +233,53 @@ export type Database = {
       }
       model_configs: {
         Row: {
+          api_key_env: string | null
           cost_tier: string
           enabled: boolean
           id: string
+          is_custom: boolean
           max_output_tokens: number
           model_name: string
           premium_only: boolean
           provider_name: string
+          provider_url: string | null
+          request_format: Json | null
           retry_enabled: boolean
+          short_label: string | null
           timeout_seconds: number
           updated_at: string
         }
         Insert: {
+          api_key_env?: string | null
           cost_tier?: string
           enabled?: boolean
           id?: string
+          is_custom?: boolean
           max_output_tokens?: number
           model_name: string
           premium_only?: boolean
           provider_name: string
+          provider_url?: string | null
+          request_format?: Json | null
           retry_enabled?: boolean
+          short_label?: string | null
           timeout_seconds?: number
           updated_at?: string
         }
         Update: {
+          api_key_env?: string | null
           cost_tier?: string
           enabled?: boolean
           id?: string
+          is_custom?: boolean
           max_output_tokens?: number
           model_name?: string
           premium_only?: boolean
           provider_name?: string
+          provider_url?: string | null
+          request_format?: Json | null
           retry_enabled?: boolean
+          short_label?: string | null
           timeout_seconds?: number
           updated_at?: string
         }
@@ -321,33 +336,45 @@ export type Database = {
         Row: {
           ai_access_enabled: boolean
           avatar_url: string | null
+          ban_reason: string | null
+          banned_at: string | null
+          banned_by: string | null
           created_at: string
           display_name: string | null
           id: string
           last_active_at: string | null
           status: string
+          suspended_until: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           ai_access_enabled?: boolean
           avatar_url?: string | null
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
           last_active_at?: string | null
           status?: string
+          suspended_until?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           ai_access_enabled?: boolean
           avatar_url?: string | null
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
           last_active_at?: string | null
           status?: string
+          suspended_until?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -731,7 +758,34 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      model_performance: {
+        Row: {
+          avg_latency_ms: number | null
+          error_count: number | null
+          max_latency_ms: number | null
+          min_latency_ms: number | null
+          model: string | null
+          provider: string | null
+          success_count: number | null
+          success_rate: number | null
+          total_cost: number | null
+          total_requests: number | null
+        }
+        Relationships: []
+      }
+      revenue_summary: {
+        Row: {
+          day: string | null
+          model: string | null
+          provider: string | null
+          total_input_tokens: number | null
+          total_output_tokens: number | null
+          total_requests: number | null
+          total_revenue: number | null
+          unique_users: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
