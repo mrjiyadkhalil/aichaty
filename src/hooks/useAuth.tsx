@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [banned, setBanned] = useState(false);
   const [suspended, setSuspended] = useState(false);
+  const sessionRegistered = useRef(false);
 
   const checkBanStatus = async (userId: string) => {
     const { data } = await supabase
