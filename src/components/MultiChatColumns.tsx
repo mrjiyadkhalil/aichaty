@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { useModels } from "@/hooks/useModels";
+import { useState, useRef, useEffect } from "react";
+import { useModels, ModelConfig } from "@/hooks/useModels";
 import { AI_CONFIG } from "@/lib/aiConfig";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Check, Lock } from "lucide-react";
+import { ChevronDown, Check, Lock, ExternalLink, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -30,53 +30,67 @@ interface MultiChatColumnsProps {
 export function MultiChatColumns({
   selectedModels, enabledModels, onToggleModel, compact,
 }: MultiChatColumnsProps) {
-  const { allModelIds, modelLabels } = useModels();
+  const { models, allModelIds, modelLabels } = useModels();
   const allModels = allModelIds.length > 0 ? allModelIds : AI_CONFIG.allModels;
   const labelsMap = allModelIds.length > 0 ? modelLabels : AI_CONFIG.modelLabels;
 
-  // Group models by provider
+  // Build premium lookup from DB models
+  const premiumSet = new Set<string>();
+  for (const m of models) {
+    if (m.premium_only) premiumSet.add(m.model_name);
+  }
+  // Fallback heuristic if no DB models
+  const isPremium = (modelId: string): boolean => {
+    if (models.length > 0) return premiumSet.has(modelId);
+    const n = modelId.toLowerCase();
+    return (n.includes("pro") || (n.includes("gpt-5") && !n.includes("mini") && !n.includes("nano")) || n.includes("claude-4-sonnet") || n.includes("mistral-large"));
+  };
+
+  // Group by provider
   const grouped: Record<string, string[]> = {};
   for (const modelId of allModels) {
     const provider = modelId.split("/")[0] || "other";
     if (!grouped[provider]) grouped[provider] = [];
     grouped[provider].push(modelId);
   }
-
   const providerKeys = Object.keys(grouped);
 
-  // Track which provider is currently selected per "slot" — one model per provider
-  // The "active" model per provider = first selected model of that provider, or first model of that provider
   const getActiveModel = (provider: string): string => {
-    const models = grouped[provider];
-    const selected = models.find(m => selectedModels.includes(m));
-    return selected || models[0];
+    const pModels = grouped[provider];
+    return pModels.find(m => selectedModels.includes(m)) || pModels[0];
   };
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!openDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [openDropdown]);
 
   const handleSelectModel = (provider: string, newModelId: string) => {
-    const models = grouped[provider];
-    // Deselect all other models of same provider
-    for (const m of models) {
-      if (selectedModels.includes(m) && m !== newModelId) {
-        onToggleModel(m);
-      }
+    const pModels = grouped[provider];
+    for (const m of pModels) {
+      if (selectedModels.includes(m) && m !== newModelId) onToggleModel(m);
     }
-    // Select the new one if not already
-    if (!selectedModels.includes(newModelId)) {
-      onToggleModel(newModelId);
-    }
+    if (!selectedModels.includes(newModelId)) onToggleModel(newModelId);
     setOpenDropdown(null);
   };
 
   const handleToggleProvider = (provider: string) => {
-    const activeModel = getActiveModel(provider);
-    onToggleModel(activeModel);
+    onToggleModel(getActiveModel(provider));
   };
 
   return (
-    <div className="w-full">
-      <div className="flex items-stretch border-b border-border/40 overflow-x-auto scrollbar-hide">
+    <div className="w-full" ref={containerRef}>
+      <div className="flex items-stretch border-b border-border/30 overflow-x-auto scrollbar-hide">
         {providerKeys.map((provider, idx) => {
           const meta = PROVIDER_META[provider] || { label: provider, icon: "●", color: "0 0% 50%" };
           const activeModel = getActiveModel(provider);
@@ -84,63 +98,74 @@ export function MultiChatColumns({
           const isOpen = openDropdown === provider;
           const providerModels = grouped[provider];
           const label = labelsMap[activeModel] || activeModel.split("/").pop() || activeModel;
+          const standardModels = providerModels.filter(m => !isPremium(m));
+          const premiumModels = providerModels.filter(m => isPremium(m));
 
           return (
             <div
               key={provider}
               className={cn(
-                "flex-1 min-w-[180px] relative",
-                idx < providerKeys.length - 1 && "border-r border-border/30"
+                "flex-1 min-w-[200px] relative",
+                idx < providerKeys.length - 1 && "border-r border-border/20"
               )}
             >
-              {/* Header row */}
-              <div className="flex items-center justify-between px-3 py-2.5 gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-sm shrink-0" style={{ color: `hsl(${meta.color})` }}>
-                    {meta.icon}
+              {/* Top bar row — matches screenshot exactly */}
+              <div className="flex items-center gap-3 px-4 py-3">
+                {/* Provider icon */}
+                <span
+                  className="text-lg shrink-0"
+                  style={{ color: `hsl(${meta.color})` }}
+                >
+                  {meta.icon}
+                </span>
+
+                {/* Model name + dropdown */}
+                <button
+                  onClick={() => setOpenDropdown(isOpen ? null : provider)}
+                  className="flex items-center gap-1.5 min-w-0"
+                >
+                  <span className="text-[13px] font-medium truncate text-foreground/90">
+                    {label}
                   </span>
+                  <ChevronDown className={cn(
+                    "h-3.5 w-3.5 shrink-0 text-muted-foreground/50 transition-transform duration-200",
+                    isOpen && "rotate-180"
+                  )} />
+                </button>
 
-                  {/* Model selector dropdown trigger */}
-                  <button
-                    onClick={() => setOpenDropdown(isOpen ? null : provider)}
-                    className="flex items-center gap-1 min-w-0 hover:text-foreground transition-colors"
-                  >
-                    <span className="text-sm font-medium font-['Space_Grotesk'] truncate text-foreground/90">
-                      {label}
-                    </span>
-                    <ChevronDown className={cn(
-                      "h-3.5 w-3.5 shrink-0 text-muted-foreground/60 transition-transform duration-200",
-                      isOpen && "rotate-180"
-                    )} />
-                  </button>
-                </div>
+                {/* Spacer */}
+                <div className="flex-1" />
 
+                {/* External link icon */}
+                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground/30" />
+
+                {/* Toggle */}
                 <Switch
                   checked={isActive}
                   onCheckedChange={() => handleToggleProvider(provider)}
-                  className="data-[state=checked]:bg-primary shrink-0"
+                  className="data-[state=checked]:bg-emerald-500 shrink-0"
                 />
               </div>
 
-              {/* Dropdown */}
+              {/* Dropdown menu */}
               <AnimatePresence>
                 {isOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: -4 }}
+                    initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border border-border/50 rounded-b-xl shadow-lg overflow-hidden"
-                    style={{ minWidth: 200 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute top-full left-0 z-50 bg-[hsl(var(--card))] border border-border/50 rounded-xl shadow-2xl overflow-hidden"
+                    style={{ minWidth: 210 }}
                   >
-                    <div className="p-1.5 space-y-0.5">
-                      {/* Standard models */}
-                      {providerModels.filter(m => !isPremiumModel(m)).length > 0 && (
+                    <div className="py-2 px-1.5">
+                      {/* Standard */}
+                      {standardModels.length > 0 && (
                         <>
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/50 px-2.5 py-1 font-semibold">
+                          <p className="text-[11px] font-bold text-foreground/80 px-3 py-1.5">
                             Standard
                           </p>
-                          {providerModels.filter(m => !isPremiumModel(m)).map(modelId => {
+                          {standardModels.map(modelId => {
                             const mLabel = labelsMap[modelId] || modelId.split("/").pop() || modelId;
                             const isCurrent = modelId === activeModel;
                             return (
@@ -148,29 +173,31 @@ export function MultiChatColumns({
                                 key={modelId}
                                 onClick={() => handleSelectModel(provider, modelId)}
                                 className={cn(
-                                  "w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs transition-all",
+                                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-colors",
                                   isCurrent
                                     ? "text-foreground font-medium"
-                                    : "text-foreground/70 hover:bg-muted/50 hover:text-foreground"
+                                    : "text-foreground/70 hover:bg-muted/60 hover:text-foreground"
                                 )}
                               >
-                                {isCurrent && <Check className="h-3.5 w-3.5 shrink-0 text-foreground" />}
-                                <span className={cn("truncate font-['Space_Grotesk']", !isCurrent && "ml-5.5")}>
-                                  {mLabel}
-                                </span>
+                                {isCurrent ? (
+                                  <Check className="h-3.5 w-3.5 shrink-0" />
+                                ) : (
+                                  <span className="w-3.5 shrink-0" />
+                                )}
+                                <span className="truncate">{mLabel}</span>
                               </button>
                             );
                           })}
                         </>
                       )}
 
-                      {/* Premium models */}
-                      {providerModels.filter(m => isPremiumModel(m)).length > 0 && (
+                      {/* Premium */}
+                      {premiumModels.length > 0 && (
                         <>
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/50 px-2.5 py-1 font-semibold mt-1">
+                          <p className="text-[11px] font-bold text-foreground/80 px-3 py-1.5 mt-1">
                             Premium
                           </p>
-                          {providerModels.filter(m => isPremiumModel(m)).map(modelId => {
+                          {premiumModels.map(modelId => {
                             const mLabel = labelsMap[modelId] || modelId.split("/").pop() || modelId;
                             const isCurrent = modelId === activeModel;
                             return (
@@ -178,18 +205,21 @@ export function MultiChatColumns({
                                 key={modelId}
                                 onClick={() => handleSelectModel(provider, modelId)}
                                 className={cn(
-                                  "w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs transition-all",
+                                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-colors",
                                   isCurrent
                                     ? "text-foreground font-medium"
-                                    : "text-foreground/70 hover:bg-muted/50 hover:text-foreground"
+                                    : "text-foreground/70 hover:bg-muted/60 hover:text-foreground"
                                 )}
                               >
                                 {isCurrent ? (
-                                  <Check className="h-3.5 w-3.5 shrink-0 text-foreground" />
+                                  <Check className="h-3.5 w-3.5 shrink-0" />
                                 ) : (
-                                  <Lock className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+                                  <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
                                 )}
-                                <span className="truncate font-['Space_Grotesk']">{mLabel}</span>
+                                <span className="truncate">{mLabel}</span>
+                                {!isCurrent && (
+                                  <Info className="h-3 w-3 shrink-0 text-muted-foreground/40 ml-auto" />
+                                )}
                               </button>
                             );
                           })}
@@ -205,11 +235,4 @@ export function MultiChatColumns({
       </div>
     </div>
   );
-}
-
-// Helper: check if a model is premium based on model_configs or name heuristic
-function isPremiumModel(modelId: string): boolean {
-  const name = modelId.toLowerCase();
-  return name.includes("pro") || name.includes("gpt-5") && !name.includes("mini") && !name.includes("nano")
-    || name.includes("claude-4-sonnet") || name.includes("mistral-large");
 }
