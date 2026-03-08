@@ -272,6 +272,42 @@ export default function AdminUserDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Plan Modal */}
+      <Dialog open={planModal} onOpenChange={setPlanModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Subscription Plan</DialogTitle>
+            <DialogDescription>Manually set the user's subscription plan.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label>Plan</Label>
+            <Select value={selectedPlan} onValueChange={(v) => setSelectedPlan(v as PlanName)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="pro">Pro ($12/mo)</SelectItem>
+                <SelectItem value="enterprise">Enterprise ($49/mo)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPlanModal(false)}>Cancel</Button>
+            <Button disabled={acting} onClick={async () => {
+              setActing(true);
+              try {
+                await adminApi("update_user_plan", { target_user_id: id, plan: selectedPlan });
+                toast.success("Plan updated");
+                setPlanModal(false);
+                load();
+              } catch (e: any) { toast.error(e.message || "Failed"); }
+              setActing(false);
+            }} className="gap-1.5">
+              {acting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
