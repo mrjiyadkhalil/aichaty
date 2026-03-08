@@ -768,3 +768,140 @@ async function getSystemHealth(sb: any) {
     requestTypes,
   });
 }
+
+// ==================== BROADCAST ====================
+
+async function sendBroadcast(sb: any, adminId: string, body: any) {
+  const { title, body: msgBody, type = "info", target = "all" } = body;
+  if (!title || !msgBody) throw new Error("title and body required");
+  const { data, error } = await sb.from("broadcast_messages").insert({
+    title, body: msgBody, type, target, sent_by: adminId,
+  }).select().single();
+  if (error) throw error;
+  await sb.from("admin_audit_logs").insert({
+    admin_user_id: adminId, action_type: "send_broadcast",
+    target_type: "broadcast", target_id: data.id, details_json: { title, type, target },
+  });
+  return json({ broadcast: data });
+}
+
+async function listBroadcasts(sb: any) {
+  const { data } = await sb.from("broadcast_messages").select("*").order("created_at", { ascending: false }).limit(50);
+  return json({ broadcasts: data || [] });
+}
+
+// ==================== USER QUOTA ====================
+
+async function updateUserQuota(sb: any, adminId: string, body: any) {
+  const { target_user_id, custom_soft_cap, custom_hard_cap } = body;
+  if (!target_user_id) throw new Error("target_user_id required");
+  await sb.from("profiles").update({
+    custom_soft_cap: custom_soft_cap ?? null,
+    custom_hard_cap: custom_hard_cap ?? null,
+  }).eq("user_id", target_user_id);
+  await sb.from("admin_audit_logs").insert({
+    admin_user_id: adminId, action_type: "update_user_quota",
+    target_type: "user", target_id: target_user_id,
+    details_json: { custom_soft_cap, custom_hard_cap },
+  });
+  return json({ success: true });
+}
+
+// ==================== ROLES ====================
+
+async function listAllRoles(sb: any) {
+  // Get system roles (admin, user) and count users
+  const { data: userRoles } = await sb.from("user_roles").select("role, user_id");
+  const roleCounts: Record<string, number> = {};
+  (userRoles || []).forEach((r: any) => { roleCounts[r.role] = (roleCounts[r.role] || 0) + 1; });
+  
+  const systemRoles = ["admin", "user"];
+  const roles = systemRoles.map(r => ({
+    role: r, description: r === "admin" ? "Full admin access" : "Standard user", 
+    is_system: true, user_count: roleCounts[r] || 0,
+  }));
+
+  // Check for custom roles stored in feature_flags as role markers
+  const { data: customRoles } = await sb.from("feature_flags").select("*").like("key", "role_%");
+  (customRoles || []).forEach((cr: any) => {
+    const roleName = cr.key.replace("role_", "");
+    roles.push({
+      role: roleName, description: cr.description || "",
+      is_system: false, user_count: roleCounts[roleName] || 0,
+    });
+  });
+
+  return json({ roles });
+}
+
+async function createCustomRole(sb: any, adminId: string, body: any) {
+  const { name, description } = body;
+  if (!name) throw new Error("name required");
+  // Store custom role as a feature_flag with role_ prefix
+  const { error } = await sb.from("feature_flags").insert({
+    key: `role_${name}`, description: description || `Custom role: ${name}`,
+    enabled: true, updated_by: adminId,
+  });
+  if (error) throw error;
+  await sb.from("admin_audit_logs").insert({
+    admin_user_id: adminId, action_type: "create_custom_role",
+    target_type: "role", target_id: name, details_json: { description },
+  });
+  return json({ success: true });
+}
+
+async function deleteCustomRole(sb: any, adminId: string, body: any) {
+  const { role_name } = body;
+  if (!role_name) throw new Error("role_name required");
+  await sb.from("feature_flags").delete().eq("key", `role_${role_name}`);
+  await sb.from("admin_audit_logs").insert({
+    admin_user_id: adminId, action_type: "delete_custom_role",
+    target_type: "role", target_id: role_name,
+  });
+  return json({ success: true });
+}
+
+// ==================== API KEYS ====================
+
+async function getApiKeys(sb: any) {
+  const { data } = await sb.from("provider_api_keys").select("*").order("provider_name");
+  // Check which env vars are actually set
+  const enriched = (data || []).map((k: any) => ({
+    ...k,
+    is_set: !!Deno.env.get(k.env_key_name),
+  }));
+  return json({ keys: enriched });
+}
+
+async function updateApiKey(sb: any, adminId: string, body: any) {
+  const { id, env_key_name } = body;
+  if (!id || !env_key_name) throw new Error("id and env_key_name required");
+  await sb.from("provider_api_keys").update({
+    env_key_name, updated_at: new Date().toISOString(), updated_by: adminId,
+  }).eq("id", id);
+  await sb.from("admin_audit_logs").insert({
+    admin_user_id: adminId, action_type: "update_api_key",
+    target_type: "provider_api_key", target_id: id, details_json: { env_key_name },
+  });
+  return json({ success: true });
+}
+
+async function initDefaultApiKeys(sb: any, adminId: string) {
+  const defaults = [
+    { provider_name: "google", env_key_name: "GOOGLE_API_KEY", label: "Google AI" },
+    { provider_name: "openai", env_key_name: "OPENAI_API_KEY", label: "OpenAI" },
+    { provider_name: "anthropic", env_key_name: "ANTHROPIC_API_KEY", label: "Anthropic" },
+    { provider_name: "lovable", env_key_name: "LOVABLE_API_KEY", label: "Lovable AI Gateway" },
+  ];
+  for (const d of defaults) {
+    const { data: existing } = await sb.from("provider_api_keys").select("id").eq("provider_name", d.provider_name).maybeSingle();
+    if (!existing) {
+      await sb.from("provider_api_keys").insert({ ...d, updated_by: adminId });
+    }
+  }
+  await sb.from("admin_audit_logs").insert({
+    admin_user_id: adminId, action_type: "init_default_api_keys",
+    target_type: "system", target_id: "api_keys",
+  });
+  return json({ success: true });
+}
