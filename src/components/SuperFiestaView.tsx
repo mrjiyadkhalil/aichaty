@@ -14,10 +14,6 @@ export function SuperFiestaView({
 }: SuperFiestaViewProps) {
   const [prompt, setPrompt] = useState("");
 
-  const { isRecording, toggleRecording } = useVoiceInput((text) => {
-    setPrompt((prev) => (prev ? prev + " " + text : text));
-  });
-
   const handleSend = () => {
     if (!prompt.trim() || disabled) return;
     onSend(prompt.trim());
