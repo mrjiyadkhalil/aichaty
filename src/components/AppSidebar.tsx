@@ -1,4 +1,4 @@
-import { FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Settings, LayoutDashboard, Shield } from "lucide-react";
+import { FolderOpen, MessageSquare, LogOut, Zap, ChevronDown, Settings, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdmin";
 import { useNavigate, useLocation } from "react-router-dom";
