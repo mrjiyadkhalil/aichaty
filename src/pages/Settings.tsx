@@ -35,8 +35,9 @@ export default function Settings() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("display_name").eq("user_id", user.id).single().then(({ data }) => {
+    supabase.from("profiles").select("display_name, custom_system_prompt").eq("user_id", user.id).single().then(({ data }) => {
       if (data?.display_name) setDisplayName(data.display_name);
+      if ((data as any)?.custom_system_prompt) setCustomSystemPrompt((data as any).custom_system_prompt);
     });
   }, [user]);
 
