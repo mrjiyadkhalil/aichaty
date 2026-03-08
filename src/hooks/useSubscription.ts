@@ -79,7 +79,7 @@ const ADMIN_FEATURES: PlanFeatures = {
 
 export function useSubscription(): UseSubscriptionReturn {
   const { user } = useAuth();
-  const { isAdmin } = useAdminCheck();
+  const { isAdmin, loading: adminLoading } = useAdminCheck();
   const [plan, setPlan] = useState<PlanName>("free");
   const [features, setFeatures] = useState<PlanFeatures | null>(null);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
