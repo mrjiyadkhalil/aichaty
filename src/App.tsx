@@ -110,7 +110,7 @@ function AppWithShortcuts() {
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
         <Route path="/admin/users/:id" element={<AdminRoute><AdminUserDetail /></AdminRoute>} />
-        <Route path="/admin/roles" element={<AdminRoute><AdminRoles /></AdminRoute>} />
+        
         <Route path="/admin/usage" element={<AdminRoute><AdminUsage /></AdminRoute>} />
         <Route path="/admin/models" element={<AdminRoute><AdminModels /></AdminRoute>} />
         <Route path="/admin/models/add" element={<AdminRoute><AdminModelAdd /></AdminRoute>} />

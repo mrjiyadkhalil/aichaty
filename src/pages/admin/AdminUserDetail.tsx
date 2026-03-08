@@ -97,7 +97,7 @@ export default function AdminUserDetail() {
   const aiEnabled = detail.profile?.ai_access_enabled !== false;
 
   return (
-    <div className="p-6 space-y-6 max-w-3xl">
+    <div className="p-4 sm:p-6 space-y-6 w-full">
       <Button variant="ghost" size="sm" onClick={() => navigate("/admin/users")} className="gap-1.5">
         <ArrowLeft className="h-4 w-4" /> Back to Users
       </Button>
