@@ -20,7 +20,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ projects, chats, selectedProjectId }: AppSidebarProps) {
   const { signOut, user } = useAuth();
-  const { isAdmin } = useAdminCheck();
+  const { state } = useSidebar();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
