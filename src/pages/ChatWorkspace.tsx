@@ -269,7 +269,7 @@ export default function ChatWorkspace() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* Multi-chat model bar */}
       {!isSuperFiesta && hasMessages && (
-        <div className="relative z-20 shrink-0">
+        <div className="relative z-40 shrink-0 overflow-visible">
           <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />
         </div>
       )}
@@ -287,7 +287,7 @@ export default function ChatWorkspace() {
               setChatMode(mode);
             }} />
             {!isSuperFiesta && (
-              <div className="w-full max-w-5xl mt-6">
+              <div className="w-full max-w-5xl mt-6 relative z-40 overflow-visible">
                 <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />
               </div>
             )}
