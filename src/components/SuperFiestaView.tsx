@@ -9,10 +9,11 @@ interface SuperFiestaViewProps {
   onAttachFiles?: () => void;
   disabled: boolean;
   enhancing: boolean;
+  showGreeting?: boolean;
 }
 
 export function SuperFiestaView({
-  onSend, onEnhance, onAttachFiles, disabled, enhancing,
+  onSend, onEnhance, onAttachFiles, disabled, enhancing, showGreeting = true,
 }: SuperFiestaViewProps) {
   const [prompt, setPrompt] = useState("");
 
