@@ -7,8 +7,6 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AI_CONFIG } from "@/lib/aiConfig";
-import { useVoiceInput } from "@/hooks/useVoiceInput";
-import { cn } from "@/lib/utils";
 import type { ChatMode } from "@/pages/ChatWorkspace";
 
 interface SelectedFile { id: string; name: string; }
