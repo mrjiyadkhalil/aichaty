@@ -163,7 +163,7 @@ export default function ChatWorkspace() {
     const calls = modelsToUse.map(async (model) => {
       const start = Date.now();
       try {
-        const resp = await supabase.functions.invoke("multi-model-chat", { body: { prompt: fullPrompt, model, projectId, chatId, messageId: msg.id, max_tokens: modeConfig.maxOutputTokens, request_type: requestType } });
+        const resp = await supabase.functions.invoke("multi-model-chat", { body: { prompt: fullPrompt, model, projectId, chatId: activeChatId, messageId: msg.id, max_tokens: modeConfig.maxOutputTokens, request_type: requestType } });
         const latency = Date.now() - start;
         const responseId = newMsg.responses.find((r) => r.model === model)?.id;
         if (!responseId) return;
