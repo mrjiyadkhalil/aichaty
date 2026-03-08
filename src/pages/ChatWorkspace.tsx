@@ -374,7 +374,7 @@ export default function ChatWorkspace() {
       </div>
 
       {hasMessages && (
-        <div className="shrink-0 sticky bottom-0 z-20 bg-background">
+        <div className="shrink-0 border-t border-border/30 bg-background">
           <PromptComposer
             onSend={handleSend} onEnhance={handleEnhance}
             onAttachFiles={projectId ? () => setShowFileModal(true) : undefined}
