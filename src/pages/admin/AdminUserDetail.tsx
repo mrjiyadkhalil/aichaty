@@ -38,14 +38,18 @@ export default function AdminUserDetail() {
 
   const load = () => {
     setLoading(true);
-    adminApi("get_user_detail", { target_user_id: id })
-      .then((d) => {
-        setDetail(d);
-        setSoftCap(d.profile?.custom_soft_cap?.toString() || "");
-        setHardCap(d.profile?.custom_hard_cap?.toString() || "");
-      })
-      .catch(() => toast.error("Failed to load user"))
-      .finally(() => setLoading(false));
+    Promise.all([
+      adminApi("get_user_detail", { target_user_id: id }),
+      adminApi("get_user_sessions", { target_user_id: id }),
+    ]).then(([d, s]) => {
+      setDetail(d);
+      setSoftCap(d.profile?.custom_soft_cap?.toString() || "");
+      setHardCap(d.profile?.custom_hard_cap?.toString() || "");
+      setSelectedPlan((d.profile?.plan as PlanName) || "free");
+      setUserSessions(s.sessions || []);
+    })
+    .catch(() => toast.error("Failed to load user"))
+    .finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, [id]);
