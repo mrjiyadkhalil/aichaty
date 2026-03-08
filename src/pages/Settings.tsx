@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUsage } from "@/hooks/useUsage";
 import { usePreferences } from "@/hooks/usePreferences";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -11,16 +12,21 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { Save, User, BarChart3, Settings2, Sun, Moon, Monitor, RotateCcw, Brain, MessageSquare } from "lucide-react";
+import { Save, User, BarChart3, Settings2, Sun, Moon, Monitor, RotateCcw, Brain, MessageSquare, Crown, ShieldCheck } from "lucide-react";
 import { AI_CONFIG, CostMode } from "@/lib/aiConfig";
 import { MemoryManager } from "@/components/MemoryManager";
 import { Textarea } from "@/components/ui/textarea";
+import { PlanBadge } from "@/components/PlanBadge";
+import { SessionManager } from "@/components/SessionManager";
+import { useNavigate } from "react-router-dom";
 
 export default function Settings() {
   const { user, signOut } = useAuth();
   const { totalCost, requestCount, isNearCap, isAtCap } = useUsage();
   const { costMode, defaultLayout, theme: prefTheme, onboardingCompleted, savePreferences } = usePreferences();
+  const { plan, features } = useSubscription();
   const { setTheme } = useTheme();
+  const navigate = useNavigate();
 
   const [displayName, setDisplayName] = useState("");
   const [customSystemPrompt, setCustomSystemPrompt] = useState("");
@@ -61,7 +67,9 @@ export default function Settings() {
     setTimeout(() => window.location.reload(), 500);
   };
 
-  const usagePercent = Math.min((totalCost / AI_CONFIG.limits.hardCapUsd) * 100, 100);
+  const softCap = features?.usage_cap_soft ?? AI_CONFIG.limits.softCapUsd;
+  const hardCap = features?.usage_cap_hard ?? AI_CONFIG.limits.hardCapUsd;
+  const usagePercent = Math.min((totalCost / hardCap) * 100, 100);
   const statusLabel = isAtCap ? "Limit Reached" : isNearCap ? "Near Limit" : "Normal";
   const statusColor = isAtCap ? "destructive" : isNearCap ? "secondary" : "default";
 
@@ -75,6 +83,27 @@ export default function Settings() {
     <div className="max-w-2xl mx-auto p-6 space-y-6 animate-fade-in">
       <h1 className="text-3xl font-bold font-['Space_Grotesk']">Settings</h1>
 
+      {/* Plan */}
+      <div className="glass-card p-6 space-y-4">
+        <h2 className="text-base font-semibold flex items-center gap-2 font-['Space_Grotesk']"><Crown className="h-4 w-4 text-primary" /> Subscription Plan</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <PlanBadge plan={plan} />
+            <span className="text-sm text-muted-foreground capitalize">{plan} Plan</span>
+          </div>
+          {plan === "free" && (
+            <Button size="sm" onClick={() => navigate("/pricing")} className="gap-1.5 shadow-glow-sm">
+              <Crown className="h-3.5 w-3.5" /> Upgrade
+            </Button>
+          )}
+          {plan !== "free" && (
+            <Button variant="outline" size="sm" onClick={() => navigate("/pricing")}>
+              Manage Plan
+            </Button>
+          )}
+        </div>
+      </div>
+
       {/* Profile */}
       <div className="glass-card p-6 space-y-4">
         <h2 className="text-base font-semibold flex items-center gap-2 font-['Space_Grotesk']"><User className="h-4 w-4 text-primary" /> Profile</h2>
@@ -86,11 +115,13 @@ export default function Settings() {
           <Label>Display Name</Label>
           <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="bg-background/50 border-border/30 focus:border-primary/50" />
         </div>
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2"><MessageSquare className="h-3.5 w-3.5 text-primary" /> Custom System Prompt</Label>
-          <Textarea value={customSystemPrompt} onChange={(e) => setCustomSystemPrompt(e.target.value)} placeholder="Set a custom AI personality or instructions that apply to all your chats..." rows={3} className="bg-background/50 border-border/30 focus:border-primary/50" />
-          <p className="text-xs text-muted-foreground">This prompt is prepended to every AI request you make.</p>
-        </div>
+        {(plan === "enterprise" || plan === "pro") && (
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2"><MessageSquare className="h-3.5 w-3.5 text-primary" /> Custom System Prompt</Label>
+            <Textarea value={customSystemPrompt} onChange={(e) => setCustomSystemPrompt(e.target.value)} placeholder="Set a custom AI personality or instructions that apply to all your chats..." rows={3} className="bg-background/50 border-border/30 focus:border-primary/50" />
+            <p className="text-xs text-muted-foreground">This prompt is prepended to every AI request you make.</p>
+          </div>
+        )}
         <Button onClick={handleSaveProfile} disabled={saving} className="gap-1.5 shadow-glow-sm"><Save className="h-3.5 w-3.5" /> Save</Button>
       </div>
 
@@ -108,15 +139,22 @@ export default function Settings() {
           <span className="text-sm text-muted-foreground">Estimated Spend</span>
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">${totalCost.toFixed(4)}</span>
-            <span className="text-xs text-muted-foreground">/ ${AI_CONFIG.limits.hardCapUsd.toFixed(2)}</span>
+            <span className="text-xs text-muted-foreground">/ ${hardCap.toFixed(2)}</span>
             <Badge variant={statusColor as any}>{statusLabel}</Badge>
           </div>
         </div>
         <Progress value={usagePercent} className="h-2" />
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Soft cap: ${AI_CONFIG.limits.softCapUsd.toFixed(2)}</span>
+          <span>Soft cap: ${softCap.toFixed(2)}</span>
           <span>{requestCount} requests this month</span>
         </div>
+      </div>
+
+      {/* Sessions */}
+      <div className="glass-card p-6 space-y-4">
+        <h2 className="text-base font-semibold flex items-center gap-2 font-['Space_Grotesk']"><ShieldCheck className="h-4 w-4 text-primary" /> Active Sessions</h2>
+        <p className="text-sm text-muted-foreground">Manage your active sessions across devices.</p>
+        <SessionManager />
       </div>
 
       {/* Preferences */}

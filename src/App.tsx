@@ -99,6 +99,7 @@ function AppWithShortcuts() {
       <Routes>
         <Route path="/" element={<LandingRoute />} />
         <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+        <Route path="/pricing" element={<Pricing />} />
         <Route path="/chat" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
         <Route path="/chat/:id" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
         <Route path="/project/:id" element={<ProtectedRoute><AppLayout><ProjectDetail /></AppLayout></ProtectedRoute>} />
