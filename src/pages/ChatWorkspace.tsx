@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUsage } from "@/hooks/useUsage";
@@ -267,12 +268,13 @@ export default function ChatWorkspace() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Multi-chat model bar */}
-      {!isSuperFiesta && hasMessages && (
-        <div className="relative z-40 shrink-0 overflow-visible">
-          <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />
-        </div>
-      )}
+      {/* Multi-chat model bar — portaled above TopBar */}
+      {!isSuperFiesta && hasMessages && document.getElementById("model-bar-slot") &&
+        createPortal(
+          <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />,
+          document.getElementById("model-bar-slot")!
+        )
+      }
 
       <div className="flex-1 overflow-y-auto">
         {!hasMessages ? (
@@ -286,11 +288,12 @@ export default function ChatWorkspace() {
               }
               setChatMode(mode);
             }} />
-            {!isSuperFiesta && (
-              <div className="w-full max-w-5xl mt-6 relative z-40 overflow-visible">
-                <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />
-              </div>
-            )}
+            {!isSuperFiesta && document.getElementById("model-bar-slot") &&
+              createPortal(
+                <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />,
+                document.getElementById("model-bar-slot")!
+              )
+            }
             <div className="w-full mt-10">
               <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} showGreeting={isSuperFiesta} onImageSelected={(b64, mime) => { setImageBase64(b64); setImageMimeType(mime); }} onImageRemoved={() => { setImageBase64(null); setImageMimeType(null); }} hasImage={!!imageBase64} />
             </div>
