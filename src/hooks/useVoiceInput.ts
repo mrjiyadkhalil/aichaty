@@ -1,9 +1,34 @@
 import { useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useVoiceInput(onTranscript: (text: string) => void) {
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
   const recognitionRef = useRef<any>(null);
+
+  const translateToEnglish = useCallback(async (text: string): Promise<string> => {
+    // Quick check — if it looks like English already, skip translation
+    const simpleEnglishTest = /^[a-zA-Z0-9\s.,!?'"()\-:;@#$%&*]+$/;
+    if (simpleEnglishTest.test(text)) return text;
+
+    setIsTranslating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("multi-model-chat", {
+        body: {
+          prompt: `Translate the following text to English. Return ONLY the translated text, nothing else. If it's already in English, return it as-is.\n\nText: ${text}`,
+          model: "google/gemini-2.5-flash-lite",
+          request_type: "voice_translate",
+        },
+      });
+      if (error || !data?.content) return text;
+      return data.content.trim();
+    } catch {
+      return text;
+    } finally {
+      setIsTranslating(false);
+    }
+  }, []);
 
   const startRecording = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -15,15 +40,18 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = false;
-    recognition.lang = "en-US";
+    // No lang set — auto-detect any language
+    recognition.lang = "";
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = async (event: any) => {
       const results = Array.from(event.results as SpeechRecognitionResultList);
       const transcript = results
         .map((r: any) => r[0].transcript)
         .join(" ")
         .trim();
-      if (transcript) onTranscript(transcript);
+      if (!transcript) return;
+      const translated = await translateToEnglish(transcript);
+      onTranscript(translated);
     };
 
     recognition.onerror = (event: any) => {
@@ -44,7 +72,7 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
     recognitionRef.current = recognition;
     recognition.start();
     setIsRecording(true);
-  }, [onTranscript]);
+  }, [onTranscript, translateToEnglish]);
 
   const stopRecording = useCallback(() => {
     if (recognitionRef.current) {
@@ -59,5 +87,5 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
     else startRecording();
   }, [isRecording, startRecording, stopRecording]);
 
-  return { isRecording, toggleRecording, startRecording, stopRecording };
+  return { isRecording, isTranslating, toggleRecording, startRecording, stopRecording };
 }
