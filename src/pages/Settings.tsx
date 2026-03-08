@@ -86,7 +86,19 @@ export default function Settings() {
           <Label>Display Name</Label>
           <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="bg-background/50 border-border/30 focus:border-primary/50" />
         </div>
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2"><MessageSquare className="h-3.5 w-3.5 text-primary" /> Custom System Prompt</Label>
+          <Textarea value={customSystemPrompt} onChange={(e) => setCustomSystemPrompt(e.target.value)} placeholder="Set a custom AI personality or instructions that apply to all your chats..." rows={3} className="bg-background/50 border-border/30 focus:border-primary/50" />
+          <p className="text-xs text-muted-foreground">This prompt is prepended to every AI request you make.</p>
+        </div>
         <Button onClick={handleSaveProfile} disabled={saving} className="gap-1.5 shadow-glow-sm"><Save className="h-3.5 w-3.5" /> Save</Button>
+      </div>
+
+      {/* AI Memory */}
+      <div className="glass-card p-6 space-y-3">
+        <h2 className="text-base font-semibold flex items-center gap-2 font-['Space_Grotesk']"><Brain className="h-4 w-4 text-primary" /> AI Memory</h2>
+        <p className="text-sm text-muted-foreground">The AI learns key facts about you from conversations. Manage what it remembers.</p>
+        <MemoryManager />
       </div>
 
       {/* Usage */}
