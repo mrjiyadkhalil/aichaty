@@ -76,6 +76,16 @@ Deno.serve(async (req) => {
       case "list_share_links": return await listShareLinks(sb, body);
       case "revoke_share_link": return await revokeShareLink(sb, userId, body);
       case "get_system_health": return await getSystemHealth(sb);
+      // New admin features
+      case "send_broadcast": return await sendBroadcast(sb, userId, body);
+      case "list_broadcasts": return await listBroadcasts(sb);
+      case "update_user_quota": return await updateUserQuota(sb, userId, body);
+      case "list_all_roles": return await listAllRoles(sb);
+      case "create_custom_role": return await createCustomRole(sb, userId, body);
+      case "delete_custom_role": return await deleteCustomRole(sb, userId, body);
+      case "get_api_keys": return await getApiKeys(sb);
+      case "update_api_key": return await updateApiKey(sb, userId, body);
+      case "init_default_api_keys": return await initDefaultApiKeys(sb, userId);
       default: return json({ error: `Unknown action: ${action}` }, 400);
     }
   } catch (e: any) {
