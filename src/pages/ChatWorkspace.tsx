@@ -119,7 +119,18 @@ export default function ChatWorkspace() {
   };
 
   const handleSend = async (prompt: string) => {
-    if (!user || !chatId) return;
+    if (!user) return;
+    
+    // If no chatId, create a new chat first and redirect
+    let activeChatId = chatId;
+    if (!activeChatId) {
+      const title = prompt.slice(0, 50) + (prompt.length > 50 ? "..." : "");
+      const { data: newChat, error: chatErr } = await supabase.from("chats").insert({ user_id: user.id, title }).select().single();
+      if (chatErr || !newChat) { toast.error("Failed to create chat"); return; }
+      activeChatId = newChat.id;
+      navigate(`/chat/${activeChatId}`, { replace: true });
+    }
+    
     if (isAtCap) { toast.error("Monthly usage limit reached. Check Settings for details."); return; }
     if (isNearCap) { toast.warning("Approaching usage limit"); }
 
