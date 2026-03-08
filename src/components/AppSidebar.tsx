@@ -53,7 +53,7 @@ function groupChatsByDate(chats: Chat[]): { label: string; chats: Chat[] }[] {
 export function AppSidebar({ projects, recentChats, projectChats, selectedProjectId, onProjectsChanged }: AppSidebarProps) {
   const { signOut, user } = useAuth();
   const { isAdmin } = useAdminCheck();
-  const { plan } = useSubscription();
+  const { plan, loading: planLoading } = useSubscription();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
