@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Send, Plus, Mic, Sparkles, Globe, Image } from "lucide-react";
+import { Send, Plus, Mic, MicOff, Sparkles, Globe, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AI_CONFIG } from "@/lib/aiConfig";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { cn } from "@/lib/utils";
 
 interface SuperFiestaViewProps {
   onSend: (prompt: string) => void;
   onEnhance: (prompt: string) => void;
-  onAttachFiles: () => void;
+  onAttachFiles?: () => void;
   disabled: boolean;
   enhancing: boolean;
   selectedModels: string[];
@@ -20,6 +22,10 @@ export function SuperFiestaView({
   selectedModels, enabledModels, onToggleModel,
 }: SuperFiestaViewProps) {
   const [prompt, setPrompt] = useState("");
+
+  const { isRecording, toggleRecording } = useVoiceInput((text) => {
+    setPrompt((prev) => (prev ? prev + " " + text : text));
+  });
 
   const handleSend = () => {
     if (!prompt.trim() || disabled) return;
@@ -47,12 +53,14 @@ export function SuperFiestaView({
       <div className="w-full relative group">
         <div className="absolute -inset-0.5 bg-primary/20 rounded-2xl blur-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
         <div className="relative flex items-center bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl px-4 py-3 gap-3 focus-within:border-primary/40 focus-within:shadow-glow transition-all duration-300">
-          <button
-            onClick={onAttachFiles}
-            className="h-9 w-9 rounded-xl bg-secondary/60 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shrink-0"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
+          {onAttachFiles && (
+            <button
+              onClick={onAttachFiles}
+              className="h-9 w-9 rounded-xl bg-secondary/60 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shrink-0"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          )}
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -64,6 +72,19 @@ export function SuperFiestaView({
             style={{ fieldSizing: "content" } as any}
           />
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={toggleRecording}
+              disabled={disabled}
+              className={cn(
+                "h-9 w-9 rounded-xl flex items-center justify-center transition-colors",
+                isRecording
+                  ? "text-destructive bg-destructive/10 animate-pulse"
+                  : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+              )}
+              title={isRecording ? "Stop recording" : "Voice input"}
+            >
+              {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </button>
             <button
               onClick={() => onEnhance(prompt)}
               disabled={!prompt.trim() || enhancing || disabled}
