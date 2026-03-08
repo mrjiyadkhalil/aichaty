@@ -44,6 +44,48 @@ export type Database = {
         }
         Relationships: []
       }
+      announcements: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          end_at: string | null
+          id: string
+          message: string
+          placement: string
+          start_at: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          end_at?: string | null
+          id?: string
+          message: string
+          placement?: string
+          start_at?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          end_at?: string | null
+          id?: string
+          message?: string
+          placement?: string
+          start_at?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chats: {
         Row: {
           created_at: string
@@ -118,6 +160,33 @@ export type Database = {
           resolved_at?: string | null
           severity?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      feature_flags: {
+        Row: {
+          description: string | null
+          enabled: boolean
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -250,28 +319,34 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_access_enabled: boolean
           avatar_url: string | null
           created_at: string
           display_name: string | null
           id: string
+          last_active_at: string | null
           status: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          ai_access_enabled?: boolean
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          last_active_at?: string | null
           status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          ai_access_enabled?: boolean
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          last_active_at?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -382,6 +457,50 @@ export type Database = {
         }
         Relationships: []
       }
+      share_links: {
+        Row: {
+          chat_id: string
+          created_at: string
+          id: string
+          last_accessed_at: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          status: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: string
+          token?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_links_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       synthesis_results: {
         Row: {
           content: string
@@ -441,6 +560,48 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           value_json?: Json
+        }
+        Relationships: []
+      }
+      system_templates: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          featured: boolean
+          id: string
+          prompt_body: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          featured?: boolean
+          id?: string
+          prompt_body: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          featured?: boolean
+          id?: string
+          prompt_body?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
