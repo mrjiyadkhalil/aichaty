@@ -53,7 +53,7 @@ function groupChatsByDate(chats: Chat[]): { label: string; chats: Chat[] }[] {
 export function AppSidebar({ projects, recentChats, projectChats, selectedProjectId, onProjectsChanged }: AppSidebarProps) {
   const { signOut, user } = useAuth();
   const { isAdmin } = useAdminCheck();
-  const { plan } = useSubscription();
+  const { plan, loading: planLoading } = useSubscription();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
@@ -94,8 +94,8 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
     onProjectsChanged?.();
   };
 
-  // Determine upgrade CTA
-  const nextPlan = plan === "free" ? "Pro" : plan === "pro" ? "Enterprise" : null;
+  // Determine upgrade CTA - only show after plan is loaded
+  const nextPlan = planLoading ? null : (plan === "free" ? "Pro" : plan === "pro" ? "Enterprise" : null);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
@@ -261,7 +261,7 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-foreground truncate">{displayName || user?.email || "User"}</p>
-                <PlanBadge plan={plan} />
+                {!planLoading && <PlanBadge plan={plan} />}
               </div>
               <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => navigate("/settings")}>
                 <Settings className="h-3.5 w-3.5" />
