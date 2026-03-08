@@ -104,7 +104,10 @@ export default function AdminUserDetail() {
 
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold font-['Space_Grotesk']">{detail.profile?.display_name || "User"}</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-2xl font-bold font-['Space_Grotesk']">{detail.profile?.display_name || "User"}</h1>
+            <PlanBadge plan={(detail.profile?.plan as PlanName) || "free"} />
+          </div>
           <p className="text-sm text-muted-foreground">{detail.profile?.user_id}</p>
           {detail.profile?.last_active_at && <p className="text-xs text-muted-foreground">Last active: {new Date(detail.profile.last_active_at).toLocaleString()}</p>}
           {detail.profile?.ban_reason && <p className="text-xs text-destructive mt-1">Ban reason: {detail.profile.ban_reason}</p>}
