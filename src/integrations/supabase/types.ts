@@ -86,6 +86,71 @@ export type Database = {
         }
         Relationships: []
       }
+      broadcast_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          sent_at: string | null
+          sent_by: string
+          target: string
+          target_user_ids: string[] | null
+          title: string
+          type: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          sent_at?: string | null
+          sent_by: string
+          target?: string
+          target_user_ids?: string[] | null
+          title: string
+          type?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          sent_at?: string | null
+          sent_by?: string
+          target?: string
+          target_user_ids?: string[] | null
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      broadcast_reads: {
+        Row: {
+          broadcast_id: string
+          id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          broadcast_id: string
+          id?: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          broadcast_id?: string
+          id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_reads_broadcast_id_fkey"
+            columns: ["broadcast_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chats: {
         Row: {
           created_at: string
@@ -340,6 +405,8 @@ export type Database = {
           banned_at: string | null
           banned_by: string | null
           created_at: string
+          custom_hard_cap: number | null
+          custom_soft_cap: number | null
           display_name: string | null
           id: string
           last_active_at: string | null
@@ -355,6 +422,8 @@ export type Database = {
           banned_at?: string | null
           banned_by?: string | null
           created_at?: string
+          custom_hard_cap?: number | null
+          custom_soft_cap?: number | null
           display_name?: string | null
           id?: string
           last_active_at?: string | null
@@ -370,6 +439,8 @@ export type Database = {
           banned_at?: string | null
           banned_by?: string | null
           created_at?: string
+          custom_hard_cap?: number | null
+          custom_soft_cap?: number | null
           display_name?: string | null
           id?: string
           last_active_at?: string | null
@@ -454,6 +525,36 @@ export type Database = {
           preferred_models?: string[] | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      provider_api_keys: {
+        Row: {
+          env_key_name: string
+          id: string
+          is_set: boolean
+          label: string | null
+          provider_name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          env_key_name: string
+          id?: string
+          is_set?: boolean
+          label?: string | null
+          provider_name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          env_key_name?: string
+          id?: string
+          is_set?: boolean
+          label?: string | null
+          provider_name?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
