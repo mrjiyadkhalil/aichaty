@@ -69,12 +69,6 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
                   {!collapsed && <span>Settings</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => navigate("/settings")} isActive={location.pathname === "/settings"} tooltip="Settings">
-                  <Settings className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span>Settings</span>}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               {isAdmin && (
                 <SidebarMenuItem>
                   <SidebarMenuButton onClick={() => navigate("/admin")} isActive={location.pathname.startsWith("/admin")} tooltip="Admin Panel">
