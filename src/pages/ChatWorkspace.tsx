@@ -300,7 +300,7 @@ export default function ChatWorkspace() {
               <div key={msg.id} className="space-y-4 animate-fade-in">
                 {/* User message — right aligned, dark bubble */}
                 <div className="flex justify-end" onMouseEnter={() => setHoveredMsg(msg.id)} onMouseLeave={() => setHoveredMsg(null)}>
-                  <div className="relative max-w-[85%]">
+                  <div className="relative max-w-[85%] sm:max-w-[70%]">
                     <div className="bg-card border border-border rounded-2xl rounded-br-md px-4 py-3">
                       <p className="text-sm leading-relaxed">{msg.content}</p>
                     </div>
