@@ -7,13 +7,14 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { TopBar } from "@/components/TopBar";
 
 interface Project { id: string; name: string; }
-interface Chat { id: string; title: string | null; project_id: string; }
+interface Chat { id: string; title: string | null; project_id: string | null; }
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [chats, setChats] = useState<Chat[]>([]);
+  const [recentChats, setRecentChats] = useState<Chat[]>([]);
+  const [projectChats, setProjectChats] = useState<Chat[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [layout, setLayout] = useState<"grid" | "stacked">("grid");
 
@@ -27,6 +28,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
     supabase.from("projects").select("id, name").order("updated_at", { ascending: false }).then(({ data }) => {
       if (data) setProjects(data);
     });
+    // Load recent chats (all chats, ordered by recent)
+    supabase.from("chats").select("id, title, project_id").eq("user_id", user.id)
+      .order("updated_at", { ascending: false }).limit(15).then(({ data }) => {
+        if (data) setRecentChats(data);
+      });
   }, [user, location.pathname]);
 
   useEffect(() => {
@@ -35,6 +41,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     } else if (currentChatId) {
       supabase.from("chats").select("project_id").eq("id", currentChatId).single().then(({ data }) => {
         if (data) setSelectedProjectId(data.project_id);
+        else setSelectedProjectId(null);
       });
     } else {
       setSelectedProjectId(null);
@@ -42,10 +49,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
   }, [currentProjectId, currentChatId]);
 
   useEffect(() => {
-    if (!selectedProjectId) { setChats([]); return; }
+    if (!selectedProjectId) { setProjectChats([]); return; }
     supabase.from("chats").select("id, title, project_id").eq("project_id", selectedProjectId)
       .order("updated_at", { ascending: false }).then(({ data }) => {
-        if (data) setChats(data);
+        if (data) setProjectChats(data);
       });
   }, [selectedProjectId, location.pathname]);
 
@@ -57,7 +64,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       return p?.name || "Project";
     }
     if (currentChatId) {
-      const c = chats.find((ch) => ch.id === currentChatId);
+      const c = [...recentChats, ...projectChats].find((ch) => ch.id === currentChatId);
       return c?.title || "Chat";
     }
     return "Fiesta AI";
@@ -68,7 +75,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar projects={projects} chats={chats} selectedProjectId={selectedProjectId} />
+        <AppSidebar projects={projects} recentChats={recentChats} projectChats={projectChats} selectedProjectId={selectedProjectId} />
         <div className="flex-1 flex flex-col min-w-0">
           <TopBar
             title={getTitle()}
