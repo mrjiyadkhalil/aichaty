@@ -23,7 +23,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const currentProjectId = projectMatch?.[1] || null;
   const currentChatId = chatMatch?.[1] || null;
 
-  useEffect(() => {
+  const loadData = () => {
     if (!user) return;
     supabase.from("projects").select("id, name").order("updated_at", { ascending: false }).then(({ data }) => {
       if (data) setProjects(data);
@@ -32,6 +32,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
       .order("updated_at", { ascending: false }).limit(30).then(({ data }) => {
         if (data) setRecentChats(data);
       });
+  };
+
+  useEffect(() => {
+    loadData();
   }, [user, location.pathname]);
 
   useEffect(() => {
@@ -73,7 +77,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar projects={projects} recentChats={recentChats} projectChats={projectChats} selectedProjectId={selectedProjectId} />
+        <AppSidebar projects={projects} recentChats={recentChats} projectChats={projectChats} selectedProjectId={selectedProjectId} onProjectsChanged={loadData} />
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex items-center">
             <TopBar title={getTitle()} />
