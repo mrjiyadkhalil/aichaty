@@ -1,9 +1,10 @@
-import { Copy, Check, ToggleLeft, ToggleRight, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { Copy, Check, ToggleLeft, ToggleRight, AlertCircle, RefreshCw, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 
 interface ModelResponseCardProps {
   model: string;
@@ -12,6 +13,8 @@ interface ModelResponseCardProps {
   errorMessage?: string | null;
   includedInSynthesis: boolean;
   onToggleInclude: () => void;
+  onRetry?: () => void;
+  latencyMs?: number | null;
   colorIndex: number;
 }
 
@@ -27,13 +30,8 @@ const MODEL_LABELS: Record<string, string> = {
 const colorVars = ["--model-1", "--model-2", "--model-3", "--model-4", "--model-5"];
 
 export function ModelResponseCard({
-  model,
-  content,
-  status,
-  errorMessage,
-  includedInSynthesis,
-  onToggleInclude,
-  colorIndex,
+  model, content, status, errorMessage, includedInSynthesis,
+  onToggleInclude, onRetry, latencyMs, colorIndex,
 }: ModelResponseCardProps) {
   const [copied, setCopied] = useState(false);
   const colorVar = colorVars[colorIndex % colorVars.length];
@@ -53,19 +51,22 @@ export function ModelResponseCard({
         style={{ borderBottom: `2px solid hsl(var(${colorVar}))` }}
       >
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <div
-            className="h-2.5 w-2.5 rounded-full"
-            style={{ backgroundColor: `hsl(var(${colorVar}))` }}
-          />
+          <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: `hsl(var(${colorVar}))` }} />
           {MODEL_LABELS[model] || model}
+          {latencyMs != null && status === "success" && (
+            <span className="text-xs font-normal text-muted-foreground flex items-center gap-0.5">
+              <Clock className="h-3 w-3" />
+              {(latencyMs / 1000).toFixed(1)}s
+            </span>
+          )}
         </CardTitle>
         <div className="flex items-center gap-1">
           {status === "success" && (
             <>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopy}>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopy} title="Copy">
                 {copied ? <Check className="h-3.5 w-3.5 text-accent" /> : <Copy className="h-3.5 w-3.5" />}
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onToggleInclude}>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onToggleInclude} title="Include in Final Answer">
                 {includedInSynthesis ? (
                   <ToggleRight className="h-4 w-4 text-accent" />
                 ) : (
@@ -73,6 +74,11 @@ export function ModelResponseCard({
                 )}
               </Button>
             </>
+          )}
+          {status === "error" && onRetry && (
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={onRetry}>
+              <RefreshCw className="h-3 w-3" /> Retry
+            </Button>
           )}
         </div>
       </CardHeader>
@@ -90,9 +96,9 @@ export function ModelResponseCard({
             <span>{errorMessage || "Failed to generate response"}</span>
           </div>
         )}
-        {status === "success" && (
-          <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap text-sm leading-relaxed">
-            {content}
+        {status === "success" && content && (
+          <div className="prose prose-sm max-w-none text-foreground text-sm leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+            <ReactMarkdown>{content}</ReactMarkdown>
           </div>
         )}
       </CardContent>
