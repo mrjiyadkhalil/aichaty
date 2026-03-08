@@ -368,18 +368,19 @@ export default function ChatWorkspace() {
 
       {hasMessages && (
         <div className="shrink-0">
-        <PromptComposer
-          onSend={handleSend} onEnhance={handleEnhance}
-          onAttachFiles={projectId ? () => setShowFileModal(true) : undefined}
-          selectedModels={selectedModels} onToggleModel={toggleModel}
-          selectedFiles={selectedFilesForComposer}
-          onRemoveFile={(fid) => setSelectedFileIds((prev) => prev.filter((id) => id !== fid))}
-          useProjectInstruction={useInstruction} onToggleInstruction={setUseInstruction}
-          hasProjectInstruction={!!projectInstruction}
-          disabled={sending} enhancing={enhancing} enabledModels={enabledModels} chatMode={chatMode}
-          onImageSelected={(b64, mime) => { setImageBase64(b64); setImageMimeType(mime); }}
-          onImageRemoved={() => { setImageBase64(null); setImageMimeType(null); }} hasImage={!!imageBase64}
-        />
+          <PromptComposer
+            onSend={handleSend} onEnhance={handleEnhance}
+            onAttachFiles={projectId ? () => setShowFileModal(true) : undefined}
+            selectedModels={selectedModels} onToggleModel={toggleModel}
+            selectedFiles={selectedFilesForComposer}
+            onRemoveFile={(fid) => setSelectedFileIds((prev) => prev.filter((id) => id !== fid))}
+            useProjectInstruction={useInstruction} onToggleInstruction={setUseInstruction}
+            hasProjectInstruction={!!projectInstruction}
+            disabled={sending} enhancing={enhancing} enabledModels={enabledModels} chatMode={chatMode}
+            onImageSelected={(b64, mime) => { setImageBase64(b64); setImageMimeType(mime); }}
+            onImageRemoved={() => { setImageBase64(null); setImageMimeType(null); }} hasImage={!!imageBase64}
+          />
+        </div>
       )}
 
       <PromptEnhancerModal open={showEnhancer} onClose={() => setShowEnhancer(false)} originalPrompt={enhanceOriginal} enhancedPrompt={enhancedPrompt} loading={enhancing} onKeepOriginal={() => setShowEnhancer(false)} onUseEnhanced={(p) => { setShowEnhancer(false); handleSend(p); }} />
