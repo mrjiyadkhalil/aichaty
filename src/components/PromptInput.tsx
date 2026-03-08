@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { cn } from "@/lib/utils";
 
 interface PromptInputProps {
   onSend: (prompt: string) => void;
@@ -13,6 +15,9 @@ interface PromptInputProps {
 export function PromptInput({ onSend, onEnhance, disabled, enhancing }: PromptInputProps) {
   const [prompt, setPrompt] = useState("");
 
+  const { isRecording, toggleRecording } = useVoiceInput((text) => {
+    setPrompt((prev) => (prev ? prev + " " + text : text));
+  });
 
   const handleSend = () => {
     if (!prompt.trim() || disabled) return;
@@ -40,6 +45,18 @@ export function PromptInput({ onSend, onEnhance, disabled, enhancing }: PromptIn
             disabled={disabled}
           />
           <div className="absolute bottom-2 right-2 flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-8 gap-1 text-xs",
+                isRecording ? "text-destructive animate-pulse" : "text-muted-foreground hover:text-primary"
+              )}
+              onClick={toggleRecording}
+              disabled={disabled}
+            >
+              {isRecording ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
