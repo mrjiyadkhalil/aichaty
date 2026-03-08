@@ -5,8 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Search, Shield, ShieldOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
 
 export default function AdminUsers() {
   const navigate = useNavigate();
@@ -16,8 +19,10 @@ export default function AdminUsers() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sort, setSort] = useState("newest");
   const [loading, setLoading] = useState(true);
+  const [roleModal, setRoleModal] = useState<{ user: any; action: "grant" | "revoke" } | null>(null);
+  const [acting, setActing] = useState(false);
 
-  useEffect(() => {
+  const loadUsers = () => {
     setLoading(true);
     adminApi("list_users", {
       search,
@@ -28,7 +33,29 @@ export default function AdminUsers() {
       .then((d) => setUsers(d.users || []))
       .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadUsers();
   }, [search, roleFilter, statusFilter, sort]);
+
+  const handleRoleChange = async () => {
+    if (!roleModal) return;
+    setActing(true);
+    try {
+      await adminApi("update_user_role", {
+        target_user_id: roleModal.user.user_id,
+        role: "admin",
+        grant: roleModal.action === "grant",
+      });
+      toast.success(roleModal.action === "grant" ? "Admin role granted" : "Admin role removed");
+      setRoleModal(null);
+      loadUsers();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update role");
+    }
+    setActing(false);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -81,29 +108,80 @@ export default function AdminUsers() {
                   <TableHead>Chats</TableHead>
                   <TableHead>Est. Cost</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((u) => (
-                  <TableRow key={u.user_id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/admin/users/${u.user_id}`)}>
-                    <TableCell className="font-medium">{u.display_name || "—"}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {u.roles?.map((r: string) => <StatusBadge key={r} status={r} />)}
-                      </div>
-                    </TableCell>
-                    <TableCell><StatusBadge status={u.status || "active"} /></TableCell>
-                    <TableCell>{u.project_count}</TableCell>
-                    <TableCell>{u.chat_count}</TableCell>
-                    <TableCell>${u.estimated_cost}</TableCell>
-                    <TableCell className="text-muted-foreground text-xs">{new Date(u.created_at).toLocaleDateString()}</TableCell>
-                  </TableRow>
-                ))}
+                {users.map((u) => {
+                  const isAdmin = u.roles?.includes("admin");
+                  return (
+                    <TableRow key={u.user_id} className="cursor-pointer hover:bg-muted/50">
+                      <TableCell className="font-medium" onClick={() => navigate(`/admin/users/${u.user_id}`)}>{u.display_name || "—"}</TableCell>
+                      <TableCell onClick={() => navigate(`/admin/users/${u.user_id}`)}>
+                        <div className="flex gap-1">
+                          {u.roles?.map((r: string) => <StatusBadge key={r} status={r} />)}
+                        </div>
+                      </TableCell>
+                      <TableCell onClick={() => navigate(`/admin/users/${u.user_id}`)}><StatusBadge status={u.status || "active"} /></TableCell>
+                      <TableCell onClick={() => navigate(`/admin/users/${u.user_id}`)}>{u.project_count}</TableCell>
+                      <TableCell onClick={() => navigate(`/admin/users/${u.user_id}`)}>{u.chat_count}</TableCell>
+                      <TableCell onClick={() => navigate(`/admin/users/${u.user_id}`)}>${u.estimated_cost}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs" onClick={() => navigate(`/admin/users/${u.user_id}`)}>{new Date(u.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        {isAdmin ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1.5 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => { e.stopPropagation(); setRoleModal({ user: u, action: "revoke" }); }}
+                          >
+                            <ShieldOff className="h-3.5 w-3.5" /> Remove Admin
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1.5 text-muted-foreground hover:text-primary"
+                            onClick={(e) => { e.stopPropagation(); setRoleModal({ user: u, action: "grant" }); }}
+                          >
+                            <Shield className="h-3.5 w-3.5" /> Make Admin
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
         </CardContent>
       </Card>
+
+      {/* Role Change Confirmation Modal */}
+      <Dialog open={!!roleModal} onOpenChange={() => setRoleModal(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {roleModal?.action === "grant" ? "Make Admin" : "Remove Admin"}
+            </DialogTitle>
+            <DialogDescription>
+              {roleModal?.action === "grant"
+                ? `Are you sure you want to grant admin privileges to "${roleModal?.user?.display_name || "this user"}"? They will have full access to the admin panel.`
+                : `Are you sure you want to remove admin privileges from "${roleModal?.user?.display_name || "this user"}"? They will lose access to the admin panel.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRoleModal(null)}>Cancel</Button>
+            <Button
+              variant={roleModal?.action === "revoke" ? "destructive" : "default"}
+              disabled={acting}
+              onClick={handleRoleChange}
+            >
+              {roleModal?.action === "grant" ? "Grant Admin" : "Remove Admin"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
