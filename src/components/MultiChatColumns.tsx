@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { Send, Plus, Sparkles, ChevronDown, Power } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Send, Plus, Sparkles, ExternalLink } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { AI_CONFIG } from "@/lib/aiConfig";
 
-const MODEL_ICONS: Record<string, { label: string; color: string; shortLabel: string }> = {
-  "google/gemini-3-flash-preview": { label: "Gemini 3 Flash", color: "var(--model-1)", shortLabel: "Gemini" },
-  "google/gemini-2.5-flash": { label: "Gemini 2.5 Flash", color: "var(--model-1)", shortLabel: "Gemini" },
-  "google/gemini-2.5-pro": { label: "Gemini 2.5 Pro", color: "var(--model-1)", shortLabel: "Gemini" },
-  "openai/gpt-5": { label: "GPT-5", color: "var(--model-2)", shortLabel: "GPT" },
-  "openai/gpt-5-mini": { label: "GPT-5 Mini", color: "var(--model-2)", shortLabel: "GPT" },
-  "openai/gpt-5-nano": { label: "GPT-5 Nano", color: "var(--model-2)", shortLabel: "GPT" },
+const MODEL_ICONS: Record<string, { label: string; color: string; icon: string }> = {
+  "google/gemini-3-flash-preview": { label: "Gemini 3 Flash", color: "var(--model-1)", icon: "✦" },
+  "google/gemini-2.5-flash": { label: "Gemini 2.5 Flash", color: "var(--model-1)", icon: "✦" },
+  "google/gemini-2.5-flash-lite": { label: "Gemini 2.5 Lite", color: "var(--model-1)", icon: "✦" },
+  "google/gemini-2.5-pro": { label: "Gemini 2.5 Pro", color: "var(--model-1)", icon: "✦" },
+  "openai/gpt-5": { label: "GPT-5", color: "var(--model-2)", icon: "◎" },
+  "openai/gpt-5-mini": { label: "GPT-5 mini", color: "var(--model-2)", icon: "◎" },
+  "openai/gpt-5-nano": { label: "GPT-5 Nano", color: "var(--model-2)", icon: "◎" },
 };
 
 interface MultiChatColumnsProps {
@@ -45,45 +46,41 @@ export function MultiChatColumns({
 
   return (
     <div className="flex flex-col items-center gap-6 w-full">
-      {/* Model columns */}
+      {/* Model row — horizontal bar like reference */}
       <div className="w-full max-w-5xl">
-        <div className={`grid gap-3 ${compact ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2 md:grid-cols-4"}`}>
-          {displayModels.map((modelId) => {
-            const info = MODEL_ICONS[modelId] || { label: modelId, color: "var(--model-5)", shortLabel: modelId.split("/")[1] || modelId };
+        <div className="flex items-center border-b border-border/40">
+          {displayModels.map((modelId, idx) => {
+            const info = MODEL_ICONS[modelId] || { label: modelId.split("/")[1] || modelId, color: "var(--model-5)", icon: "●" };
             const isSelected = selectedModels.includes(modelId);
 
             return (
               <div
                 key={modelId}
-                className={`glass-card p-4 flex flex-col items-center gap-3 transition-all duration-300 cursor-pointer ${
-                  isSelected ? "glow-border" : "opacity-50 hover:opacity-80"
-                } ${compact ? "py-3" : ""}`}
-                onClick={() => onToggleModel(modelId)}
+                className={`flex-1 flex items-center justify-between gap-2 px-4 py-3 ${
+                  idx < displayModels.length - 1 ? "border-r border-border/40" : ""
+                }`}
               >
-                {/* Model icon circle */}
-                <div
-                  className="h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all"
-                  style={{
-                    borderColor: `hsl(${info.color})`,
-                    backgroundColor: isSelected ? `hsl(${info.color} / 0.15)` : "transparent",
-                    color: `hsl(${info.color})`,
-                  }}
-                >
-                  {info.shortLabel.slice(0, 2).toUpperCase()}
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="text-sm shrink-0"
+                    style={{ color: `hsl(${info.color})` }}
+                  >
+                    {info.icon}
+                  </span>
+                  <span className="text-sm font-medium font-['Space_Grotesk'] truncate text-foreground/90">
+                    {info.label}
+                  </span>
                 </div>
-
-                {/* Model name */}
-                <div className="text-center">
-                  <p className="text-xs font-semibold font-['Space_Grotesk'] truncate">{info.label}</p>
-                  {!compact && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {isSelected ? "Active" : "Tap to enable"}
-                    </p>
-                  )}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button className="text-muted-foreground/50 hover:text-foreground transition-colors">
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </button>
+                  <Switch
+                    checked={isSelected}
+                    onCheckedChange={() => onToggleModel(modelId)}
+                    className="data-[state=checked]:bg-primary"
+                  />
                 </div>
-
-                {/* Toggle indicator */}
-                <div className={`h-1.5 w-8 rounded-full transition-colors ${isSelected ? "bg-primary" : "bg-border"}`} />
               </div>
             );
           })}
@@ -133,7 +130,6 @@ export function MultiChatColumns({
             </div>
           </div>
 
-          {/* Selected model badges */}
           <div className="flex items-center gap-1.5 flex-wrap justify-center">
             <span className="text-xs text-muted-foreground/60">
               {selectedModels.length} model{selectedModels.length !== 1 ? "s" : ""} selected
