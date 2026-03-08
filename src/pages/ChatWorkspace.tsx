@@ -14,11 +14,13 @@ import { ChatModeSwitcher } from "@/components/ChatModeSwitcher";
 import { SuperFiestaView } from "@/components/SuperFiestaView";
 import { MultiChatColumns } from "@/components/MultiChatColumns";
 import { ExploreSection } from "@/components/ExploreSection";
+import { SavePromptButton } from "@/components/SavePromptButton";
 import { AI_CONFIG } from "@/lib/aiConfig";
 import { pickBestModel } from "@/lib/autoRouter";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Zap } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 interface ProjectFile { id: string; file_name: string; file_path: string; extracted_text: string | null; file_size: number | null; mime_type: string | null; }
 interface ModelResponse { id: string; model: string; content: string | null; status: string; error_message: string | null; included_in_synthesis: boolean; latency_ms: number | null; }
@@ -49,6 +51,8 @@ export default function ChatWorkspace() {
   const [enhancing, setEnhancing] = useState(false);
   const [showFileModal, setShowFileModal] = useState(false);
   const [chatMode, setChatMode] = useState<ChatMode>("superfiesta");
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [imageMimeType, setImageMimeType] = useState<string | null>(null);
 
   useEffect(() => { setLayout(defaultLayout); }, [defaultLayout]);
 
@@ -59,10 +63,8 @@ export default function ChatWorkspace() {
     const load = async () => {
       const { data: chat } = await supabase.from("chats").select("project_id, title").eq("id", chatId).single();
       if (!chat) { navigate("/chat", { replace: true }); return; }
-      
       const chatProjectId = chat.project_id;
       setProjectId(chatProjectId);
-      
       if (chatProjectId) {
         const { data: project } = await supabase.from("projects").select("name, custom_instruction, preferred_models").eq("id", chatProjectId).single();
         if (project) {
@@ -73,11 +75,8 @@ export default function ChatWorkspace() {
         const { data: files } = await supabase.from("project_files").select("*").eq("project_id", chatProjectId);
         if (files) setProjectFiles(files as ProjectFile[]);
       } else {
-        setProjectName("");
-        setProjectInstruction("");
-        setProjectFiles([]);
+        setProjectName(""); setProjectInstruction(""); setProjectFiles([]);
       }
-      
       const { data: msgs } = await supabase.from("messages").select("*").eq("chat_id", chatId).order("created_at", { ascending: true });
       if (!msgs) return;
       const loaded: MessageWithResponses[] = [];
@@ -109,19 +108,79 @@ export default function ChatWorkspace() {
     if (!prompt.trim()) return;
     setEnhanceOriginal(prompt); setEnhancedPrompt(null); setShowEnhancer(true); setEnhancing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("enhance-prompt", {
-        body: { prompt, projectInstruction: useInstruction ? projectInstruction : undefined, projectId, chatId },
-      });
+      const { data, error } = await supabase.functions.invoke("enhance-prompt", { body: { prompt, projectInstruction: useInstruction ? projectInstruction : undefined, projectId, chatId } });
       if (error) throw error;
       setEnhancedPrompt(data?.enhanced || prompt);
     } catch (e: any) { toast.error(e.message || "Enhancement failed"); setEnhancedPrompt(prompt); }
     setEnhancing(false);
   };
 
+  const streamResponse = async (model: string, fullPrompt: string, msgId: string, responseId: string, activeChatId: string, modeConfig: any, requestType: string) => {
+    const start = Date.now();
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/multi-model-chat`;
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({
+          prompt: fullPrompt, model, projectId, chatId: activeChatId, messageId: msgId,
+          max_tokens: modeConfig.maxOutputTokens, request_type: requestType, stream: true,
+          ...(imageBase64 ? { image_base64: imageBase64, image_mime_type: imageMimeType } : {}),
+        }),
+      });
+
+      if (!resp.ok || !resp.body) {
+        const errText = await resp.text();
+        let errorMsg = "AI model error";
+        try { errorMsg = JSON.parse(errText).error || errorMsg; } catch {}
+        throw new Error(errorMsg);
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = "";
+      let textBuffer = "";
+
+      // Mark as streaming (use "success" status with partial content)
+      setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, responses: m.responses.map((r) => r.id === responseId ? { ...r, status: "success", content: "" } : r) } : m));
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              fullContent += delta;
+              const captured = fullContent;
+              setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, responses: m.responses.map((r) => r.id === responseId ? { ...r, content: captured } : r) } : m));
+            }
+          } catch {}
+        }
+      }
+
+      const latency = Date.now() - start;
+      await supabase.from("model_responses").update({ status: "success", content: fullContent, latency_ms: latency }).eq("id", responseId);
+      setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, responses: m.responses.map((r) => r.id === responseId ? { ...r, status: "success", content: fullContent, latency_ms: latency } : r) } : m));
+    } catch (e: any) {
+      const latency = Date.now() - start;
+      await supabase.from("model_responses").update({ status: "error", error_message: e.message, latency_ms: latency }).eq("id", responseId);
+      setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, responses: m.responses.map((r) => r.id === responseId ? { ...r, status: "error", error_message: e.message, latency_ms: latency } : r) } : m));
+    }
+  };
+
   const handleSend = async (prompt: string) => {
     if (!user) return;
-    
-    // If no chatId, create a new chat first and redirect
     let activeChatId = chatId;
     if (!activeChatId) {
       const title = prompt.slice(0, 50) + (prompt.length > 50 ? "..." : "");
@@ -130,15 +189,10 @@ export default function ChatWorkspace() {
       activeChatId = newChat.id;
       navigate(`/chat/${activeChatId}`, { replace: true });
     }
-    
     if (isAtCap) { toast.error("Monthly usage limit reached. Check Settings for details."); return; }
     if (isNearCap) { toast.warning("Approaching usage limit"); }
 
-    // Determine models based on chat mode
-    const modelsToUse = chatMode === "superfiesta"
-      ? [pickBestModel(prompt, enabledModels)]
-      : selectedModels;
-
+    const modelsToUse = chatMode === "superfiesta" ? [pickBestModel(prompt, enabledModels)] : selectedModels;
     if (modelsToUse.length === 0) { toast.error("Select at least one model"); return; }
 
     setSending(true);
@@ -160,33 +214,17 @@ export default function ChatWorkspace() {
     setMessages((prev) => [...prev, newMsg]);
     const modeConfig = AI_CONFIG.costModes[costMode] || AI_CONFIG.costModes.balanced;
     const requestType = chatMode === "superfiesta" ? "auto_route" : "model_compare";
+
+    // Use streaming for all requests
     const calls = modelsToUse.map(async (model) => {
-      const start = Date.now();
-      try {
-        const resp = await supabase.functions.invoke("multi-model-chat", { body: { prompt: fullPrompt, model, projectId, chatId: activeChatId, messageId: msg.id, max_tokens: modeConfig.maxOutputTokens, request_type: requestType } });
-        const latency = Date.now() - start;
-        const responseId = newMsg.responses.find((r) => r.model === model)?.id;
-        if (!responseId) return;
-        if (resp.error) {
-          await supabase.from("model_responses").update({ status: "error", error_message: resp.error.message, latency_ms: latency }).eq("id", responseId);
-          setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, responses: m.responses.map((r) => r.model === model ? { ...r, status: "error", error_message: resp.error.message, latency_ms: latency } : r) } : m));
-        } else {
-          const aiContent = resp.data?.content || "No response";
-          if (resp.data?.warning) toast.warning(resp.data.warning);
-          await supabase.from("model_responses").update({ status: "success", content: aiContent, latency_ms: latency }).eq("id", responseId);
-          setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, responses: m.responses.map((r) => r.model === model ? { ...r, status: "success", content: aiContent, latency_ms: latency } : r) } : m));
-        }
-      } catch (e: any) {
-        const latency = Date.now() - start;
-        const responseId = newMsg.responses.find((r) => r.model === model)?.id;
-        if (responseId) {
-          await supabase.from("model_responses").update({ status: "error", error_message: e.message, latency_ms: latency }).eq("id", responseId);
-          setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, responses: m.responses.map((r) => r.model === model ? { ...r, status: "error", error_message: e.message, latency_ms: latency } : r) } : m));
-        }
-      }
+      const responseId = newMsg.responses.find((r) => r.model === model)?.id;
+      if (!responseId) return;
+      await streamResponse(model, fullPrompt, msg.id, responseId, activeChatId!, modeConfig, requestType);
     });
     await Promise.all(calls);
     setSending(false);
+    setImageBase64(null);
+    setImageMimeType(null);
     refreshUsage();
   };
 
@@ -197,19 +235,8 @@ export default function ChatWorkspace() {
     const resp = msg.responses.find((r) => r.model === model);
     if (!resp) return;
     setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, responses: m.responses.map((r) => r.model === model ? { ...r, status: "loading", content: null, error_message: null } : r) } : m));
-    const start = Date.now();
-    try {
-      const result = await supabase.functions.invoke("multi-model-chat", { body: { prompt: msg.content, model, projectId, chatId, messageId, request_type: "retry" } });
-      const latency = Date.now() - start;
-      if (result.error) throw result.error;
-      const content = result.data?.content || "No response";
-      await supabase.from("model_responses").update({ status: "success", content, latency_ms: latency, error_message: null }).eq("id", resp.id);
-      setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, responses: m.responses.map((r) => r.model === model ? { ...r, status: "success", content, latency_ms: latency } : r) } : m));
-    } catch (e: any) {
-      const latency = Date.now() - start;
-      await supabase.from("model_responses").update({ status: "error", error_message: e.message, latency_ms: latency }).eq("id", resp.id);
-      setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, responses: m.responses.map((r) => r.model === model ? { ...r, status: "error", error_message: e.message, latency_ms: latency } : r) } : m));
-    }
+    const modeConfig = AI_CONFIG.costModes[costMode] || AI_CONFIG.costModes.balanced;
+    await streamResponse(model, msg.content, messageId, resp.id, chatId!, modeConfig, "retry");
     refreshUsage();
   };
 
@@ -221,7 +248,6 @@ export default function ChatWorkspace() {
   };
 
   const selectedFilesForComposer = projectFiles.filter((f) => selectedFileIds.includes(f.id)).map((f) => ({ id: f.id, name: f.file_name }));
-
   const hasMessages = messages.length > 0;
   const isSuperFiesta = chatMode === "superfiesta";
 
@@ -231,7 +257,6 @@ export default function ChatWorkspace() {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-primary/[0.04] rounded-full blur-[120px]" />
       </div>
 
-      {/* Model bar — sticky beneath top bar, only in multichat mode */}
       {!isSuperFiesta && (
         <div className="relative z-20 shrink-0">
           <MultiChatColumns selectedModels={selectedModels} enabledModels={enabledModels} onToggleModel={toggleModel} compact />
@@ -243,7 +268,7 @@ export default function ChatWorkspace() {
           <div className="flex flex-col items-center justify-center min-h-full px-4 py-8">
             <ChatModeSwitcher mode={chatMode} onModeChange={setChatMode} />
             <motion.div key="empty-prompt" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="w-full max-w-3xl mt-8">
-              <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} showGreeting={isSuperFiesta} />
+              <SuperFiestaView onSend={handleSend} onEnhance={handleEnhance} onAttachFiles={projectId ? () => setShowFileModal(true) : undefined} disabled={sending} enhancing={enhancing} showGreeting={isSuperFiesta} onImageSelected={(b64, mime) => { setImageBase64(b64); setImageMimeType(mime); }} onImageRemoved={() => { setImageBase64(null); setImageMimeType(null); }} hasImage={!!imageBase64} />
             </motion.div>
             <div className="w-full max-w-4xl mt-12">
               <ExploreSection />
@@ -259,7 +284,10 @@ export default function ChatWorkspace() {
                 <div className="glass-card p-4 border-l-2 border-l-primary/40">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-primary font-['Space_Grotesk']">You</p>
-                    <span className="text-xs text-muted-foreground">{new Date(msg.created_at).toLocaleTimeString()}</span>
+                    <div className="flex items-center gap-2">
+                      <SavePromptButton promptContent={msg.content} />
+                      <span className="text-xs text-muted-foreground">{new Date(msg.created_at).toLocaleTimeString()}</span>
+                    </div>
                   </div>
                   <p className="text-sm mt-1.5">{msg.content}</p>
                   {msg.enhanced_content && (
@@ -267,7 +295,6 @@ export default function ChatWorkspace() {
                   )}
                 </div>
 
-                {/* Super Fiesta: single clean response. Multi-Chat: grid comparison */}
                 {isSuperFiesta ? (
                   <div className="max-w-3xl">
                     {msg.responses.map((resp) => (
@@ -291,7 +318,9 @@ export default function ChatWorkspace() {
                               <span>{AI_CONFIG.modelLabels[resp.model] || resp.model}</span>
                               {resp.latency_ms && <span>· {(resp.latency_ms / 1000).toFixed(1)}s</span>}
                             </div>
-                            <div className="text-sm whitespace-pre-wrap">{resp.content}</div>
+                            <div className="prose-dark text-sm leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                              <ReactMarkdown>{resp.content || ""}</ReactMarkdown>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -331,6 +360,9 @@ export default function ChatWorkspace() {
           enhancing={enhancing}
           enabledModels={enabledModels}
           chatMode={chatMode}
+          onImageSelected={(b64, mime) => { setImageBase64(b64); setImageMimeType(mime); }}
+          onImageRemoved={() => { setImageBase64(null); setImageMimeType(null); }}
+          hasImage={!!imageBase64}
         />
       )}
 
