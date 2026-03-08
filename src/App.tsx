@@ -21,6 +21,7 @@ import ProjectDetail from "./pages/ProjectDetail";
 import ChatWorkspace from "./pages/ChatWorkspace";
 import Settings from "./pages/Settings";
 import Bookmarks from "./pages/Bookmarks";
+import Prompts from "./pages/Prompts";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
