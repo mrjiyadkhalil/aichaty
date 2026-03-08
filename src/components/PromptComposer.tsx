@@ -56,7 +56,7 @@ export function PromptComposer({
   };
 
   return (
-    <div className="border-t border-border/30 bg-card/30 backdrop-blur-xl p-4 space-y-3">
+    <div className="sticky bottom-0 z-30 border-t border-border/30 bg-card/30 backdrop-blur-xl p-4 space-y-3">
       <div className="max-w-5xl mx-auto space-y-3">
         {/* Model chips — only in Multi-Chat mode */}
         {!isSuperFiesta && (
