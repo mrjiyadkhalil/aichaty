@@ -27,7 +27,13 @@ export default function AdminSubscriptionPlans() {
     try {
       const { data, error } = await supabase.from("subscription_plans").select("*").order("plan_name");
       if (error) throw error;
-      setPlans(data || []);
+      setPlans((data || []).map(p => ({
+        id: p.id,
+        plan_name: p.plan_name,
+        price_monthly: Number(p.price_monthly),
+        price_yearly: Number(p.price_yearly),
+        features: p.features as unknown as PlanFeatures,
+      })));
     } catch (err) {
       toast.error("Failed to load subscription plans");
     } finally {
