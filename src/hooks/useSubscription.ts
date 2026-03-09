@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdmin";
 
-export type PlanName = "free" | "pro" | "enterprise";
+export type PlanName = "free" | "pro";
 
 export interface PlanFeatures {
   messages_per_day: number;
