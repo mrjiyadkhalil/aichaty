@@ -50,6 +50,8 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
   const { setTheme } = useTheme();
   const navigate = useNavigate();
 
+  const [timeUntilReset, setTimeUntilReset] = useState("");
+
   const [displayName, setDisplayName] = useState("");
   const [customSystemPrompt, setCustomSystemPrompt] = useState("");
   const [saving, setSaving] = useState(false);
@@ -61,6 +63,28 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
   useEffect(() => { setLocalCostMode(costMode); }, [costMode]);
   useEffect(() => { setLocalLayout(defaultLayout); }, [defaultLayout]);
   useEffect(() => { setLocalTheme(prefTheme); }, [prefTheme]);
+
+  // Countdown timer for free users
+  useEffect(() => {
+    if (plan !== "free") return;
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      
+      const diff = midnight.getTime() - now.getTime();
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      setTimeUntilReset(`${hours}h ${minutes}m ${seconds}s`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [plan]);
 
   useEffect(() => {
     if (!user) return;
@@ -237,9 +261,12 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
                     </div>
                   </div>
                   <Progress value={messageUsagePercent} className="h-2" />
-                  <p className="text-xs text-muted-foreground">
-                    Free plan limited to {messagesPerDay} messages per day. Resets daily.
-                  </p>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
+                    <span>Free plan: {messagesPerDay} messages/day</span>
+                    <span className="flex items-center gap-1 font-medium text-foreground">
+                      Resets in: {timeUntilReset}
+                    </span>
+                  </div>
                 </>
               ) : (
                 <>
