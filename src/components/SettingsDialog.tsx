@@ -50,6 +50,8 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
   const { setTheme } = useTheme();
   const navigate = useNavigate();
 
+  const [timeUntilReset, setTimeUntilReset] = useState("");
+
   const [displayName, setDisplayName] = useState("");
   const [customSystemPrompt, setCustomSystemPrompt] = useState("");
   const [saving, setSaving] = useState(false);
