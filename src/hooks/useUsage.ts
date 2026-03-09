@@ -5,7 +5,9 @@ import { AI_CONFIG } from "@/lib/aiConfig";
 
 interface UsageData {
   totalCost: number;
+  totalTokens: number;
   requestCount: number;
+  messagesUsedToday: number;
   isNearCap: boolean;
   isAtCap: boolean;
   loading: boolean;
