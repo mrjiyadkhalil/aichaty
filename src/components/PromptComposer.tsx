@@ -141,9 +141,44 @@ export function PromptComposer({
               {onImageSelected && onImageRemoved && (
                 <ImageUploadButton onImageSelected={onImageSelected} onImageRemoved={onImageRemoved} hasImage={hasImage} disabled={disabled} />
               )}
-              <button onClick={toggleRecording} disabled={disabled} className={cn("h-9 w-9 min-h-[36px] min-w-[36px] rounded-lg flex items-center justify-center transition-colors duration-150", isRecording ? "text-destructive bg-destructive/10" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
-                {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              </button>
+              <div className="relative group/voice flex items-center">
+                <button onClick={toggleRecording} disabled={disabled} className={cn("h-9 w-9 min-h-[36px] min-w-[36px] rounded-lg flex items-center justify-center transition-colors duration-150", isRecording ? "text-destructive bg-destructive/10" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
+                  {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </button>
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const menu = e.currentTarget.nextElementSibling as HTMLElement;
+                      if (menu) menu.classList.toggle("hidden");
+                    }}
+                    disabled={disabled || isRecording}
+                    className="h-7 px-1.5 rounded-md flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    title="Voice language"
+                  >
+                    <Globe className="h-3 w-3" />
+                    <span className="hidden sm:inline">{currentLangLabel}</span>
+                  </button>
+                  <div className="hidden absolute bottom-full left-0 mb-1 bg-popover border border-border rounded-lg shadow-lg py-1 z-50 min-w-[120px]">
+                    {VOICE_LANGS.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVoiceLang(lang.code);
+                          (e.currentTarget.parentElement as HTMLElement)?.classList.add("hidden");
+                        }}
+                        className={cn(
+                          "w-full text-left px-3 py-1.5 text-xs hover:bg-muted transition-colors",
+                          voiceLang === lang.code && "text-primary font-medium"
+                        )}
+                      >
+                        {lang.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-muted-foreground/40 hidden sm:inline">{prompt.length}/{AI_CONFIG.limits.maxPromptLength}</span>
