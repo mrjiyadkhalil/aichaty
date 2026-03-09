@@ -51,7 +51,7 @@ export default function AdminSubscriptionPlans() {
         .update({
           price_monthly: plan.price_monthly,
           price_yearly: plan.price_yearly,
-          features: plan.features,
+          features: plan.features as any,
         })
         .eq("id", plan.id);
 
