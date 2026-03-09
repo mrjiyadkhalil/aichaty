@@ -62,23 +62,73 @@ async function getCustomSystemPrompt(sb: any, userId: string, projectId?: string
 }
 
 async function extractAndStoreMemories(sb: any, userId: string, chatId: string | null, content: string) {
-  // Simple heuristic: extract "remember" or key fact patterns
-  const patterns = [
-    /(?:remember|note|keep in mind)[:\s]+(.+?)(?:\.|$)/gi,
-    /(?:my name is|i am|i'm|i prefer|i use|i work (?:at|with|on)|i live in)\s+(.+?)(?:\.|,|$)/gi,
-  ];
-  const facts: string[] = [];
-  for (const p of patterns) {
-    let match;
-    while ((match = p.exec(content)) !== null) {
-      if (match[1]?.trim().length > 3 && match[1].trim().length < 200) {
-        facts.push(match[1].trim());
-      }
+  // Check if memory is enabled
+  const { data: prefs } = await sb.from("user_preferences").select("memory_enabled").eq("user_id", userId).maybeSingle();
+  if (prefs && prefs.memory_enabled === false) return;
+
+  // Skip very short messages - not likely to contain memorable info
+  if (content.trim().length < 15) return;
+
+  // Use AI to intelligently extract memory-worthy facts
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) return;
+
+  try {
+    const extractionPrompt = `Analyze the following user message and extract ONLY personal facts worth remembering for future conversations. Extract facts like:
+- Name, age, location, profession
+- Preferences (language, tools, frameworks, food, hobbies)
+- Interests and skills
+- Important personal info they share
+- Anything they explicitly ask to remember/save
+
+Rules:
+- Return ONLY a JSON array of strings, each being a concise fact
+- If user explicitly says "remember this" or "save to memory", extract what they want saved
+- If the message contains personal info or preferences, extract them
+- If the message is just a question or general chat with NO personal info, return empty array []
+- Do NOT extract facts about topics they're asking about, only about THE USER
+- Keep each fact under 100 characters
+- Maximum 3 facts per message
+
+User message: "${content.replace(/"/g, '\\"')}"
+
+Response (JSON array only):`;
+
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [{ role: "user", content: extractionPrompt }],
+        max_tokens: 200,
+      }),
+    });
+
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const text = data.choices?.[0]?.message?.content?.trim() || "";
+    
+    // Parse JSON array from response
+    const jsonMatch = text.match(/\[[\s\S]*?\]/);
+    if (!jsonMatch) return;
+    
+    const facts: string[] = JSON.parse(jsonMatch[0]);
+    if (!Array.isArray(facts) || facts.length === 0) return;
+
+    // Check for duplicates against existing memories
+    const { data: existing } = await sb.from("user_memories").select("fact").eq("user_id", userId);
+    const existingFacts = (existing || []).map((m: any) => m.fact.toLowerCase());
+    
+    const newFacts = facts.filter(
+      (f: string) => f && f.length > 3 && f.length < 200 && !existingFacts.some((ef: string) => ef === f.toLowerCase() || ef.includes(f.toLowerCase()) || f.toLowerCase().includes(ef))
+    );
+
+    if (newFacts.length > 0) {
+      const rows = newFacts.map((f: string) => ({ user_id: userId, fact: f, source_chat_id: chatId || null }));
+      await sb.from("user_memories").insert(rows);
     }
-  }
-  if (facts.length > 0) {
-    const rows = facts.map(f => ({ user_id: userId, fact: f, source_chat_id: chatId || null }));
-    await sb.from("user_memories").insert(rows);
+  } catch {
+    // Silent fail - memory extraction is non-critical
   }
 }
 
