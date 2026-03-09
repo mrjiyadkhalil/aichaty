@@ -6,8 +6,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import type { PlanFeatures } from "@/hooks/useSubscription";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Plan {
   id: string;
@@ -21,6 +39,13 @@ export default function AdminSubscriptionPlans() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState<string | null>(null);
+  const [newPlan, setNewPlan] = useState({
+    plan_name: "",
+    price_monthly: 0,
+    price_yearly: 0,
+  });
 
   const loadPlans = async () => {
     setLoading(true);
@@ -76,6 +101,70 @@ export default function AdminSubscriptionPlans() {
     ));
   };
 
+  const handleAddPlan = async () => {
+    if (!newPlan.plan_name.trim()) {
+      toast.error("Plan name is required");
+      return;
+    }
+
+    setSaving("new");
+    try {
+      const defaultFeatures: PlanFeatures = {
+        messages_per_day: 20,
+        max_output_tokens: 4096,
+        models: ["google/gemini-2.5-flash"],
+        file_uploads: true,
+        projects: true,
+        multi_chat: true,
+        synthesis: true,
+        prompt_library: true,
+        bookmarks: true,
+        export: true,
+        custom_system_prompt: false,
+        usage_cap_soft: 10,
+        usage_cap_hard: 20,
+      };
+
+      const { error } = await supabase.from("subscription_plans").insert({
+        plan_name: newPlan.plan_name.toLowerCase(),
+        price_monthly: newPlan.price_monthly,
+        price_yearly: newPlan.price_yearly,
+        features: defaultFeatures as any,
+      });
+
+      if (error) throw error;
+      
+      toast.success("Plan created successfully");
+      setShowAddDialog(false);
+      setNewPlan({ plan_name: "", price_monthly: 0, price_yearly: 0 });
+      await loadPlans();
+    } catch (err) {
+      toast.error("Failed to create plan");
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleDeletePlan = async (planId: string) => {
+    setSaving(planId);
+    try {
+      const { error } = await supabase
+        .from("subscription_plans")
+        .delete()
+        .eq("id", planId);
+
+      if (error) throw error;
+      
+      toast.success("Plan deleted successfully");
+      setShowDeleteDialog(null);
+      await loadPlans();
+    } catch (err) {
+      toast.error("Failed to delete plan");
+    } finally {
+      setSaving(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
@@ -86,9 +175,15 @@ export default function AdminSubscriptionPlans() {
 
   return (
     <div className="p-6 space-y-6 max-w-6xl">
-      <div>
-        <h1 className="text-2xl font-bold font-['Space_Grotesk']">Subscription Plans</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage pricing and features for each plan</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold font-['Space_Grotesk']">Subscription Plans</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage pricing and features for each plan</p>
+        </div>
+        <Button onClick={() => setShowAddDialog(true)} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add New Plan
+        </Button>
       </div>
 
       <div className="grid gap-6">
@@ -97,20 +192,32 @@ export default function AdminSubscriptionPlans() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="capitalize">{plan.plan_name} Plan</span>
-                <Button
-                  onClick={() => handleSave(plan)}
-                  disabled={saving === plan.id}
-                  size="sm"
-                >
-                  {saving === plan.id ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Save Changes"
-                  )}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setShowDeleteDialog(plan.id)}
+                    disabled={saving === plan.id}
+                    variant="destructive"
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+                  <Button
+                    onClick={() => handleSave(plan)}
+                    disabled={saving === plan.id}
+                    size="sm"
+                  >
+                    {saving === plan.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </Button>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -301,6 +408,90 @@ export default function AdminSubscriptionPlans() {
           </Card>
         ))}
       </div>
+
+      {/* Add Plan Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Subscription Plan</DialogTitle>
+            <DialogDescription>
+              Create a new subscription plan with custom pricing and features
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Plan Name</Label>
+              <Input
+                value={newPlan.plan_name}
+                onChange={(e) => setNewPlan({ ...newPlan, plan_name: e.target.value })}
+                placeholder="e.g., Premium, Student, Business"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Monthly Price ($)</Label>
+                <Input
+                  type="number"
+                  value={newPlan.price_monthly}
+                  onChange={(e) => setNewPlan({ ...newPlan, price_monthly: Number(e.target.value) })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Yearly Price ($)</Label>
+                <Input
+                  type="number"
+                  value={newPlan.price_yearly}
+                  onChange={(e) => setNewPlan({ ...newPlan, price_yearly: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddPlan} disabled={saving === "new"}>
+              {saving === "new" ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create Plan"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!showDeleteDialog} onOpenChange={(open) => !open && setShowDeleteDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this subscription plan. This action cannot be undone.
+              Users currently on this plan may be affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => showDeleteDialog && handleDeletePlan(showDeleteDialog)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {saving === showDeleteDialog ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Plan"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
