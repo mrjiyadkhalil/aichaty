@@ -8,6 +8,7 @@ export type PlanName = "free" | "pro";
 export interface PlanFeatures {
   messages_per_day: number;
   max_output_tokens: number;
+  max_tokens_per_month?: number;
   models: string[] | "all";
   file_uploads: boolean;
   file_max_mb?: number;
