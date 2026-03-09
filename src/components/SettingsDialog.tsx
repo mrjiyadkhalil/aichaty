@@ -64,6 +64,28 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
   useEffect(() => { setLocalLayout(defaultLayout); }, [defaultLayout]);
   useEffect(() => { setLocalTheme(prefTheme); }, [prefTheme]);
 
+  // Countdown timer for free users
+  useEffect(() => {
+    if (plan !== "free") return;
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      
+      const diff = midnight.getTime() - now.getTime();
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      setTimeUntilReset(`${hours}h ${minutes}m ${seconds}s`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [plan]);
+
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("display_name, custom_system_prompt")
