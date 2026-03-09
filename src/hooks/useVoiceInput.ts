@@ -1,34 +1,11 @@
 import { useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 export function useVoiceInput(onTranscript: (text: string) => void) {
   const [isRecording, setIsRecording] = useState(false);
-  const [isTranslating, setIsTranslating] = useState(false);
+  const [isTranslating] = useState(false);
   const recognitionRef = useRef<any>(null);
-
-  const translateToEnglish = useCallback(async (text: string): Promise<string> => {
-    // Quick check — if it's ASCII-only, likely English already
-    const isAscii = /^[\x00-\x7F\s]+$/.test(text);
-    if (isAscii) return text;
-
-    setIsTranslating(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("multi-model-chat", {
-        body: {
-          prompt: `Translate the following text to English. Return ONLY the English translation, nothing else. Do not add quotes or explanations.\n\nText: ${text}`,
-          model: "google/gemini-2.5-flash-lite",
-          request_type: "voice_translate",
-        },
-      });
-      if (error || !data?.content) return text;
-      return data.content.trim();
-    } catch {
-      return text;
-    } finally {
-      setIsTranslating(false);
-    }
-  }, []);
+  const [voiceLang, setVoiceLang] = useState<string>("bn-BD"); // Default Bangla
 
   const startRecording = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -40,9 +17,9 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = false;
-    // Don't set recognition.lang — let the browser auto-detect any language
+    recognition.lang = voiceLang; // Set language so browser transcribes in the correct language
 
-    recognition.onresult = async (event: any) => {
+    recognition.onresult = (event: any) => {
       const newResults: string[] = [];
       for (let i = 0; i < event.results.length; i++) {
         if (event.results[i].isFinal) {
@@ -51,8 +28,6 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
       }
       const transcript = newResults.join(" ").trim();
       if (!transcript) return;
-
-      // Pass the transcript as-is without translation
       onTranscript(transcript);
     };
 
@@ -74,7 +49,7 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
     recognitionRef.current = recognition;
     recognition.start();
     setIsRecording(true);
-  }, [onTranscript, translateToEnglish]);
+  }, [onTranscript, voiceLang]);
 
   const stopRecording = useCallback(() => {
     if (recognitionRef.current) {
@@ -89,5 +64,5 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
     else startRecording();
   }, [isRecording, startRecording, stopRecording]);
 
-  return { isRecording, isTranslating, toggleRecording, startRecording, stopRecording };
+  return { isRecording, isTranslating, toggleRecording, startRecording, stopRecording, voiceLang, setVoiceLang };
 }
