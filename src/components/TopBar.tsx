@@ -31,14 +31,13 @@ export function TopBar({ title, layout, onToggleLayout, exportMessages, projectN
       <div className="flex items-center gap-1">
         {showNewChatButton && (
           <Button
-            variant="ghost"
             size="sm"
             onClick={() => navigate("/chat")}
-            className="h-9 px-3 text-muted-foreground hover:text-foreground transition-colors"
+            className="h-8 px-3 bg-gradient-to-r from-primary to-primary/70 text-primary-foreground hover:from-primary/90 hover:to-primary/60 shadow-sm transition-all duration-200 rounded-full text-xs font-medium"
             title="New Chat"
           >
-            <Plus className="h-4 w-4 mr-1" />
-            <span className="text-xs">New</span>
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            New Chat
           </Button>
         )}
         {onToggleLayout && (
