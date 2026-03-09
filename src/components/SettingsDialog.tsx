@@ -344,7 +344,7 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="max-w-4xl h-[80vh] max-h-[700px] p-0 gap-0 overflow-hidden flex flex-col">
-        <div className="flex h-full">
+        <div className="flex flex-1 min-h-0">
           {/* Sidebar */}
           <div className="h-full border-r border-border/30 w-[260px] shrink-0 hidden md:flex flex-col">
             <div className="flex items-center gap-3 p-4 border-b border-border/30">
