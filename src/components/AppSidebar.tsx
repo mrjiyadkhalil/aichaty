@@ -14,6 +14,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { NewProjectDialog } from "@/components/NewProjectDialog";
+import { SettingsDialog } from "@/components/SettingsDialog";
 
 interface Project { id: string; name: string; }
 interface Chat { id: string; title: string | null; project_id: string | null; updated_at?: string; }
@@ -62,6 +63,7 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
   const [hoveredProject, setHoveredProject] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [showNewProject, setShowNewProject] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const chatGroups = useMemo(() => groupChatsByDate(recentChats), [recentChats]);
 
@@ -263,7 +265,7 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
                 <p className="text-xs text-foreground truncate">{displayName || user?.email || "User"}</p>
                 {!planLoading && <PlanBadge plan={plan} />}
               </div>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => navigate("/settings")}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setShowSettings(true)}>
                 <Settings className="h-3.5 w-3.5" />
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={signOut}>
@@ -283,6 +285,7 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
       </SidebarFooter>
 
       <NewProjectDialog open={showNewProject} onClose={() => setShowNewProject(false)} onSubmit={handleCreateProject} />
+      <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
     </Sidebar>
   );
 }
