@@ -192,20 +192,32 @@ export default function AdminSubscriptionPlans() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="capitalize">{plan.plan_name} Plan</span>
-                <Button
-                  onClick={() => handleSave(plan)}
-                  disabled={saving === plan.id}
-                  size="sm"
-                >
-                  {saving === plan.id ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Save Changes"
-                  )}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setShowDeleteDialog(plan.id)}
+                    disabled={saving === plan.id}
+                    variant="destructive"
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+                  <Button
+                    onClick={() => handleSave(plan)}
+                    disabled={saving === plan.id}
+                    size="sm"
+                  >
+                    {saving === plan.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </Button>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
