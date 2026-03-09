@@ -400,7 +400,7 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
             </div>
 
             {/* Content */}
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 h-0">
               <div className="p-4 md:p-6">{renderContent()}</div>
             </ScrollArea>
           </div>
