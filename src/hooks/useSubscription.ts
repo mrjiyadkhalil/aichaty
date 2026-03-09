@@ -43,7 +43,7 @@ interface UseSubscriptionReturn {
 }
 
 const DEFAULT_FREE_FEATURES: PlanFeatures = {
-  messages_per_day: 20,
+  messages_per_day: 5,
   max_output_tokens: 2048,
   models: ["google/gemini-2.5-flash", "openai/gpt-5-nano"],
   file_uploads: false,
