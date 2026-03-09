@@ -39,6 +39,13 @@ export default function AdminSubscriptionPlans() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState<string | null>(null);
+  const [newPlan, setNewPlan] = useState({
+    plan_name: "",
+    price_monthly: 0,
+    price_yearly: 0,
+  });
 
   const loadPlans = async () => {
     setLoading(true);
