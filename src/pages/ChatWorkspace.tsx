@@ -159,9 +159,11 @@ export default function ChatWorkspace({ layout: externalLayout, onToggleLayout: 
     const start = Date.now();
     try {
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/multi-model-chat`;
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const resp = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ prompt: fullPrompt, model, projectId, chatId: activeChatId, messageId: msgId, max_tokens: modeConfig.maxOutputTokens, request_type: requestType, stream: true, ...(imageBase64 ? { image_base64: imageBase64, image_mime_type: imageMimeType } : {}) }),
       });
       if (!resp.ok || !resp.body) {

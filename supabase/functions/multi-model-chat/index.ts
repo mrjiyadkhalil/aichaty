@@ -212,53 +212,47 @@ serve(async (req) => {
 
     // Streaming response
     if (shouldStream) {
-      // Log usage after stream completes asynchronously
       const streamBody = response.body;
       if (!streamBody) throw new Error("No stream body");
 
-      // We pass through the SSE stream, and log usage when done
-      const { readable, writable } = new TransformStream();
-      const writer = writable.getWriter();
-      const reader = streamBody.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = "";
-      let totalInputTokens = 0;
-      let totalOutputTokens = 0;
+      // Insert a placeholder usage event immediately so it's always recorded
+      const estimatedInputTokens = Math.ceil(prompt.length / 4);
+      if (userId) {
+        await sb.from("usage_events").insert({
+          user_id: userId, project_id: projectId || null, chat_id: chatId || null,
+          message_id: messageId || null, provider: modelId.split("/")[0], model: modelId,
+          request_type: reqType, input_tokens: estimatedInputTokens, output_tokens: 0,
+          estimated_cost: 0, latency_ms: 0, status: "success"
+        });
+      }
 
-      (async () => {
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            await writer.write(value);
-            const text = decoder.decode(value, { stream: true });
-            for (const line of text.split("\n")) {
-              if (!line.startsWith("data: ") || line.includes("[DONE]")) continue;
-              try {
-                const parsed = JSON.parse(line.slice(6));
-                const delta = parsed.choices?.[0]?.delta?.content;
-                if (delta) fullContent += delta;
-                if (parsed.usage) {
-                  totalInputTokens = parsed.usage.prompt_tokens || 0;
-                  totalOutputTokens = parsed.usage.completion_tokens || 0;
-                }
-              } catch {}
-            }
+      // Track content for memory extraction
+      let fullContent = "";
+      const decoder = new TextDecoder();
+
+      const transform = new TransformStream({
+        transform(chunk, controller) {
+          controller.enqueue(chunk);
+          const text = decoder.decode(chunk, { stream: true });
+          for (const line of text.split("\n")) {
+            if (!line.startsWith("data: ") || line.includes("[DONE]")) continue;
+            try {
+              const parsed = JSON.parse(line.slice(6));
+              const delta = parsed.choices?.[0]?.delta?.content;
+              if (delta) fullContent += delta;
+            } catch {}
           }
-        } finally {
-          await writer.close();
-          const latency = Date.now() - start;
-          const rates = COST_PER_1K[modelId] || { input: 0.001, output: 0.002 };
-          const estCost = (totalInputTokens / 1000) * rates.input + (totalOutputTokens / 1000) * rates.output;
+        },
+        flush() {
+          // Extract memories after stream completes (fire and forget)
           if (userId) {
-            await sb.from("usage_events").insert({ user_id: userId, project_id: projectId || null, chat_id: chatId || null, message_id: messageId || null, provider: modelId.split("/")[0], model: modelId, request_type: reqType, input_tokens: totalInputTokens, output_tokens: totalOutputTokens, estimated_cost: estCost, latency_ms: latency, status: "success" });
-            // Extract memories from user prompt
             extractAndStoreMemories(sb, userId, chatId, prompt).catch(() => {});
           }
         }
-      })();
+      });
 
-      return new Response(readable, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+      const outputStream = streamBody.pipeThrough(transform);
+      return new Response(outputStream, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
     }
 
     // Non-streaming response
