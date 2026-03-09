@@ -22,8 +22,6 @@ const COST_PER_1K: Record<string, { input: number; output: number }> = {
   "kimi/moonshot-v1": { input: 0.001, output: 0.002 },
 };
 
-const HARD_CAP = 10.0;
-const SOFT_CAP = 5.0;
 const RATE_LIMIT = 30;
 
 const VISION_MODELS = ["google/gemini-2.5-pro", "openai/gpt-5"];
