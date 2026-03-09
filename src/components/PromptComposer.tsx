@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send, Sparkles, Paperclip, X, Mic, MicOff } from "lucide-react";
+import { Send, Sparkles, Paperclip, X, Mic, MicOff, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -46,9 +46,17 @@ export function PromptComposer({
   const displayModels = allModelIds.length > 0 ? allModelIds : AI_CONFIG.allModels;
   const isSuperFiesta = chatMode === "superfiesta";
 
-  const { isRecording, toggleRecording } = useVoiceInput((text) => {
+  const { isRecording, toggleRecording, voiceLang, setVoiceLang } = useVoiceInput((text) => {
     setPrompt((prev) => (prev ? prev + " " + text : text));
   });
+
+  const VOICE_LANGS = [
+    { code: "bn-BD", label: "বাংলা" },
+    { code: "en-US", label: "English" },
+    { code: "hi-IN", label: "हिन्दी" },
+    { code: "ar-SA", label: "العربية" },
+  ];
+  const currentLangLabel = VOICE_LANGS.find(l => l.code === voiceLang)?.label || voiceLang;
 
   const handleSend = () => {
     if (!prompt.trim()) return;
@@ -133,9 +141,44 @@ export function PromptComposer({
               {onImageSelected && onImageRemoved && (
                 <ImageUploadButton onImageSelected={onImageSelected} onImageRemoved={onImageRemoved} hasImage={hasImage} disabled={disabled} />
               )}
-              <button onClick={toggleRecording} disabled={disabled} className={cn("h-9 w-9 min-h-[36px] min-w-[36px] rounded-lg flex items-center justify-center transition-colors duration-150", isRecording ? "text-destructive bg-destructive/10" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
-                {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              </button>
+              <div className="relative group/voice flex items-center">
+                <button onClick={toggleRecording} disabled={disabled} className={cn("h-9 w-9 min-h-[36px] min-w-[36px] rounded-lg flex items-center justify-center transition-colors duration-150", isRecording ? "text-destructive bg-destructive/10" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
+                  {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </button>
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const menu = e.currentTarget.nextElementSibling as HTMLElement;
+                      if (menu) menu.classList.toggle("hidden");
+                    }}
+                    disabled={disabled || isRecording}
+                    className="h-7 px-1.5 rounded-md flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    title="Voice language"
+                  >
+                    <Globe className="h-3 w-3" />
+                    <span className="hidden sm:inline">{currentLangLabel}</span>
+                  </button>
+                  <div className="hidden absolute bottom-full left-0 mb-1 bg-popover border border-border rounded-lg shadow-lg py-1 z-50 min-w-[120px]">
+                    {VOICE_LANGS.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVoiceLang(lang.code);
+                          (e.currentTarget.parentElement as HTMLElement)?.classList.add("hidden");
+                        }}
+                        className={cn(
+                          "w-full text-left px-3 py-1.5 text-xs hover:bg-muted transition-colors",
+                          voiceLang === lang.code && "text-primary font-medium"
+                        )}
+                      >
+                        {lang.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-muted-foreground/40 hidden sm:inline">{prompt.length}/{AI_CONFIG.limits.maxPromptLength}</span>
