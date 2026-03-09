@@ -41,6 +41,10 @@ function getUserId(req: Request): string | null {
 }
 
 async function getUserMemories(sb: any, userId: string): Promise<string> {
+  // Check if memory is enabled for this user
+  const { data: prefs } = await sb.from("user_preferences").select("memory_enabled").eq("user_id", userId).maybeSingle();
+  if (prefs && prefs.memory_enabled === false) return "";
+
   const { data } = await sb.from("user_memories").select("fact").eq("user_id", userId).limit(20);
   if (!data || data.length === 0) return "";
   return "\n\n[User Memory Context]:\n" + data.map((m: any) => `- ${m.fact}`).join("\n");
