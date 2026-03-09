@@ -31,7 +31,10 @@ interface MessageWithResponses { id: string; content: string; enhanced_content: 
 
 export type ChatMode = "superfiesta" | "multichat";
 
-export default function ChatWorkspace() {
+export default function ChatWorkspace({ layout: externalLayout, onToggleLayout: externalOnToggleLayout }: { 
+  layout?: "grid" | "stacked"; 
+  onToggleLayout?: () => void; 
+} = {}) {
   const { id: chatId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
