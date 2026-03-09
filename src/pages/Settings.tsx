@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function Settings() {
   const { user, signOut } = useAuth();
-  const { totalCost, requestCount, isNearCap, isAtCap } = useUsage();
+  const { totalTokens, requestCount } = useUsage();
   const { costMode, defaultLayout, theme: prefTheme, onboardingCompleted, savePreferences } = usePreferences();
   const { plan, features } = useSubscription();
   const { setTheme } = useTheme();
@@ -67,11 +67,8 @@ export default function Settings() {
     setTimeout(() => window.location.reload(), 500);
   };
 
-  const softCap = features?.usage_cap_soft ?? AI_CONFIG.limits.softCapUsd;
-  const hardCap = features?.usage_cap_hard ?? AI_CONFIG.limits.hardCapUsd;
-  const usagePercent = Math.min((totalCost / hardCap) * 100, 100);
-  const statusLabel = isAtCap ? "Limit Reached" : isNearCap ? "Near Limit" : "Normal";
-  const statusColor = isAtCap ? "destructive" : isNearCap ? "secondary" : "default";
+  const maxTokensPerMonth = features?.max_tokens_per_month;
+  const tokenUsagePercent = maxTokensPerMonth ? Math.min((totalTokens / Number(maxTokensPerMonth)) * 100, 100) : 0;
 
   const themeOptions = [
     { value: "light" as const, label: "Light", icon: Sun },
@@ -136,17 +133,17 @@ export default function Settings() {
       <div className="glass-card p-4 sm:p-6 space-y-4">
         <h2 className="text-base font-semibold flex items-center gap-2 font-['Space_Grotesk']"><BarChart3 className="h-4 w-4 text-primary" /> Usage This Month</h2>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <span className="text-sm text-muted-foreground">Estimated Spend</span>
+          <span className="text-sm text-muted-foreground">Tokens Used</span>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">${totalCost.toFixed(4)}</span>
-            <span className="text-xs text-muted-foreground">/ ${hardCap.toFixed(2)}</span>
-            <Badge variant={statusColor as any}>{statusLabel}</Badge>
+            <span className="text-sm font-medium">{totalTokens.toLocaleString()}</span>
+            {maxTokensPerMonth && (
+              <span className="text-xs text-muted-foreground">/ {Number(maxTokensPerMonth).toLocaleString()}</span>
+            )}
           </div>
         </div>
-        <Progress value={usagePercent} className="h-2" />
+        {maxTokensPerMonth && <Progress value={tokenUsagePercent} className="h-2" />}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Soft cap: ${softCap.toFixed(2)}</span>
-          <span>{requestCount} requests</span>
+          <span>{requestCount} requests this month</span>
         </div>
       </div>
 

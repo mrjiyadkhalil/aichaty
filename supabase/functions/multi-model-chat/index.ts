@@ -22,8 +22,6 @@ const COST_PER_1K: Record<string, { input: number; output: number }> = {
   "kimi/moonshot-v1": { input: 0.001, output: 0.002 },
 };
 
-const HARD_CAP = 10.0;
-const SOFT_CAP = 5.0;
 const RATE_LIMIT = 30;
 
 const VISION_MODELS = ["google/gemini-2.5-pro", "openai/gpt-5"];
@@ -92,11 +90,9 @@ serve(async (req) => {
     const reqType = request_type || "model_compare";
     const shouldStream = stream === true;
 
-    // Check ban/suspension + custom caps
-    let userSoftCap = SOFT_CAP;
-    let userHardCap = HARD_CAP;
+    // Check ban/suspension
     if (userId) {
-      const { data: profile } = await sb.from("profiles").select("status, suspended_until, custom_soft_cap, custom_hard_cap").eq("user_id", userId).single();
+      const { data: profile } = await sb.from("profiles").select("status, suspended_until").eq("user_id", userId).single();
       if (profile?.status === "banned") {
         return new Response(JSON.stringify({ error: "Your account has been banned", code: "BANNED" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
@@ -106,8 +102,6 @@ serve(async (req) => {
           return new Response(JSON.stringify({ error: "Your account is suspended", code: "SUSPENDED" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
       }
-      if (profile?.custom_soft_cap != null) userSoftCap = Number(profile.custom_soft_cap);
-      if (profile?.custom_hard_cap != null) userHardCap = Number(profile.custom_hard_cap);
     }
 
     const modelId = model || "google/gemini-3-flash-preview";
@@ -172,14 +166,6 @@ serve(async (req) => {
       const { count } = await sb.from("usage_events").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", oneHourAgo);
       if ((count || 0) >= RATE_LIMIT) {
         return new Response(JSON.stringify({ error: "Too many requests, please wait", code: "RATE_LIMIT" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      
-      // Monthly cost cap check
-      const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
-      const { data: costData } = await sb.from("usage_events").select("estimated_cost").eq("user_id", userId).gte("created_at", startOfMonth.toISOString());
-      const monthlyCost = (costData || []).reduce((s, r) => s + (Number(r.estimated_cost) || 0), 0);
-      if (monthlyCost >= userHardCap) {
-        return new Response(JSON.stringify({ error: "Monthly usage limit reached", code: "HARD_CAP" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     }
 
@@ -286,12 +272,9 @@ serve(async (req) => {
     const latency = Date.now() - start;
 
     if (userId) {
-      const monthlyCostNow = await getMonthlyCost(sb, userId);
-      const warning = monthlyCostNow + estCost >= userSoftCap ? "Approaching usage limit" : undefined;
       await sb.from("usage_events").insert({ user_id: userId, project_id: projectId || null, chat_id: chatId || null, message_id: messageId || null, provider: modelId.split("/")[0], model: modelId, request_type: reqType, input_tokens: inputTokens, output_tokens: outputTokens, estimated_cost: estCost, latency_ms: latency, status: "success" });
-      // Extract memories
       extractAndStoreMemories(sb, userId, chatId, prompt).catch(() => {});
-      return new Response(JSON.stringify({ content, usage: { input_tokens: inputTokens, output_tokens: outputTokens, estimated_cost: estCost }, warning }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ content, usage: { input_tokens: inputTokens, output_tokens: outputTokens, estimated_cost: estCost } }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     return new Response(JSON.stringify({ content }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -300,9 +283,3 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
-
-async function getMonthlyCost(sb: any, userId: string): Promise<number> {
-  const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
-  const { data } = await sb.from("usage_events").select("estimated_cost").eq("user_id", userId).gte("created_at", startOfMonth.toISOString());
-  return (data || []).reduce((s: number, r: any) => s + (Number(r.estimated_cost) || 0), 0);
-}

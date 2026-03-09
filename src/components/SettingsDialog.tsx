@@ -44,7 +44,7 @@ type TabId = (typeof TABS)[number]["id"];
 
 export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogProps) {
   const { user, signOut } = useAuth();
-  const { totalCost, totalTokens, requestCount, messagesUsedToday, isNearCap, isAtCap } = useUsage();
+  const { totalTokens, requestCount, messagesUsedToday } = useUsage();
   const { costMode, defaultLayout, theme: prefTheme, savePreferences } = usePreferences();
   const { plan, features } = useSubscription();
   const { setTheme } = useTheme();
@@ -123,11 +123,8 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
   const messagesLeft = Math.max(0, messagesPerDay - messagesUsedToday);
   const messageUsagePercent = Math.min((messagesUsedToday / messagesPerDay) * 100, 100);
   
-  const softCap = features?.usage_cap_soft ?? AI_CONFIG.limits.softCapUsd;
-  const hardCap = features?.usage_cap_hard ?? AI_CONFIG.limits.hardCapUsd;
-  const usagePercent = Math.min((totalCost / hardCap) * 100, 100);
-  const statusLabel = isAtCap ? "Limit Reached" : isNearCap ? "Near Limit" : "Normal";
-  const statusColor = isAtCap ? "destructive" : isNearCap ? "secondary" : "default";
+  const maxTokensPerMonth = features?.max_tokens_per_month;
+  const tokenUsagePercent = maxTokensPerMonth ? Math.min((totalTokens / Number(maxTokensPerMonth)) * 100, 100) : 0;
 
   const themeOptions = [
     { value: "system" as const, label: "System", icon: Monitor },
@@ -274,14 +271,14 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
                     <span className="text-sm text-muted-foreground">Tokens Used</span>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{totalTokens.toLocaleString()}</span>
-                      <span className="text-xs text-muted-foreground">tokens</span>
-                      <Badge variant={statusColor as any}>{statusLabel}</Badge>
+                      {maxTokensPerMonth && (
+                        <span className="text-xs text-muted-foreground">/ {Number(maxTokensPerMonth).toLocaleString()}</span>
+                      )}
                     </div>
                   </div>
-                  <Progress value={usagePercent} className="h-2" />
+                  {maxTokensPerMonth && <Progress value={tokenUsagePercent} className="h-2" />}
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Soft cap: ${softCap.toFixed(2)}</span>
-                    <span>{requestCount} requests</span>
+                    <span>{requestCount} requests this month</span>
                   </div>
                 </>
               )}

@@ -38,7 +38,7 @@ export default function ChatWorkspace({ layout: externalLayout, onToggleLayout: 
   const { id: chatId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { isAtCap, isNearCap, refresh: refreshUsage } = useUsage();
+  const { refresh: refreshUsage } = useUsage();
   const { costMode, defaultLayout, setLayout: setPreferredLayout } = usePreferences();
   const { plan, features, canAccess, isModelAllowed } = useSubscription();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -218,8 +218,7 @@ export default function ChatWorkspace({ layout: externalLayout, onToggleLayout: 
       activeChatId = newChat.id;
       navigate(`/chat/${activeChatId}`, { replace: true });
     }
-    if (isAtCap) { toast.error("Monthly usage limit reached."); return; }
-    if (isNearCap) { toast.warning("Approaching usage limit"); }
+    
     const modelsToUse = chatMode === "superfiesta" ? [pickBestModel(prompt, enabledModels)] : selectedModels;
     if (modelsToUse.length === 0) { toast.error("Select at least one model"); return; }
     setSending(true);
@@ -254,7 +253,7 @@ export default function ChatWorkspace({ layout: externalLayout, onToggleLayout: 
   };
 
   const handleRetry = async (messageId: string, model: string) => {
-    if (isAtCap) { toast.error("Monthly usage limit reached"); return; }
+    
     const msg = messages.find((m) => m.id === messageId);
     if (!msg || !user) return;
     const resp = msg.responses.find((r) => r.model === model);
