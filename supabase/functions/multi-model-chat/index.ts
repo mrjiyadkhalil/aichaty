@@ -167,14 +167,6 @@ serve(async (req) => {
       if ((count || 0) >= RATE_LIMIT) {
         return new Response(JSON.stringify({ error: "Too many requests, please wait", code: "RATE_LIMIT" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      
-      // Monthly cost cap check
-      const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
-      const { data: costData } = await sb.from("usage_events").select("estimated_cost").eq("user_id", userId).gte("created_at", startOfMonth.toISOString());
-      const monthlyCost = (costData || []).reduce((s, r) => s + (Number(r.estimated_cost) || 0), 0);
-      if (monthlyCost >= userHardCap) {
-        return new Response(JSON.stringify({ error: "Monthly usage limit reached", code: "HARD_CAP" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
     }
 
     // Build system prompt with memory + custom instructions
