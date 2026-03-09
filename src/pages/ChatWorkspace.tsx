@@ -65,7 +65,7 @@ export default function ChatWorkspace({ layout: externalLayout, onToggleLayout: 
   const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState("");
-  const [upgradeRequiredPlan, setUpgradeRequiredPlan] = useState<"pro" | "enterprise">("pro");
+  const [upgradeRequiredPlan, setUpgradeRequiredPlan] = useState<"pro">("pro");
   useEffect(() => { 
     if (externalLayout) setLayout(externalLayout);
     else setLayout(defaultLayout);

@@ -12,7 +12,6 @@ import { toast } from "sonner";
 const PLAN_META: Record<string, { icon: any; label: string; description: string; color: string }> = {
   free: { icon: Zap, label: "Free", description: "Get started with AI model comparison", color: "text-muted-foreground" },
   pro: { icon: Crown, label: "Pro", description: "For power users who need more", color: "text-primary" },
-  enterprise: { icon: Building2, label: "Enterprise", description: "Full access for teams and professionals", color: "text-amber-400" },
 };
 
 const FEATURE_ROWS: { label: string; key: string; type: "boolean" | "value" | "models" }[] = [
@@ -36,7 +35,7 @@ export default function Pricing() {
   const { plan: currentPlan, plans } = useSubscription();
   const [yearly, setYearly] = useState(false);
 
-  const orderedPlans = ["free", "pro", "enterprise"];
+  const orderedPlans = ["free", "pro"];
   const sortedPlans = orderedPlans
     .map((name) => plans.find((p) => p.plan_name === name))
     .filter(Boolean) as typeof plans;

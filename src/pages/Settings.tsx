@@ -115,7 +115,7 @@ export default function Settings() {
           <Label>Display Name</Label>
           <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="bg-background/50 border-border/30 focus:border-primary/50" />
         </div>
-        {(plan === "enterprise" || plan === "pro") && (
+        {plan === "pro" && (
           <div className="space-y-2">
             <Label className="flex items-center gap-2"><MessageSquare className="h-3.5 w-3.5 text-primary" /> Custom System Prompt</Label>
             <Textarea value={customSystemPrompt} onChange={(e) => setCustomSystemPrompt(e.target.value)} placeholder="Set a custom AI personality or instructions..." rows={3} className="bg-background/50 border-border/30 focus:border-primary/50" />
