@@ -408,6 +408,90 @@ export default function AdminSubscriptionPlans() {
           </Card>
         ))}
       </div>
+
+      {/* Add Plan Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Subscription Plan</DialogTitle>
+            <DialogDescription>
+              Create a new subscription plan with custom pricing and features
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Plan Name</Label>
+              <Input
+                value={newPlan.plan_name}
+                onChange={(e) => setNewPlan({ ...newPlan, plan_name: e.target.value })}
+                placeholder="e.g., Premium, Student, Business"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Monthly Price ($)</Label>
+                <Input
+                  type="number"
+                  value={newPlan.price_monthly}
+                  onChange={(e) => setNewPlan({ ...newPlan, price_monthly: Number(e.target.value) })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Yearly Price ($)</Label>
+                <Input
+                  type="number"
+                  value={newPlan.price_yearly}
+                  onChange={(e) => setNewPlan({ ...newPlan, price_yearly: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddPlan} disabled={saving === "new"}>
+              {saving === "new" ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create Plan"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!showDeleteDialog} onOpenChange={(open) => !open && setShowDeleteDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this subscription plan. This action cannot be undone.
+              Users currently on this plan may be affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => showDeleteDialog && handleDeletePlan(showDeleteDialog)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {saving === showDeleteDialog ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Plan"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
