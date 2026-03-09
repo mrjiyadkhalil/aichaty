@@ -253,7 +253,7 @@ export default function ChatWorkspace({ layout: externalLayout, onToggleLayout: 
   };
 
   const handleRetry = async (messageId: string, model: string) => {
-    if (isAtCap) { toast.error("Monthly usage limit reached"); return; }
+    
     const msg = messages.find((m) => m.id === messageId);
     if (!msg || !user) return;
     const resp = msg.responses.find((r) => r.model === model);

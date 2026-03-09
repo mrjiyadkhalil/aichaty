@@ -133,17 +133,17 @@ export default function Settings() {
       <div className="glass-card p-4 sm:p-6 space-y-4">
         <h2 className="text-base font-semibold flex items-center gap-2 font-['Space_Grotesk']"><BarChart3 className="h-4 w-4 text-primary" /> Usage This Month</h2>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <span className="text-sm text-muted-foreground">Estimated Spend</span>
+          <span className="text-sm text-muted-foreground">Tokens Used</span>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">${totalCost.toFixed(4)}</span>
-            <span className="text-xs text-muted-foreground">/ ${hardCap.toFixed(2)}</span>
-            <Badge variant={statusColor as any}>{statusLabel}</Badge>
+            <span className="text-sm font-medium">{totalTokens.toLocaleString()}</span>
+            {maxTokensPerMonth && (
+              <span className="text-xs text-muted-foreground">/ {Number(maxTokensPerMonth).toLocaleString()}</span>
+            )}
           </div>
         </div>
-        <Progress value={usagePercent} className="h-2" />
+        {maxTokensPerMonth && <Progress value={tokenUsagePercent} className="h-2" />}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Soft cap: ${softCap.toFixed(2)}</span>
-          <span>{requestCount} requests</span>
+          <span>{requestCount} requests this month</span>
         </div>
       </div>
 

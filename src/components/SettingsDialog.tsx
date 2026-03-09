@@ -271,14 +271,14 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
                     <span className="text-sm text-muted-foreground">Tokens Used</span>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{totalTokens.toLocaleString()}</span>
-                      <span className="text-xs text-muted-foreground">tokens</span>
-                      <Badge variant={statusColor as any}>{statusLabel}</Badge>
+                      {maxTokensPerMonth && (
+                        <span className="text-xs text-muted-foreground">/ {Number(maxTokensPerMonth).toLocaleString()}</span>
+                      )}
                     </div>
                   </div>
-                  <Progress value={usagePercent} className="h-2" />
+                  {maxTokensPerMonth && <Progress value={tokenUsagePercent} className="h-2" />}
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Soft cap: ${softCap.toFixed(2)}</span>
-                    <span>{requestCount} requests</span>
+                    <span>{requestCount} requests this month</span>
                   </div>
                 </>
               )}
