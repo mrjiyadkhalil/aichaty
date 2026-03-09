@@ -218,8 +218,7 @@ export default function ChatWorkspace({ layout: externalLayout, onToggleLayout: 
       activeChatId = newChat.id;
       navigate(`/chat/${activeChatId}`, { replace: true });
     }
-    if (isAtCap) { toast.error("Monthly usage limit reached."); return; }
-    if (isNearCap) { toast.warning("Approaching usage limit"); }
+    
     const modelsToUse = chatMode === "superfiesta" ? [pickBestModel(prompt, enabledModels)] : selectedModels;
     if (modelsToUse.length === 0) { toast.error("Select at least one model"); return; }
     setSending(true);
