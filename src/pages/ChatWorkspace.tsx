@@ -38,7 +38,7 @@ export default function ChatWorkspace({ layout: externalLayout, onToggleLayout: 
   const { id: chatId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { isAtCap, isNearCap, refresh: refreshUsage } = useUsage();
+  const { refresh: refreshUsage } = useUsage();
   const { costMode, defaultLayout, setLayout: setPreferredLayout } = usePreferences();
   const { plan, features, canAccess, isModelAllowed } = useSubscription();
   const messagesEndRef = useRef<HTMLDivElement>(null);

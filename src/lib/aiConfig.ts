@@ -63,8 +63,6 @@ export const AI_CONFIG = {
     maxFileContextLength: 50000,
     maxSynthesisInputLength: 30000,
     maxFileSizeMb: 10,
-    softCapUsd: 5.0,
-    hardCapUsd: 10.0,
     rateLimit: { maxRequests: 30, windowMinutes: 60 },
     maxRetries: 1,
   },
