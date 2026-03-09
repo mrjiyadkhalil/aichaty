@@ -1,9 +1,11 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, List, Settings } from "lucide-react";
+import { LayoutGrid, List, Settings, Plus } from "lucide-react";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TopBarProps {
   title: string;
