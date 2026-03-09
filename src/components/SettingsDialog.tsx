@@ -123,11 +123,8 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
   const messagesLeft = Math.max(0, messagesPerDay - messagesUsedToday);
   const messageUsagePercent = Math.min((messagesUsedToday / messagesPerDay) * 100, 100);
   
-  const softCap = features?.usage_cap_soft ?? AI_CONFIG.limits.softCapUsd;
-  const hardCap = features?.usage_cap_hard ?? AI_CONFIG.limits.hardCapUsd;
-  const usagePercent = Math.min((totalCost / hardCap) * 100, 100);
-  const statusLabel = isAtCap ? "Limit Reached" : isNearCap ? "Near Limit" : "Normal";
-  const statusColor = isAtCap ? "destructive" : isNearCap ? "secondary" : "default";
+  const maxTokensPerMonth = features?.max_tokens_per_month;
+  const tokenUsagePercent = maxTokensPerMonth ? Math.min((totalTokens / Number(maxTokensPerMonth)) * 100, 100) : 0;
 
   const themeOptions = [
     { value: "system" as const, label: "System", icon: Monitor },
