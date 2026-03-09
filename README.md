@@ -1,4 +1,4 @@
-# Fiesta AI
+# AI Chaty (AI Fiesta Clone)
 
 **Compare AI Models. Get Better Answers.**
 
