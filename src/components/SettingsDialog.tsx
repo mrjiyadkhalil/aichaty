@@ -374,7 +374,7 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
           </div>
 
           {/* Mobile tabs */}
-          <div className="flex flex-col flex-1 min-w-0">
+          <div className="flex flex-col flex-1 min-w-0 min-h-0">
             <div className="md:hidden flex gap-1 p-3 border-b border-border/30 overflow-x-auto">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
