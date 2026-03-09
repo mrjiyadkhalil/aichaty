@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function Settings() {
   const { user, signOut } = useAuth();
-  const { totalCost, requestCount, isNearCap, isAtCap } = useUsage();
+  const { totalTokens, requestCount } = useUsage();
   const { costMode, defaultLayout, theme: prefTheme, onboardingCompleted, savePreferences } = usePreferences();
   const { plan, features } = useSubscription();
   const { setTheme } = useTheme();
