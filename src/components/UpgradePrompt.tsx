@@ -7,7 +7,7 @@ interface UpgradePromptProps {
   open: boolean;
   onClose: () => void;
   feature: string;
-  requiredPlan?: "pro" | "enterprise";
+  requiredPlan?: "pro";
 }
 
 export function UpgradePrompt({ open, onClose, feature, requiredPlan = "pro" }: UpgradePromptProps) {
