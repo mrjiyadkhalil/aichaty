@@ -926,7 +926,7 @@ async function updateUserPlan(sb: any, adminId: string, body: any) {
 
 async function getPlanStats(sb: any) {
   const { data: profiles } = await sb.from("profiles").select("plan");
-  const counts: Record<string, number> = { free: 0, pro: 0, enterprise: 0 };
+  const counts: Record<string, number> = { free: 0, pro: 0 };
   (profiles || []).forEach((p: any) => { counts[p.plan || "free"] = (counts[p.plan || "free"] || 0) + 1; });
   return json({ planStats: counts });
 }

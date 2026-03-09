@@ -234,7 +234,7 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
               {!collapsed && <span>Bookmarks</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
-          {/* Upgrade CTA - only for non-enterprise users */}
+          {/* Upgrade CTA - only for free users */}
           {nextPlan && (
             <SidebarMenuItem>
               <SidebarMenuButton onClick={() => navigate("/pricing")} tooltip={`Upgrade to ${nextPlan}`} className="h-9 rounded-lg text-[13px] transition-colors duration-150 text-primary hover:text-primary">
