@@ -70,7 +70,7 @@ export function SynthesisPanel({ messageId, prompt, responses, existingSynthesis
           )}
         </div>
       </div>
-      <div className="p-4">
+      <div className="p-4 bg-card/95 backdrop-blur-sm">
         {content ? (
           <div className="prose-dark">
             <ReactMarkdown>{content}</ReactMarkdown>

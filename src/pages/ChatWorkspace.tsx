@@ -66,13 +66,20 @@ export default function ChatWorkspace({ layout: externalLayout, onToggleLayout: 
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState("");
   const [upgradeRequiredPlan, setUpgradeRequiredPlan] = useState<"pro" | "enterprise">("pro");
-  useEffect(() => { setLayout(defaultLayout); }, [defaultLayout]);
+  useEffect(() => { 
+    if (externalLayout) setLayout(externalLayout);
+    else setLayout(defaultLayout);
+  }, [defaultLayout, externalLayout]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const handleToggleLayout = () => {
-    const newLayout = layout === "grid" ? "stacked" : "grid";
-    setLayout(newLayout);
-    setPreferredLayout(newLayout);
+    if (externalOnToggleLayout) {
+      externalOnToggleLayout();
+    } else {
+      const newLayout = layout === "grid" ? "stacked" : "grid";
+      setLayout(newLayout);
+      setPreferredLayout(newLayout);
+    }
   };
 
   const { allModelIds, modelLabels } = useModels();
