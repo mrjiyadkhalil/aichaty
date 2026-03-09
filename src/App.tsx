@@ -104,7 +104,7 @@ function AppWithShortcuts() {
         <Route path="/chat" element={<ProtectedRoute><ChatWorkspaceWrapper /></ProtectedRoute>} />
         <Route path="/chat/:id" element={<ProtectedRoute><ChatWorkspaceWrapper /></ProtectedRoute>} />
         <Route path="/project/:id" element={<ProtectedRoute><AppLayout><ProjectDetail /></AppLayout></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>} />
+        <Route path="/settings" element={<Navigate to="/chat" replace />} />
         <Route path="/bookmarks" element={<ProtectedRoute><AppLayout><Bookmarks /></AppLayout></ProtectedRoute>} />
         <Route path="/prompts" element={<ProtectedRoute><AppLayout><Prompts /></AppLayout></ProtectedRoute>} />
         {/* Admin Routes */}
