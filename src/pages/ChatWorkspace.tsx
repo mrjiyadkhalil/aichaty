@@ -52,7 +52,7 @@ export default function ChatWorkspace({ layout: externalLayout, onToggleLayout: 
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [useInstruction, setUseInstruction] = useState(true);
   const [sending, setSending] = useState(false);
-  const [layout, setLayout] = useState<"grid" | "stacked">(defaultLayout);
+  const [layout, setLayout] = useState<"grid" | "stacked">(externalLayout || defaultLayout);
   const [showEnhancer, setShowEnhancer] = useState(false);
   const [enhanceOriginal, setEnhanceOriginal] = useState("");
   const [enhancedPrompt, setEnhancedPrompt] = useState<string | null>(null);
