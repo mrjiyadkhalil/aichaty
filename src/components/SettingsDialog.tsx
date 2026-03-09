@@ -44,7 +44,7 @@ type TabId = (typeof TABS)[number]["id"];
 
 export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogProps) {
   const { user, signOut } = useAuth();
-  const { totalCost, requestCount, isNearCap, isAtCap } = useUsage();
+  const { totalCost, totalTokens, requestCount, messagesUsedToday, isNearCap, isAtCap } = useUsage();
   const { costMode, defaultLayout, theme: prefTheme, savePreferences } = usePreferences();
   const { plan, features } = useSubscription();
   const { setTheme } = useTheme();
