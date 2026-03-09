@@ -343,8 +343,8 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="max-w-4xl h-[80vh] max-h-[700px] p-0 gap-0 overflow-hidden">
-        <div className="flex h-full">
+      <DialogContent className="max-w-4xl h-[80vh] max-h-[700px] p-0 gap-0 overflow-hidden flex flex-col">
+        <div className="flex flex-1 min-h-0">
           {/* Sidebar */}
           <div className="h-full border-r border-border/30 w-[260px] shrink-0 hidden md:flex flex-col">
             <div className="flex items-center gap-3 p-4 border-b border-border/30">
@@ -374,7 +374,7 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
           </div>
 
           {/* Mobile tabs */}
-          <div className="flex flex-col flex-1 min-w-0">
+          <div className="flex flex-col flex-1 min-w-0 min-h-0">
             <div className="md:hidden flex gap-1 p-3 border-b border-border/30 overflow-x-auto">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
