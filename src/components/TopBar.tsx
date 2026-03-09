@@ -17,12 +17,30 @@ interface TopBarProps {
 
 export function TopBar({ title, layout, onToggleLayout, exportMessages, projectName }: TopBarProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isMobile = useIsMobile();
+
+  // Show "New Chat" button on mobile when not already on /chat
+  const showNewChatButton = isMobile && location.pathname !== "/chat";
 
   return (
     <header className="h-12 border-b border-border flex items-center gap-2 md:gap-3 px-2 md:px-3 bg-background shrink-0 flex-1">
       <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors duration-150 h-9 w-9 min-w-[36px] min-h-[36px]" />
       <h2 className="font-medium text-sm truncate flex-1 text-foreground/80">{title}</h2>
       <div className="flex items-center gap-1">
+        {showNewChatButton && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/chat")}
+            className="h-9 px-3 text-muted-foreground hover:text-foreground transition-colors"
+            title="New Chat"
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            <span className="text-xs">New</span>
+          </Button>
+        )}
         {onToggleLayout && (
           <Button
             variant="ghost"
