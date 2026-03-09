@@ -94,8 +94,8 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
     onProjectsChanged?.();
   };
 
-  // Determine upgrade CTA - only show after plan is loaded
-  const nextPlan = planLoading ? null : (plan === "free" ? "Pro" : plan === "pro" ? "Enterprise" : null);
+  // Determine upgrade CTA - only show for free plan users
+  const nextPlan = planLoading ? null : (plan === "free" ? "Pro" : null);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
@@ -234,7 +234,7 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
               {!collapsed && <span>Bookmarks</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
-          {/* Upgrade CTA - only for non-enterprise users */}
+          {/* Upgrade CTA - only for free users */}
           {nextPlan && (
             <SidebarMenuItem>
               <SidebarMenuButton onClick={() => navigate("/pricing")} tooltip={`Upgrade to ${nextPlan}`} className="h-9 rounded-lg text-[13px] transition-colors duration-150 text-primary hover:text-primary">

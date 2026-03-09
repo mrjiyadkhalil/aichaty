@@ -287,7 +287,6 @@ export default function AdminUserDetail() {
               <SelectContent>
                 <SelectItem value="free">Free</SelectItem>
                 <SelectItem value="pro">Pro ($12/mo)</SelectItem>
-                <SelectItem value="enterprise">Enterprise ($49/mo)</SelectItem>
               </SelectContent>
             </Select>
           </div>

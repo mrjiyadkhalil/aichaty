@@ -915,7 +915,7 @@ async function initDefaultApiKeys(sb: any, adminId: string) {
 async function updateUserPlan(sb: any, adminId: string, body: any) {
   const { target_user_id, plan } = body;
   if (!target_user_id || !plan) throw new Error("target_user_id and plan required");
-  if (!["free", "pro", "enterprise"].includes(plan)) throw new Error("Invalid plan");
+  if (!["free", "pro"].includes(plan)) throw new Error("Invalid plan");
   await sb.from("profiles").update({ plan }).eq("user_id", target_user_id);
   await sb.from("admin_audit_logs").insert({
     admin_user_id: adminId, action_type: "update_user_plan",
@@ -926,7 +926,7 @@ async function updateUserPlan(sb: any, adminId: string, body: any) {
 
 async function getPlanStats(sb: any) {
   const { data: profiles } = await sb.from("profiles").select("plan");
-  const counts: Record<string, number> = { free: 0, pro: 0, enterprise: 0 };
+  const counts: Record<string, number> = { free: 0, pro: 0 };
   (profiles || []).forEach((p: any) => { counts[p.plan || "free"] = (counts[p.plan || "free"] || 0) + 1; });
   return json({ planStats: counts });
 }
