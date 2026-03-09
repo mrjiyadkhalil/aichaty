@@ -101,6 +101,70 @@ export default function AdminSubscriptionPlans() {
     ));
   };
 
+  const handleAddPlan = async () => {
+    if (!newPlan.plan_name.trim()) {
+      toast.error("Plan name is required");
+      return;
+    }
+
+    setSaving("new");
+    try {
+      const defaultFeatures: PlanFeatures = {
+        messages_per_day: 20,
+        max_output_tokens: 4096,
+        models: ["google/gemini-2.5-flash"],
+        file_uploads: true,
+        projects: true,
+        multi_chat: true,
+        synthesis: true,
+        prompt_library: true,
+        bookmarks: true,
+        export: true,
+        custom_system_prompt: false,
+        usage_cap_soft: 10,
+        usage_cap_hard: 20,
+      };
+
+      const { error } = await supabase.from("subscription_plans").insert({
+        plan_name: newPlan.plan_name.toLowerCase(),
+        price_monthly: newPlan.price_monthly,
+        price_yearly: newPlan.price_yearly,
+        features: defaultFeatures as any,
+      });
+
+      if (error) throw error;
+      
+      toast.success("Plan created successfully");
+      setShowAddDialog(false);
+      setNewPlan({ plan_name: "", price_monthly: 0, price_yearly: 0 });
+      await loadPlans();
+    } catch (err) {
+      toast.error("Failed to create plan");
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleDeletePlan = async (planId: string) => {
+    setSaving(planId);
+    try {
+      const { error } = await supabase
+        .from("subscription_plans")
+        .delete()
+        .eq("id", planId);
+
+      if (error) throw error;
+      
+      toast.success("Plan deleted successfully");
+      setShowDeleteDialog(null);
+      await loadPlans();
+    } catch (err) {
+      toast.error("Failed to delete plan");
+    } finally {
+      setSaving(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
