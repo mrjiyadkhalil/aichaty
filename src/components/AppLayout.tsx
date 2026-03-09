@@ -88,7 +88,7 @@ export function AppLayout({ children, layout, onToggleLayout }: {
           {/* Model bar portal target — rendered above TopBar */}
           <div id="model-bar-slot" className="shrink-0" />
           <div className="flex items-center">
-            <TopBar title={getTitle()} />
+            <TopBar title={getTitle()} layout={layout} onToggleLayout={onToggleLayout} />
             {currentChatId && (
               <div className="shrink-0 pr-2 md:pr-3 h-12 flex items-center border-b border-border bg-background">
                 <ChatTagManager chatId={currentChatId} />

@@ -72,5 +72,15 @@ export function usePreferences(): UsePreferencesReturn {
     else toast.success("Preferences saved");
   }, [user, prefs]);
 
-  return { ...prefs, loading, savePreferences };
+  const setLayout = useCallback((layout: "grid" | "stacked") => {
+    setPrefs(prev => ({ ...prev, defaultLayout: layout }));
+    if (user) {
+      supabase
+        .from("user_preferences")
+        .upsert({ user_id: user.id, default_layout: layout }, { onConflict: "user_id" })
+        .then(({ error }) => { if (error) console.error("Failed to save layout preference", error); });
+    }
+  }, [user]);
+
+  return { ...prefs, loading, savePreferences, setLayout };
 }

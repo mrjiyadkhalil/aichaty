@@ -66,6 +66,12 @@ export default function ChatWorkspace() {
   useEffect(() => { setLayout(defaultLayout); }, [defaultLayout]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
+  const handleToggleLayout = () => {
+    const newLayout = layout === "grid" ? "stacked" : "grid";
+    setLayout(newLayout);
+    setPreferredLayout(newLayout);
+  };
+
   const { allModelIds, modelLabels } = useModels();
   const enabledModels = allModelIds.length > 0 ? allModelIds : (AI_CONFIG.costModes[costMode]?.enabledModels || AI_CONFIG.costModes.balanced.enabledModels);
 
