@@ -78,42 +78,46 @@ export function MemoryManager() {
         <Switch checked={memoryEnabled} onCheckedChange={toggleMemory} />
       </div>
 
-      {/* Add new memory */}
-      <div className="flex gap-2">
-        <Input
-          value={newFact}
-          onChange={(e) => setNewFact(e.target.value)}
-          placeholder="Add a fact (e.g., 'I prefer Python')"
-          className="bg-background/50 border-border/30"
-          onKeyDown={(e) => e.key === "Enter" && addMemory()}
-        />
-        <Button size="sm" onClick={addMemory} disabled={!newFact.trim()}>
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Memory list */}
-      <div className="space-y-2 max-h-[300px] overflow-y-auto">
-        {loading && <p className="text-sm text-muted-foreground">Loading...</p>}
-        {!loading && memories.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            No memories stored yet. Add facts above or the AI will learn as you chat.
-          </p>
-        )}
-        {memories.map((m) => (
-          <div key={m.id} className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/20 group">
-            <p className="text-sm flex-1">{m.fact}</p>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
-              onClick={() => deleteMemory(m.id)}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
+      {memoryEnabled && (
+        <>
+          {/* Add new memory */}
+          <div className="flex gap-2">
+            <Input
+              value={newFact}
+              onChange={(e) => setNewFact(e.target.value)}
+              placeholder="Add a fact (e.g., 'I prefer Python')"
+              className="bg-background/50 border-border/30"
+              onKeyDown={(e) => e.key === "Enter" && addMemory()}
+            />
+            <Button size="sm" onClick={addMemory} disabled={!newFact.trim()}>
+              <Plus className="h-4 w-4" />
             </Button>
           </div>
-        ))}
-      </div>
+
+          {/* Memory list */}
+          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+            {loading && <p className="text-sm text-muted-foreground">Loading...</p>}
+            {!loading && memories.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No memories stored yet. Add facts above or the AI will learn as you chat.
+              </p>
+            )}
+            {memories.map((m) => (
+              <div key={m.id} className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/20 group">
+                <p className="text-sm flex-1">{m.fact}</p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                  onClick={() => deleteMemory(m.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
