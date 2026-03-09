@@ -90,11 +90,9 @@ serve(async (req) => {
     const reqType = request_type || "model_compare";
     const shouldStream = stream === true;
 
-    // Check ban/suspension + custom caps
-    let userSoftCap = SOFT_CAP;
-    let userHardCap = HARD_CAP;
+    // Check ban/suspension
     if (userId) {
-      const { data: profile } = await sb.from("profiles").select("status, suspended_until, custom_soft_cap, custom_hard_cap").eq("user_id", userId).single();
+      const { data: profile } = await sb.from("profiles").select("status, suspended_until").eq("user_id", userId).single();
       if (profile?.status === "banned") {
         return new Response(JSON.stringify({ error: "Your account has been banned", code: "BANNED" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
@@ -104,8 +102,6 @@ serve(async (req) => {
           return new Response(JSON.stringify({ error: "Your account is suspended", code: "SUSPENDED" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
       }
-      if (profile?.custom_soft_cap != null) userSoftCap = Number(profile.custom_soft_cap);
-      if (profile?.custom_hard_cap != null) userHardCap = Number(profile.custom_hard_cap);
     }
 
     const modelId = model || "google/gemini-3-flash-preview";
