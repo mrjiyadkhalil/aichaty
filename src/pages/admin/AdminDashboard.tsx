@@ -64,13 +64,11 @@ export default function AdminDashboard() {
         <MetricCard label="Total Users" value={metrics.totalUsers} icon={<Users className="h-5 w-5" />} />
         <MetricCard label="Active (7d)" value={metrics.activeUsers7d} icon={<Activity className="h-5 w-5" />} />
         <MetricCard label="Suspended" value={metrics.suspendedUsers} icon={<Ban className="h-5 w-5" />} />
-        <MetricCard label="Projects" value={metrics.totalProjects} icon={<FolderOpen className="h-5 w-5" />} />
         <MetricCard label="Chats" value={metrics.totalChats} icon={<MessageSquare className="h-5 w-5" />} />
         <MetricCard label="AI Requests" value={metrics.totalRequests} icon={<Zap className="h-5 w-5" />} />
         <MetricCard label="Est. Cost" value={`$${metrics.totalCost}`} icon={<DollarSign className="h-5 w-5" />} />
         <MetricCard label="Failed" value={metrics.failedRequests} icon={<AlertTriangle className="h-5 w-5" />} />
         <MetricCard label="Errors" value={metrics.totalErrors} icon={<AlertTriangle className="h-5 w-5" />} />
-        <MetricCard label="Share Links" value={metrics.activeShareLinks} icon={<Link2 className="h-5 w-5" />} />
         <MetricCard label="Free Users" value={planStats.free || 0} icon={<Users className="h-5 w-5" />} />
         <MetricCard label="Pro Users" value={planStats.pro || 0} icon={<Crown className="h-5 w-5" />} />
         <MetricCard label="Enterprise" value={planStats.enterprise || 0} icon={<Crown className="h-5 w-5" />} />
