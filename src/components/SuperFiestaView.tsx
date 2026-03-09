@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send, Plus, Mic, MicOff, Sparkles } from "lucide-react";
+import { Send, Plus, Mic, MicOff, Sparkles, Globe } from "lucide-react";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { ImageUploadButton } from "@/components/ImageUploadButton";
 import { cn } from "@/lib/utils";
