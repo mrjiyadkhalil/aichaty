@@ -40,6 +40,7 @@ import AdminSystemHealth from "./pages/admin/AdminSystemHealth";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminModelAdd from "./pages/admin/AdminModelAdd";
 import AdminBroadcast from "./pages/admin/AdminBroadcast";
+import AdminSubscriptionPlans from "./pages/admin/AdminSubscriptionPlans";
 
 
 const queryClient = new QueryClient();
@@ -116,6 +117,7 @@ function AppWithShortcuts() {
         <Route path="/admin/models/add" element={<AdminRoute><AdminModelAdd /></AdminRoute>} />
         <Route path="/admin/revenue" element={<AdminRoute><AdminRevenue /></AdminRoute>} />
         <Route path="/admin/broadcast" element={<AdminRoute><AdminBroadcast /></AdminRoute>} />
+        <Route path="/admin/subscription-plans" element={<AdminRoute><AdminSubscriptionPlans /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
         <Route path="/admin/errors" element={<AdminRoute><AdminErrors /></AdminRoute>} />
         <Route path="/admin/audit" element={<AdminRoute><AdminAudit /></AdminRoute>} />
