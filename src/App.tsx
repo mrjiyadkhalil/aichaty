@@ -18,7 +18,7 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import ProjectDetail from "./pages/ProjectDetail";
-import ChatWorkspace from "./pages/ChatWorkspace";
+import ChatWorkspaceWrapper from "./pages/ChatWorkspaceWrapper";
 import Settings from "./pages/Settings";
 import Bookmarks from "./pages/Bookmarks";
 import Prompts from "./pages/Prompts";
