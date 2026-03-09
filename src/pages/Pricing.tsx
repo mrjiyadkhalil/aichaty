@@ -35,7 +35,7 @@ export default function Pricing() {
   const { plan: currentPlan, plans } = useSubscription();
   const [yearly, setYearly] = useState(false);
 
-  const orderedPlans = ["free", "pro", "enterprise"];
+  const orderedPlans = ["free", "pro"];
   const sortedPlans = orderedPlans
     .map((name) => plans.find((p) => p.plan_name === name))
     .filter(Boolean) as typeof plans;

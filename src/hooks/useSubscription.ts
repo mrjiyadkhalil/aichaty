@@ -90,7 +90,7 @@ export function useSubscription(): UseSubscriptionReturn {
     setLoading(true);
 
     if (isAdmin) {
-      setPlan("enterprise");
+      setPlan("pro");
       setFeatures(ADMIN_FEATURES);
       setLoading(false);
       const { data } = await supabase.from("subscription_plans").select("*");

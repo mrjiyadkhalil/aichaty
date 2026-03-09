@@ -30,13 +30,9 @@ export function UpgradePrompt({ open, onClose, feature, requiredPlan = "pro" }: 
         <div className="flex items-center gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
           <Sparkles className="h-8 w-8 text-primary shrink-0" />
           <div>
-            <p className="text-sm font-medium">
-              {requiredPlan === "pro" ? "Pro Plan — $12/mo" : "Enterprise Plan — $49/mo"}
-            </p>
+            <p className="text-sm font-medium">Pro Plan — $12/mo</p>
             <p className="text-xs text-muted-foreground">
-              {requiredPlan === "pro"
-                ? "Unlimited messages, all balanced models, file uploads, and more."
-                : "All models, priority speed, custom system prompts, and admin access."}
+              Unlimited messages, all models, file uploads, and more.
             </p>
           </div>
         </div>
