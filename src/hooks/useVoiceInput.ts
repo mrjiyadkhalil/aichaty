@@ -43,7 +43,6 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
     // Don't set recognition.lang — let the browser auto-detect any language
 
     recognition.onresult = async (event: any) => {
-      // Only process new results
       const newResults: string[] = [];
       for (let i = 0; i < event.results.length; i++) {
         if (event.results[i].isFinal) {
@@ -53,8 +52,8 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
       const transcript = newResults.join(" ").trim();
       if (!transcript) return;
 
-      const translated = await translateToEnglish(transcript);
-      onTranscript(translated);
+      // Pass the transcript as-is without translation
+      onTranscript(transcript);
     };
 
     recognition.onerror = (event: any) => {
