@@ -272,12 +272,9 @@ serve(async (req) => {
     const latency = Date.now() - start;
 
     if (userId) {
-      const monthlyCostNow = await getMonthlyCost(sb, userId);
-      const warning = monthlyCostNow + estCost >= userSoftCap ? "Approaching usage limit" : undefined;
       await sb.from("usage_events").insert({ user_id: userId, project_id: projectId || null, chat_id: chatId || null, message_id: messageId || null, provider: modelId.split("/")[0], model: modelId, request_type: reqType, input_tokens: inputTokens, output_tokens: outputTokens, estimated_cost: estCost, latency_ms: latency, status: "success" });
-      // Extract memories
       extractAndStoreMemories(sb, userId, chatId, prompt).catch(() => {});
-      return new Response(JSON.stringify({ content, usage: { input_tokens: inputTokens, output_tokens: outputTokens, estimated_cost: estCost }, warning }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ content, usage: { input_tokens: inputTokens, output_tokens: outputTokens, estimated_cost: estCost } }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     return new Response(JSON.stringify({ content }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -286,9 +283,3 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
-
-async function getMonthlyCost(sb: any, userId: string): Promise<number> {
-  const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
-  const { data } = await sb.from("usage_events").select("estimated_cost").eq("user_id", userId).gte("created_at", startOfMonth.toISOString());
-  return (data || []).reduce((s: number, r: any) => s + (Number(r.estimated_cost) || 0), 0);
-}
