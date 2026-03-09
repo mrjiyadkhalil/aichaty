@@ -248,11 +248,20 @@ serve(async (req) => {
         } finally {
           await writer.close();
           const latency = Date.now() - start;
+          // Estimate tokens if usage data wasn't provided in stream
+          if (totalInputTokens === 0 && totalOutputTokens === 0 && fullContent.length > 0) {
+            // Rough estimate: ~4 chars per token
+            totalInputTokens = Math.ceil(prompt.length / 4);
+            totalOutputTokens = Math.ceil(fullContent.length / 4);
+          }
           const rates = COST_PER_1K[modelId] || { input: 0.001, output: 0.002 };
           const estCost = (totalInputTokens / 1000) * rates.input + (totalOutputTokens / 1000) * rates.output;
           if (userId) {
-            await sb.from("usage_events").insert({ user_id: userId, project_id: projectId || null, chat_id: chatId || null, message_id: messageId || null, provider: modelId.split("/")[0], model: modelId, request_type: reqType, input_tokens: totalInputTokens, output_tokens: totalOutputTokens, estimated_cost: estCost, latency_ms: latency, status: "success" });
-            // Extract memories from user prompt
+            try {
+              await sb.from("usage_events").insert({ user_id: userId, project_id: projectId || null, chat_id: chatId || null, message_id: messageId || null, provider: modelId.split("/")[0], model: modelId, request_type: reqType, input_tokens: totalInputTokens, output_tokens: totalOutputTokens, estimated_cost: estCost, latency_ms: latency, status: "success" });
+            } catch (insertErr) {
+              console.error("Failed to insert usage event:", insertErr);
+            }
             extractAndStoreMemories(sb, userId, chatId, prompt).catch(() => {});
           }
         }
