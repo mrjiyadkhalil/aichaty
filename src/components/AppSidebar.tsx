@@ -265,7 +265,7 @@ export function AppSidebar({ projects, recentChats, projectChats, selectedProjec
                 <p className="text-xs text-foreground truncate">{displayName || user?.email || "User"}</p>
                 {!planLoading && <PlanBadge plan={plan} />}
               </div>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => navigate("/settings")}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setShowSettings(true)}>
                 <Settings className="h-3.5 w-3.5" />
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={signOut}>
