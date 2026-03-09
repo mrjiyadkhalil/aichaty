@@ -22,9 +22,17 @@ export function SuperFiestaView({
 }: SuperFiestaViewProps) {
   const [prompt, setPrompt] = useState("");
 
-  const { isRecording, toggleRecording } = useVoiceInput((text) => {
+  const { isRecording, toggleRecording, voiceLang, setVoiceLang } = useVoiceInput((text) => {
     setPrompt((prev) => (prev ? prev + " " + text : text));
   });
+
+  const VOICE_LANGS = [
+    { code: "bn-BD", label: "বাংলা" },
+    { code: "en-US", label: "English" },
+    { code: "hi-IN", label: "हिन्दी" },
+    { code: "ar-SA", label: "العربية" },
+  ];
+  const currentLangLabel = VOICE_LANGS.find(l => l.code === voiceLang)?.label || voiceLang;
 
   const handleSend = () => {
     if (!prompt.trim() || disabled) return;
