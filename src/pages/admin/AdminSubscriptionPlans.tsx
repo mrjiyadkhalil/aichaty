@@ -175,9 +175,15 @@ export default function AdminSubscriptionPlans() {
 
   return (
     <div className="p-6 space-y-6 max-w-6xl">
-      <div>
-        <h1 className="text-2xl font-bold font-['Space_Grotesk']">Subscription Plans</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage pricing and features for each plan</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold font-['Space_Grotesk']">Subscription Plans</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage pricing and features for each plan</p>
+        </div>
+        <Button onClick={() => setShowAddDialog(true)} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add New Plan
+        </Button>
       </div>
 
       <div className="grid gap-6">
