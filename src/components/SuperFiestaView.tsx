@@ -77,9 +77,43 @@ export function SuperFiestaView({
               {onImageSelected && onImageRemoved && (
                 <ImageUploadButton onImageSelected={onImageSelected} onImageRemoved={onImageRemoved} hasImage={hasImage} disabled={disabled} />
               )}
-              <button onClick={toggleRecording} disabled={disabled} className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-colors duration-150", isRecording ? "text-destructive bg-destructive/10" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
-                {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              </button>
+              <div className="relative group/voice flex items-center">
+                <button onClick={toggleRecording} disabled={disabled} className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-colors duration-150", isRecording ? "text-destructive bg-destructive/10" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
+                  {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </button>
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const menu = e.currentTarget.nextElementSibling as HTMLElement;
+                      if (menu) menu.classList.toggle("hidden");
+                    }}
+                    disabled={disabled || isRecording}
+                    className="h-6 px-1 rounded-md flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    title="Voice language"
+                  >
+                    <Globe className="h-3 w-3" />
+                  </button>
+                  <div className="hidden absolute bottom-full left-0 mb-1 bg-popover border border-border rounded-lg shadow-lg py-1 z-50 min-w-[120px]">
+                    {VOICE_LANGS.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVoiceLang(lang.code);
+                          (e.currentTarget.parentElement as HTMLElement)?.classList.add("hidden");
+                        }}
+                        className={cn(
+                          "w-full text-left px-3 py-1.5 text-xs hover:bg-muted transition-colors",
+                          voiceLang === lang.code && "text-primary font-medium"
+                        )}
+                      >
+                        {lang.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
               <button onClick={() => onEnhance(prompt)} disabled={!prompt.trim() || enhancing || disabled} className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150 disabled:opacity-30">
                 <Sparkles className="h-4 w-4" />
               </button>
