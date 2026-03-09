@@ -14,6 +14,8 @@ interface TopBarProps {
 }
 
 export function TopBar({ title, layout, onToggleLayout, exportMessages, projectName }: TopBarProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   return (
     <header className="h-12 border-b border-border flex items-center gap-2 md:gap-3 px-2 md:px-3 bg-background shrink-0 flex-1">
       <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors duration-150 h-9 w-9 min-w-[36px] min-h-[36px]" />
@@ -33,6 +35,21 @@ export function TopBar({ title, layout, onToggleLayout, exportMessages, projectN
         {exportMessages && projectName && (
           <ExportMenu messages={exportMessages} projectName={projectName} />
         )}
+        
+        <SettingsDialog
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          trigger={
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-muted-foreground hover:text-foreground transition-colors"
+              title="Settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          }
+        />
       </div>
     </header>
   );
