@@ -71,7 +71,9 @@ export function useUsage(): UsageData {
 
   return {
     totalCost,
+    totalTokens,
     requestCount,
+    messagesUsedToday,
     isNearCap: totalCost >= AI_CONFIG.limits.softCapUsd,
     isAtCap: totalCost >= AI_CONFIG.limits.hardCapUsd,
     loading,

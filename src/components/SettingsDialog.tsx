@@ -225,19 +225,39 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
               <h4 className="text-sm font-semibold flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-primary" /> Usage This Month
               </h4>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm text-muted-foreground">Estimated Spend</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">${totalCost.toFixed(4)}</span>
-                  <span className="text-xs text-muted-foreground">/ ${hardCap.toFixed(2)}</span>
-                  <Badge variant={statusColor as any}>{statusLabel}</Badge>
-                </div>
-              </div>
-              <Progress value={usagePercent} className="h-2" />
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Soft cap: ${softCap.toFixed(2)}</span>
-                <span>{requestCount} requests</span>
-              </div>
+              {plan === "free" ? (
+                <>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm text-muted-foreground">Messages Today</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{messagesUsedToday} / {messagesPerDay}</span>
+                      <Badge variant={messagesLeft === 0 ? "destructive" : messagesLeft <= 3 ? "secondary" : "default"}>
+                        {messagesLeft} left
+                      </Badge>
+                    </div>
+                  </div>
+                  <Progress value={messageUsagePercent} className="h-2" />
+                  <p className="text-xs text-muted-foreground">
+                    Free plan limited to {messagesPerDay} messages per day. Resets daily.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm text-muted-foreground">Tokens Used</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{totalTokens.toLocaleString()}</span>
+                      <span className="text-xs text-muted-foreground">tokens</span>
+                      <Badge variant={statusColor as any}>{statusLabel}</Badge>
+                    </div>
+                  </div>
+                  <Progress value={usagePercent} className="h-2" />
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Soft cap: ${softCap.toFixed(2)}</span>
+                    <span>{requestCount} requests</span>
+                  </div>
+                </>
+              )}
             </div>
             <div className="space-y-4 pt-4 border-t border-border/30">
               <h4 className="text-sm font-semibold flex items-center gap-2">
