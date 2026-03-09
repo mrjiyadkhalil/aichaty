@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { label: "Usage & Cost", path: "/admin/usage", icon: BarChart3 },
   { label: "Revenue", path: "/admin/revenue", icon: DollarSign },
   { label: "Models", path: "/admin/models", icon: Cpu },
+  { label: "Subscription Plans", path: "/admin/subscription-plans", icon: UserCog },
   { label: "Broadcast", path: "/admin/broadcast", icon: Radio },
   { label: "Settings", path: "/admin/settings", icon: Settings2 },
   { label: "Feature Flags", path: "/admin/feature-flags", icon: Flag },
