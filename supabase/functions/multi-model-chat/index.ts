@@ -145,12 +145,13 @@ serve(async (req) => {
       const { data: planData } = await sb.from("subscription_plans").select("features").eq("plan_name", userPlan).single();
       const features = planData?.features || {};
       
-      // Check message limit per day
+      // Check message limit per day (count distinct message_ids, not per-model events)
       const messagesPerDay = features.messages_per_day || 5;
       if (messagesPerDay > 0) {
         const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        const { count: messageCount } = await sb.from("usage_events").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", oneDayAgo);
-        if ((messageCount || 0) >= messagesPerDay) {
+        const { data: dayEvents } = await sb.from("usage_events").select("message_id").eq("user_id", userId).not("message_id", "is", null).gte("created_at", oneDayAgo);
+        const uniqueMessages = new Set((dayEvents || []).map((e: any) => e.message_id));
+        if (uniqueMessages.size >= messagesPerDay) {
           return new Response(JSON.stringify({ error: "Daily message limit reached", code: "MESSAGE_LIMIT" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
       }

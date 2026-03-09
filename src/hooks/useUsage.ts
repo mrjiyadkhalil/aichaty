@@ -50,16 +50,17 @@ export function useUsage(): UsageData {
       setRequestCount(monthlyData.length);
     }
 
-    // Get today's message count for free tier tracking
+    // Get today's message count for free tier tracking (count distinct message_ids)
     const { data: todayData, error: todayError } = await supabase
       .from("usage_events")
-      .select("id")
+      .select("message_id")
       .eq("user_id", user.id)
-      .eq("request_type", "chat")
+      .not("message_id", "is", null)
       .gte("created_at", startOfDay.toISOString());
 
     if (!todayError && todayData) {
-      setMessagesUsedToday(todayData.length);
+      const uniqueMessages = new Set(todayData.map(r => r.message_id));
+      setMessagesUsedToday(uniqueMessages.size);
     }
     
     setLoading(false);
