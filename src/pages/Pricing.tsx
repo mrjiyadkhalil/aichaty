@@ -17,6 +17,7 @@ const PLAN_META: Record<string, { icon: any; label: string; description: string;
 const FEATURE_ROWS: { label: string; key: string; type: "boolean" | "value" | "models" }[] = [
   { label: "Messages per day", key: "messages_per_day", type: "value" },
   { label: "Max output tokens", key: "max_output_tokens", type: "value" },
+  { label: "Tokens per month", key: "max_tokens_per_month", type: "value" },
   { label: "AI Models", key: "models", type: "models" },
   { label: "File uploads", key: "file_uploads", type: "boolean" },
   { label: "Projects & Instructions", key: "projects", type: "boolean" },

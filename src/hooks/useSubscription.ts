@@ -8,6 +8,7 @@ export type PlanName = "free" | "pro";
 export interface PlanFeatures {
   messages_per_day: number;
   max_output_tokens: number;
+  max_tokens_per_month?: number;
   models: string[] | "all";
   file_uploads: boolean;
   file_max_mb?: number;
@@ -43,7 +44,7 @@ interface UseSubscriptionReturn {
 }
 
 const DEFAULT_FREE_FEATURES: PlanFeatures = {
-  messages_per_day: 20,
+  messages_per_day: 5,
   max_output_tokens: 2048,
   models: ["google/gemini-2.5-flash", "openai/gpt-5-nano"],
   file_uploads: false,

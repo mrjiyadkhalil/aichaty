@@ -136,13 +136,44 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Rate limit + monthly cap
+    // Rate limit + monthly cap + message limit
     if (userId) {
+      // Get user's plan features
+      const { data: profile } = await sb.from("profiles").select("plan").eq("user_id", userId).single();
+      const userPlan = profile?.plan || "free";
+      
+      const { data: planData } = await sb.from("subscription_plans").select("features").eq("plan_name", userPlan).single();
+      const features = planData?.features || {};
+      
+      // Check message limit per day
+      const messagesPerDay = features.messages_per_day || 5;
+      if (messagesPerDay > 0) {
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { count: messageCount } = await sb.from("usage_events").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", oneDayAgo);
+        if ((messageCount || 0) >= messagesPerDay) {
+          return new Response(JSON.stringify({ error: "Daily message limit reached", code: "MESSAGE_LIMIT" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+      
+      // Check monthly token limit (for pro users)
+      const maxTokensPerMonth = features.max_tokens_per_month;
+      if (maxTokensPerMonth) {
+        const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+        const { data: tokenData } = await sb.from("usage_events").select("input_tokens, output_tokens").eq("user_id", userId).gte("created_at", startOfMonth.toISOString());
+        const totalTokens = (tokenData || []).reduce((s, r) => s + (Number(r.input_tokens) || 0) + (Number(r.output_tokens) || 0), 0);
+        if (totalTokens >= maxTokensPerMonth) {
+          return new Response(JSON.stringify({ error: "Monthly token limit reached", code: "TOKEN_LIMIT" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+      
+      // Rate limit check
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
       const { count } = await sb.from("usage_events").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", oneHourAgo);
       if ((count || 0) >= RATE_LIMIT) {
         return new Response(JSON.stringify({ error: "Too many requests, please wait", code: "RATE_LIMIT" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
+      
+      // Monthly cost cap check
       const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
       const { data: costData } = await sb.from("usage_events").select("estimated_cost").eq("user_id", userId).gte("created_at", startOfMonth.toISOString());
       const monthlyCost = (costData || []).reduce((s, r) => s + (Number(r.estimated_cost) || 0), 0);
