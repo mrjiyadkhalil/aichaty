@@ -36,7 +36,7 @@ export default function ChatWorkspace() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isAtCap, isNearCap, refresh: refreshUsage } = useUsage();
-  const { costMode, defaultLayout } = usePreferences();
+  const { costMode, defaultLayout, setLayout: setPreferredLayout } = usePreferences();
   const { plan, features, canAccess, isModelAllowed } = useSubscription();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -49,7 +49,7 @@ export default function ChatWorkspace() {
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [useInstruction, setUseInstruction] = useState(true);
   const [sending, setSending] = useState(false);
-  const [layout, setLayout] = useState<"grid" | "stacked">("grid");
+  const [layout, setLayout] = useState<"grid" | "stacked">(defaultLayout);
   const [showEnhancer, setShowEnhancer] = useState(false);
   const [enhanceOriginal, setEnhanceOriginal] = useState("");
   const [enhancedPrompt, setEnhancedPrompt] = useState<string | null>(null);
