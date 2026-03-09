@@ -14,6 +14,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { NewProjectDialog } from "@/components/NewProjectDialog";
+import { SettingsDialog } from "@/components/SettingsDialog";
 
 interface Project { id: string; name: string; }
 interface Chat { id: string; title: string | null; project_id: string | null; updated_at?: string; }
