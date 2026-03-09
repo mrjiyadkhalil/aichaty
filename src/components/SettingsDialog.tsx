@@ -261,9 +261,12 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
                     </div>
                   </div>
                   <Progress value={messageUsagePercent} className="h-2" />
-                  <p className="text-xs text-muted-foreground">
-                    Free plan limited to {messagesPerDay} messages per day. Resets daily.
-                  </p>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
+                    <span>Free plan: {messagesPerDay} messages/day</span>
+                    <span className="flex items-center gap-1 font-medium text-foreground">
+                      Resets in: {timeUntilReset}
+                    </span>
+                  </div>
                 </>
               ) : (
                 <>
