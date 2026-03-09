@@ -40,6 +40,7 @@ import AdminSystemHealth from "./pages/admin/AdminSystemHealth";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminModelAdd from "./pages/admin/AdminModelAdd";
 import AdminBroadcast from "./pages/admin/AdminBroadcast";
+import AdminSubscriptionPlans from "./pages/admin/AdminSubscriptionPlans";
 
 
 const queryClient = new QueryClient();
