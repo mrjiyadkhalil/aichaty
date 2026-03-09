@@ -214,7 +214,7 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-semibold">AI Memory</h3>
-              <p className="text-sm text-muted-foreground">The AI learns key facts about you from conversations</p>
+              <p className="text-sm text-muted-foreground">The AI learns key facts about you from conversations. Memories are used to personalize responses.</p>
             </div>
             <MemoryManager />
           </div>

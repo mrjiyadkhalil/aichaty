@@ -1008,6 +1008,7 @@ export type Database = {
           default_layout: string
           default_models: string[] | null
           id: string
+          memory_enabled: boolean
           onboarding_completed: boolean
           theme: string
           updated_at: string
@@ -1019,6 +1020,7 @@ export type Database = {
           default_layout?: string
           default_models?: string[] | null
           id?: string
+          memory_enabled?: boolean
           onboarding_completed?: boolean
           theme?: string
           updated_at?: string
@@ -1030,6 +1032,7 @@ export type Database = {
           default_layout?: string
           default_models?: string[] | null
           id?: string
+          memory_enabled?: boolean
           onboarding_completed?: boolean
           theme?: string
           updated_at?: string
