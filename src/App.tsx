@@ -18,7 +18,7 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import ProjectDetail from "./pages/ProjectDetail";
-import ChatWorkspace from "./pages/ChatWorkspace";
+import ChatWorkspaceWrapper from "./pages/ChatWorkspaceWrapper";
 import Settings from "./pages/Settings";
 import Bookmarks from "./pages/Bookmarks";
 import Prompts from "./pages/Prompts";
@@ -100,8 +100,8 @@ function AppWithShortcuts() {
         <Route path="/" element={<LandingRoute />} />
         <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
         <Route path="/pricing" element={<Pricing />} />
-        <Route path="/chat" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
-        <Route path="/chat/:id" element={<ProtectedRoute><AppLayout><ChatWorkspace /></AppLayout></ProtectedRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><ChatWorkspaceWrapper /></ProtectedRoute>} />
+        <Route path="/chat/:id" element={<ProtectedRoute><ChatWorkspaceWrapper /></ProtectedRoute>} />
         <Route path="/project/:id" element={<ProtectedRoute><AppLayout><ProjectDetail /></AppLayout></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>} />
         <Route path="/bookmarks" element={<ProtectedRoute><AppLayout><Bookmarks /></AppLayout></ProtectedRoute>} />

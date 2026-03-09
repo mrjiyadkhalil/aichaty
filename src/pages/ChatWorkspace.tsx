@@ -31,12 +31,15 @@ interface MessageWithResponses { id: string; content: string; enhanced_content: 
 
 export type ChatMode = "superfiesta" | "multichat";
 
-export default function ChatWorkspace() {
+export default function ChatWorkspace({ layout: externalLayout, onToggleLayout: externalOnToggleLayout }: { 
+  layout?: "grid" | "stacked"; 
+  onToggleLayout?: () => void; 
+} = {}) {
   const { id: chatId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isAtCap, isNearCap, refresh: refreshUsage } = useUsage();
-  const { costMode, defaultLayout } = usePreferences();
+  const { costMode, defaultLayout, setLayout: setPreferredLayout } = usePreferences();
   const { plan, features, canAccess, isModelAllowed } = useSubscription();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -49,7 +52,7 @@ export default function ChatWorkspace() {
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [useInstruction, setUseInstruction] = useState(true);
   const [sending, setSending] = useState(false);
-  const [layout, setLayout] = useState<"grid" | "stacked">("grid");
+  const [layout, setLayout] = useState<"grid" | "stacked">(externalLayout || defaultLayout);
   const [showEnhancer, setShowEnhancer] = useState(false);
   const [enhanceOriginal, setEnhanceOriginal] = useState("");
   const [enhancedPrompt, setEnhancedPrompt] = useState<string | null>(null);
@@ -63,8 +66,21 @@ export default function ChatWorkspace() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState("");
   const [upgradeRequiredPlan, setUpgradeRequiredPlan] = useState<"pro" | "enterprise">("pro");
-  useEffect(() => { setLayout(defaultLayout); }, [defaultLayout]);
+  useEffect(() => { 
+    if (externalLayout) setLayout(externalLayout);
+    else setLayout(defaultLayout);
+  }, [defaultLayout, externalLayout]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  const handleToggleLayout = () => {
+    if (externalOnToggleLayout) {
+      externalOnToggleLayout();
+    } else {
+      const newLayout = layout === "grid" ? "stacked" : "grid";
+      setLayout(newLayout);
+      setPreferredLayout(newLayout);
+    }
+  };
 
   const { allModelIds, modelLabels } = useModels();
   const enabledModels = allModelIds.length > 0 ? allModelIds : (AI_CONFIG.costModes[costMode]?.enabledModels || AI_CONFIG.costModes.balanced.enabledModels);

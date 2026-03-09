@@ -11,7 +11,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface Project { id: string; name: string; }
 interface Chat { id: string; title: string | null; project_id: string | null; updated_at?: string; }
 
-export function AppLayout({ children }: { children: ReactNode }) {
+export function AppLayout({ children, layout, onToggleLayout }: { 
+  children: ReactNode;
+  layout?: "grid" | "stacked";
+  onToggleLayout?: () => void;
+}) {
   const { user } = useAuth();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -84,7 +88,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           {/* Model bar portal target — rendered above TopBar */}
           <div id="model-bar-slot" className="shrink-0" />
           <div className="flex items-center">
-            <TopBar title={getTitle()} />
+            <TopBar title={getTitle()} layout={layout} onToggleLayout={onToggleLayout} />
             {currentChatId && (
               <div className="shrink-0 pr-2 md:pr-3 h-12 flex items-center border-b border-border bg-background">
                 <ChatTagManager chatId={currentChatId} />
