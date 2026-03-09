@@ -17,27 +17,51 @@ interface UsageData {
 export function useUsage(): UsageData {
   const { user } = useAuth();
   const [totalCost, setTotalCost] = useState(0);
+  const [totalTokens, setTotalTokens] = useState(0);
   const [requestCount, setRequestCount] = useState(0);
+  const [messagesUsedToday, setMessagesUsedToday] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const fetchUsage = useCallback(async () => {
     if (!user) return;
     setLoading(true);
+    
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const { data, error } = await supabase
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // Get monthly usage for cost and tokens
+    const { data: monthlyData, error: monthlyError } = await supabase
       .from("usage_events")
-      .select("estimated_cost")
+      .select("estimated_cost, input_tokens, output_tokens")
       .eq("user_id", user.id)
       .gte("created_at", startOfMonth.toISOString());
 
-    if (!error && data) {
-      const cost = data.reduce((sum, row) => sum + (Number(row.estimated_cost) || 0), 0);
+    if (!monthlyError && monthlyData) {
+      const cost = monthlyData.reduce((sum, row) => sum + (Number(row.estimated_cost) || 0), 0);
+      const tokens = monthlyData.reduce((sum, row) => 
+        sum + (Number(row.input_tokens) || 0) + (Number(row.output_tokens) || 0), 0
+      );
       setTotalCost(cost);
-      setRequestCount(data.length);
+      setTotalTokens(tokens);
+      setRequestCount(monthlyData.length);
     }
+
+    // Get today's message count for free tier tracking
+    const { data: todayData, error: todayError } = await supabase
+      .from("usage_events")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("request_type", "chat")
+      .gte("created_at", startOfDay.toISOString());
+
+    if (!todayError && todayData) {
+      setMessagesUsedToday(todayData.length);
+    }
+    
     setLoading(false);
   }, [user]);
 
