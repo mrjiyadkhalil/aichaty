@@ -95,6 +95,10 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
     setTimeout(() => window.location.reload(), 500);
   };
 
+  const messagesPerDay = features?.messages_per_day ?? 10;
+  const messagesLeft = Math.max(0, messagesPerDay - messagesUsedToday);
+  const messageUsagePercent = Math.min((messagesUsedToday / messagesPerDay) * 100, 100);
+  
   const softCap = features?.usage_cap_soft ?? AI_CONFIG.limits.softCapUsd;
   const hardCap = features?.usage_cap_hard ?? AI_CONFIG.limits.hardCapUsd;
   const usagePercent = Math.min((totalCost / hardCap) * 100, 100);
